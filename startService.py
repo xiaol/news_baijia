@@ -24,6 +24,7 @@ define("host", default="127.0.0.1", help="run on the given host", type=str)
 
 class FetchHomeHandler(tornado.web.RequestHandler):
     def get(self):
+
         updateTime = self.get_argument("updateTime", None)
         options = {}
         if updateTime:
@@ -32,6 +33,7 @@ class FetchHomeHandler(tornado.web.RequestHandler):
 
         print result
 
+        self.set_header("Content-Type", "Applcation/json")
         self.write(json.dumps(result))
 
 class Application(tornado.web.Application):

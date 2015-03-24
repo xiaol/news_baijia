@@ -179,13 +179,14 @@ def GetOneWeibo(title):
     weibos = weibo_relate_docs_get.search_relate_docs(title,1)
     weibos = json.loads(weibos)
 
-    if len(weibos) <= 0:
+    if len(weibos) <= 0 or "error" in weibos.keys():
         return
 
     weibo = weibos[0]
     weibo_id = weibo["weibo_id"]
     user = user_info_get.get_weibo_user(weibo_id)
     weibo["user"] = user["name"]
+
 
     return weibo
 
