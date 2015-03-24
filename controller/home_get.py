@@ -19,7 +19,7 @@ def homeContentFetch(options):
     :rtype :
     """
     updateTime = ''
-    limit = 10
+    limit = 5
     if "updateTime" in options.keys():
         updateTime = options["updateTime"]
     if 'limit' in options.keys():
@@ -38,10 +38,10 @@ def homeContentFetch(options):
         sublist = []
         title = doc["title"]
 
-        # keyword = extract_tags(title, 3)
-        # keyword = ' '.join(keyword)
+        keyword = extract_tags(title, 3)
+        keyword = ' '.join(keyword)
 
-        keyword = "周润发"
+        # keyword = "周润发"
 
         relate = []
 
