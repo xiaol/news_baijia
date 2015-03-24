@@ -33,7 +33,7 @@ class FetchHomeHandler(tornado.web.RequestHandler):
 
         print result
 
-        self.set_header("Content-Type", "Applcation/json")
+        self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
 class Application(tornado.web.Application):
