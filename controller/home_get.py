@@ -38,10 +38,10 @@ def homeContentFetch(options):
         sublist = []
         title = doc["title"]
 
-        keyword = extract_tags(title, 3)
-        keyword = ' '.join(keyword)
+        # keyword = extract_tags(title, 3)
+        # keyword = ' '.join(keyword)
 
-        # keyword = "周润发"
+        keyword = "周润发"
 
         relate = []
 

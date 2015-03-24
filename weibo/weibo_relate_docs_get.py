@@ -9,6 +9,8 @@ sys.setdefaultencoding("utf-8")
 
 def search_relate_docs(topic, page):
 
+    print topic
+
     api_url = "http://14.17.120.252:9091/getInfoByText"
 
     param = {"text": topic, "page": str(page)}
