@@ -1,0 +1,27 @@
+#coding=utf-8
+# import urllib
+import requests
+import json
+
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
+def search_relate_docs(topic, page):
+
+    api_url = "http://14.17.120.252:9091/getInfoByText"
+
+    param = {"text": topic, "page": str(page)}
+    r = requests.post(api_url, data=json.dumps(param))
+
+    # if r.raise_for_status():
+    #     print "search_relate_docs request error", r.raise_for_status()
+
+    print r.text
+    return r.text
+
+
+
+if __name__ == '__main__':
+    print search_relate_docs("柴静","1")
+
