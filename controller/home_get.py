@@ -27,7 +27,7 @@ def homeContentFetch(options):
 
     conn = DBStore._connect_news
 
-    docs = conn['news_ver2']['googleNewsItem'].find({"updateTime": {"$gt": updateTime}}).sort({"updateTime":-1}).limit(limit)
+    docs = conn['news_ver2']['googleNewsItem'].find({"updateTime": {"$gt": updateTime}}).sort([("updateTime",-1)]).limit(limit)
 
     index = 0
 
