@@ -5,7 +5,7 @@ from weibo import weibo_relate_docs_get, user_info_get
 import json
 from jieba.analyse import extract_tags
 
-mapOfSourceName = {"weibo":"weibo",
+mapOfSourceName = {"weibo":"微博",
                    "wangyi":"wangyi",
                    "xinlang":"xinlang",
                    "zhihu":"zhihu"}
@@ -55,10 +55,14 @@ def homeContentFetch(options):
         del doc["relate"]
 
         #微博数据获取
-        weibo = GetOneWeibo(keyword)
-        if weibo is not None:
-            element_weibo = {"sourceName": mapOfSourceName["weibo"], "user": weibo["user"], "url": weibo["url"], "title": weibo["content"]}
-            sublist.append(element_weibo)
+        # weibo = GetOneWeibo(keyword)
+        # if weibo is not None:
+        #     element_weibo = {"sourceName": mapOfSourceName["weibo"], "user": weibo["user"], "url": weibo["url"], "title": weibo["content"]}
+        #     sublist.append(element_weibo)
+        if "weibo" in doc.keys():
+            if isinstance(doc["weibo"], dict):
+                sublist.append(doc["weibo"])
+                del doc["weibo"]
 
         #相关新闻每一个来源 选一条
 

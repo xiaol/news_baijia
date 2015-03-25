@@ -2,13 +2,13 @@
 # import urllib
 import requests
 import json
-
+import time
 import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
-
 def search_relate_docs(topic, page):
 
+    time.sleep(3)
     print topic
 
     api_url = "http://14.17.120.252:9091/getInfoByText"
@@ -19,7 +19,7 @@ def search_relate_docs(topic, page):
     # if r.raise_for_status():
     #     print "search_relate_docs request error", r.raise_for_status()
 
-    print r.text
+    # print r.text
     return r.text
 
 

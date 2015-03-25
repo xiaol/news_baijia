@@ -1,6 +1,6 @@
 __author__ = 'jianghao'
 
-
+import time
 import requests
 
 ACCESS_TOKEN = "2.004t5RdCHB_LqCd7d61482d5iGDbcD"
@@ -8,6 +8,7 @@ ACCESS_TOKEN = "2.004t5RdCHB_LqCd7d61482d5iGDbcD"
 
 def get_weibo_user(weibo_id):
 
+    time.sleep(3)
     result = {}
     try:
         api_url = "https://api.weibo.com/2/statuses/queryid.json?type=1" + "&mid=" + weibo_id + "&access_token=" + ACCESS_TOKEN
@@ -22,7 +23,7 @@ def get_weibo_user(weibo_id):
 
         user = (r.json())["user"]
 
-        print ">>>>", user, r.url
+        # print ">>>>", user, r.url
 
 
         result["screenName"] = user["screen_name"]

@@ -13,6 +13,8 @@ import tornado.httpclient
 import tornado.netutil
 import json
 from controller import home_get
+from apscheduler.schedulers.tornado import TornadoScheduler
+from task import weibo_run
 
 
 
@@ -53,11 +55,26 @@ class Application(tornado.web.Application):
         tornado.web.Application.__init__(self, handlers, **settings)
 
 
+# def SchedulerAll():
+#     from apscheduler.triggers.cron import CronTrigger
+#     trigger_c = CronTrigger(second='00', minute='00/30', hour='*')
+#
+#     #weibo
+#     scheduler = TornadoScheduler()
+#     scheduler.add_job(weibo_run.weiboTaskRun, trigger_c)
+#
+#     # weibo_run.weiboTaskRun()
+#
+#     return scheduler
+
+
 if __name__ == "__main__":
 
+
+    # sched = SchedulerAll()
+    # sched.start()
+
     tornado.options.parse_command_line()
-
-
     sockets = tornado.netutil.bind_sockets(options.port)
     tornado.process.fork_processes(0)
     server = tornado.httpserver.HTTPServer(Application())

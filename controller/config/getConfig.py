@@ -8,6 +8,7 @@ import os
 # print os.getcwd()
 
 cf = ConfigParser.ConfigParser()
+
 with open(os.path.join(os.getcwd(),'controller/config/config.ini'),'r') as configfile:
     cf.readfp(configfile)
 
