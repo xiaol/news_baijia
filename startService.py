@@ -12,9 +12,10 @@ import tornado.httpclient
 
 import tornado.netutil
 import json
-from controller import home_get
-from apscheduler.schedulers.tornado import TornadoScheduler
-from task import weibo_run
+from controller import home_get, content_get
+
+import abstract
+
 
 
 
@@ -38,6 +39,28 @@ class FetchHomeHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
+
+class FetchContentHandler(tornado.web.RequestHandler):
+
+    def get(self):
+
+        self.set_header("Content-Type", "Application/json")
+        url = self.get_argument("url", None)
+        filter_urls = self.get_arguments("filterurls", None)
+
+        result = {}
+
+        if not url:
+            result["rc"] = 404
+            result["msg"] = "need url"
+            self.write(json.dumps(result))
+            return
+
+        result = content_get.fetchContent(url, filter_urls)
+
+        self.write(json.dumps(result))
+
+
 class Application(tornado.web.Application):
 
     def __init__(self):
@@ -45,6 +68,7 @@ class Application(tornado.web.Application):
         handlers = [
 
             (r"/news/baijia/fetchHome", FetchHomeHandler),
+            (r"/news/baijia/fetchContent", FetchContentHandler)
 
         ]
 
@@ -54,18 +78,6 @@ class Application(tornado.web.Application):
 
         tornado.web.Application.__init__(self, handlers, **settings)
 
-
-# def SchedulerAll():
-#     from apscheduler.triggers.cron import CronTrigger
-#     trigger_c = CronTrigger(second='00', minute='00/30', hour='*')
-#
-#     #weibo
-#     scheduler = TornadoScheduler()
-#     scheduler.add_job(weibo_run.weiboTaskRun, trigger_c)
-#
-#     # weibo_run.weiboTaskRun()
-#
-#     return scheduler
 
 
 if __name__ == "__main__":

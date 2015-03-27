@@ -27,7 +27,7 @@ def homeContentFetch(options):
 
     conn = DBStore._connect_news
 
-    docs = conn['news_ver2']['googleNewsItem'].find({"updateTime": {"$gt": updateTime}}).sort([("updateTime",-1)]).limit(limit)
+    docs = conn['news_ver2']['googleNewsItem'].find({"updateTime": {"$gt": updateTime}, "content": {"$exists": 1}}).sort([("updateTime",-1)]).limit(limit)
 
     index = 0
 
@@ -37,11 +37,6 @@ def homeContentFetch(options):
 
         sublist = []
         title = doc["title"]
-
-        # keyword = extract_tags(title, 3)
-        # keyword = ' '.join(keyword)
-
-        keyword = "周润发"
 
         relate = []
 
@@ -54,22 +49,51 @@ def homeContentFetch(options):
 
         del doc["relate"]
 
-        #微博数据获取
-        # weibo = GetOneWeibo(keyword)
-        # if weibo is not None:
-        #     element_weibo = {"sourceName": mapOfSourceName["weibo"], "user": weibo["user"], "url": weibo["url"], "title": weibo["content"]}
-        #     sublist.append(element_weibo)
+
         if "weibo" in doc.keys():
             if isinstance(doc["weibo"], dict):
                 sublist.append(doc["weibo"])
                 del doc["weibo"]
 
-        #相关新闻每一个来源 选一条
+            if isinstance(doc["weibo"], list) and len(doc["weibo"]) > 0 :
+                sublist.append(doc["weibo"][0])
+                del doc["weibo"]
 
+        if "zhihu" in doc.keys():
+            if isinstance(doc["zhihu"], dict):
+                sublist.append(doc["zhihu"])
+                del doc["zhihu"]
+
+            elif isinstance(doc["zhihu"], list) and len(doc["zhihu"]) > 0 :
+                sublist.append(doc["zhihu"][0])
+                del doc["zhihu"]
+
+        if "imgUrls" in doc.keys():
+            if not doc["imgUrls"]:
+                continue
+            if len(doc["imgUrls"]) > 0:
+                doc["imgUrl"] = doc["imgUrls"][-1]
+                del doc["imgUrls"]
+
+        if "content" in doc.keys():
+            del doc["content"]
+
+        if "abstract" in doc.keys():
+            del doc["abstract"]
+
+        if "douban" in doc.keys():
+            del doc["douban"]
+
+        if "baike" in doc.keys():
+            del doc["baike"]
+
+        if "baiduSearch" in doc.keys():
+            del doc["baiduSearch"]
+
+        #相关新闻每一个来源 选一条
         distinctList, distinctNum, distinct_response_urls, otherNum = GetRelateNews(relate)
 
         sublist.extend(distinctList)
-
 
         doc["sublist"] = sublist
         doc["otherNum"] = otherNum
@@ -88,8 +112,8 @@ def GetRelateNews(relate):
     if not relate:
         return
 
-    mid_relate = relate["middle"]
     left_relate = relate["left"]
+    mid_relate = relate["middle"]
     bottom_relate = relate["bottom"]
     opinion = relate["opinion"]
     deep_relate = relate["deep_report"]
@@ -153,6 +177,9 @@ def GetRelateNews(relate):
 
     otherNum = len(sumList) - len(distinctList)
     return distinctList, len(distinctList), distinct_response_urls, otherNum
+
+
+
 
 
 

@@ -23,8 +23,8 @@ def abstract(doc,use_tf=True):
   if use_tf:
       sorted_word=sorted(tf_map.items(),key=operator.itemgetter(1),reverse=True)
 
-      for elem in sorted_word:
-        print "key is %s and the value  is %d \n" %(elem[0],elem[1])
+      # for elem in sorted_word:
+      #   print "key is %s and the value  is %d \n" %(elem[0],elem[1])
   keyWords=sorted_word[0:10]
   sentences=extractSentenceBlock(doc)
   sentence_score_pairs=[]

@@ -8,8 +8,15 @@ import sys
 from requests.exceptions import ConnectionError
 import requests
 import re
+import subprocess
+import time
+import lxml.etree as etree
+import sys
+import urllib
 
 
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 arg = sys.path[0].split('/')
 path_add = arg[:-1]
@@ -35,8 +42,8 @@ mapOfSourceName = {"weibo":"微博"}
 # Task : 微博获取任务，定时获取数据，存到mongo
 def weiboTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["googleNewsItem"].find()
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"weiboOk": 0})
+    # un_runned_docs = conn["news_ver2"]["googleNewsItem"].find()
+    un_runned_docs = conn["news_ver2"]["Task"].find({"weiboOk": 0})
 
 
     success_num = 0
@@ -105,35 +112,39 @@ def GetOneWeibo(title):
 # Task : 命名实体识别， 定时分析mongo中新 新闻的命名实体识别
 def nerTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk": 0})
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk": 0})
+    un_runned_docs = conn["news_ver2"]["Task"].find()
     index = 0
     for doc in un_runned_docs:
         url = doc["url"]
+        title = doc["title"]
+
         content = get_content_by_url(url)
 
         #获取内容 有问题，跳过
         if not content:
             continue
 
-        content_after_cut = jieba.cut(content)
+        title_after_cut = jieba.cut(title)
 
-        content_after_cut = "".join(content_after_cut)
+        title_after_cut = " ".join(title_after_cut)
 
-        ne = getNe(content_after_cut)
+        ne = getNe(title_after_cut)
 
         #ner 有问题，跳过
         if not ne:
+            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"nerOk": 1}})
             continue
 
         try:
             conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"ne": ne}})
         except:
-            print "ner fail, the doc url is:", url
+            print "ne set fail, the doc url is===>", url
             continue
 
         conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"nerOk": 1, "contentOk": 1}})
         index += 1
-        print "ner success, the doc url is:", url, "num:", index
+        print "ne set success, the doc url is:", url, "num===>", index
 
 
 
@@ -167,7 +178,12 @@ def getNe(content_after_cut):
 
     r = requests.get(apiUrl)
     print '>>>>>>>>>',r.text, "encoding", r.encoding
-    json_r = json.loads(r.text)
+
+    try:
+        json_r = json.loads(r.text)
+    except ValueError:
+        return None
+
     if json_r["error_code"] != 0:
         return None
 
@@ -212,6 +228,8 @@ def parseNerResult(json_r):
         org = re.sub(pat, '', org)
         orgs.append(org)
 
+    # if len(times)==0 and len(gpes) == 0 and len(orgs) == 0 and len(persons)==0 and len(locs)==0:
+    #     return None
 
     ne = {"time": times, "gpe": gpes, "org": orgs, "person": persons, "loc": locs}
 
@@ -233,10 +251,6 @@ def isTime(string):
         return True
 
     return False
-
-
-
-
 
 
 #摘要抽取任务，对每条新闻进行摘要抽取候，存入mongo
@@ -290,7 +304,29 @@ def cont_pic_titleTaskRun():
 
 # 对应新闻，相关知乎的话题，task
 def zhihuTaskRun():
-    pass
+
+    un_runned_docs = conn["news_ver2"]["Task"].find({"zhihuOk": 0})
+
+    index = 0
+    for doc in un_runned_docs:
+        title = doc["title"]
+        keywords = extract_tags(title, 2)
+        keywords = "".join(keywords)
+
+        response_url = doc["url"]
+
+        sentence = "sh script.sh " + keywords + " " + response_url
+        # import os
+        # print os.getcwd()
+        #
+        # currdir = os.getcwd()
+        p = subprocess.Popen(sentence, shell=True, stdout=subprocess.PIPE)
+
+        print p
+        time.sleep(10)
+
+        index += 1
+        print "zhihuTaskRun complete url:", response_url, "num:", index
 
 
 # 所有任务完成后，设置新闻上线， isOnline为1
@@ -302,11 +338,17 @@ def isOnlineTaskRun():
         url = doc["url"]
         weiboOk = doc["weiboOk"]
         zhihuOk = doc["zhihuOk"]
+
         contentOk = doc["contentOk"]
         abstractOk = doc["abstractOk"]
         nerOk = doc["nerOk"]
+        if "douban" in doc.keys():
+            doubanOk = doc["douban"]
 
-        if weiboOk and zhihuOk and contentOk and abstractOk and nerOk:
+        if "baikeOk" in doc.keys():
+            baikeOk = doc["baikeOk"]
+
+        if contentOk==1 and abstractOk==1 and nerOk==1 and doubanOk == 1 and baikeOk == 1:
             try:
                 conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"isOnline": 1}})
 
@@ -317,6 +359,181 @@ def isOnlineTaskRun():
             conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"isOnline": 1}})
 
             print "isOnlineTaskRun success, the doc url is:", url
+
+# task 百科
+def baikeTaskRun():
+
+    un_runned_docs = conn["news_ver2"]["Task"].find({"baikeOk": 0})
+
+    index = 0
+    for doc in un_runned_docs:
+
+        url = doc["url"]
+        title = doc["title"]
+        keword = Getner(title)
+
+        if keword is None:
+            print "Getner is None, the url==>", url
+            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"baikeOk": 1}})
+            continue
+
+        re = parseBaike(keword)
+
+        if re is None:
+
+            print "baike is None, the url==>", url
+            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"baikeOk": 1}})
+            continue
+
+        try:
+            conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"baike": re}})
+
+        except Exception:
+
+            continue
+
+        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"baikeOk": 1}})
+        index += 1
+        print "baikeTaskRun, the url is:", url, "num==>", index
+
+
+def parseBaike(keyword):
+
+    url = "http://baike.baidu.com/search/none?word=%s&pn=0&rn=10&enc=utf8" % keyword
+
+    print "$$$$$$$$$$====>",url
+
+    r = requests.get(url)
+
+    # print ">>>>",type(r)
+
+    r.encoding = 'utf-8'
+    text = r.text
+
+    text = text.replace('&', "")
+
+    # print text
+
+    dom =etree.HTML(text)
+    # dom = soupparser.fromstring(text)
+    try:
+        element = dom.xpath('//div[@class="mod-list"]/descendant::a[@target="_blank"]')[0]
+
+        element_href = dom.xpath('//div[@class="mod-list"]/descendant::a[@target="_blank"]/@href')[0]
+
+        element_abstract = dom.xpath('//div[@class="mod-list"]/descendant::div[@class="abstract"]')[0]
+
+
+        raw_content = etree.tostring(element, encoding="utf-8")
+
+        raw_content_abstract = etree.tostring(element_abstract, encoding="utf-8")
+
+        pat = re.compile('<[^<>]+?>|&#13;|\\n')
+
+        title = re.sub(pat, '', raw_content)
+
+        url = element_href
+
+        abstract = re.sub(pat, '', raw_content_abstract)
+
+        result = {"title": title, "url": url, "abstract": abstract}
+
+    except Exception:
+
+        result = None
+
+    return result
+
+
+
+
+def Getner(title):
+
+    apiUrl = "http://121.41.75.213:8080/ner_mvc/api/ner?sentence=" + title
+
+    r = requests.get(apiUrl)
+    try:
+        json_r = json.loads(r.text)
+    except ValueError:
+        return None
+
+    if json_r["error_code"] != 0:
+        return None
+
+    keyword = ''
+    ne = parseNerResult(json_r)
+
+    if "person" in ne.keys() and len(ne['person']) > 0:
+        keyword = ne['person'][0]
+
+    elif "loc" in ne.keys() and len(ne['loc']) > 0:
+        keyword = ne['loc'][0]
+
+    elif "org" in ne.keys() and len(ne['org']) > 0:
+        keyword = ne['org'][0]
+
+
+    return keyword
+
+
+#task 豆瓣，标签提取任务
+def doubanTaskRun():
+
+    un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"doubanOk": 0}, {"doubanOk": {"$exists": 0}}]})
+
+    tagUrl = "http://www.douban.com/tag/%s/?source=topic_search"
+
+
+    douban_tags = []
+    for doc in un_runned_docs:
+        title = doc["title"]
+        url = doc["url"]
+
+        tags = extract_tags(title)
+
+        is_db_error = False
+
+        for tag in tags:
+            if isDoubanTag(tag):
+                url_tag = tagUrl%tag
+                tag_url_pairs = [tag, url_tag]
+                douban_tags.append(tag_url_pairs)
+
+        try:
+            conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"douban": douban_tags}})
+        except:
+            is_db_error = True
+            print "douban set error, url==>", url
+            continue
+
+        if not is_db_error:
+            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"doubanOk": 1}})
+
+        print "douban get and set bingo, url==>", url
+
+
+
+
+
+
+
+def isDoubanTag(tag):
+
+    time.sleep(3)
+    url = "http://www.douban.com/tag/%s/?source=topic_search" % tag
+
+    r = requests.get(url)
+
+    url_after = r.url.encode("utf-8")
+    url_after = urllib.unquote(url_after)
+
+    if url == url_after:
+        return True
+
+    return False
+
+
+
 
 
 # task 从googleNewsItem 表中取没上线新闻到 Task表
@@ -331,23 +548,58 @@ def newsToTaskRun():
         title = doc["title"]
 
         conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"url": url, "title": title, "weiboOk": 0, "zhihuOk": 0,
-                                                                 "abstractOk": 0, "contentOk": 0, "nerOk": 0, "isOnline": 0}}, upsert=True)
+                                                                 "abstractOk": 0, "contentOk": 0, "nerOk": 0, "isOnline": 0, "baikeOk": 0, "baiduSearchOk": 0}}, upsert=True)
         print "title", title, "num:", index
     print "newsToTaskRun complete"
 
 def mainRun():
-
+    import threading
     while True:
         try:
-            weiboTaskRun()
+            weibo = threading.Thread(name="weiboTask", target=weiboTaskRun)
+            # weiboTaskRun()
 
-            nerTaskRun()
 
-            abstractTaskRun()
+            ner = threading.Thread(name="nerTask", target=nerTaskRun)
+            # nerTaskRun()
 
-            zhihuTaskRun()
 
-            isOnlineTaskRun()
+            abst = threading.Thread(name="abstractTask", target=abstractTaskRun)
+            # abstractTaskRun()
+
+
+
+            zhihu = threading.Thread(name="zhihuTask", target=zhihuTaskRun)
+            # zhihuTaskRun()
+
+
+            baike = threading.Thread(name="baikeTask", target=baikeTaskRun)
+            # baikeTaskRun()
+
+
+            douban = threading.Thread(name="doubanTask", target=doubanTaskRun)
+            # doubanTaskRun()
+
+
+            isonline = threading.Thread(name="isOnlineTask", target=isOnlineTaskRun)
+            # isOnlineTaskRun()
+
+
+            weibo.start()
+            ner.start()
+            abst.start()
+            zhihu.start()
+            baike.start()
+            douban.start()
+            isonline.start()
+
+            weibo.join()
+            ner.join()
+            abst.join()
+            zhihu.join()
+            baike.join()
+            douban.join()
+            isonline.join()
 
         except:
             continue
@@ -355,12 +607,17 @@ def mainRun():
 if __name__ == '__main__':
     # weiboTaskRun()
 
-    #newsToTaskRun()
+    # newsToTaskRun()
 
     # nerTaskRun()
 
-    abstractTaskRun()
+    # abstractTaskRun()
 
+    # zhihuTaskRun()
+
+    # baikeTaskRun()
+
+    doubanTaskRun()
 
 
 
