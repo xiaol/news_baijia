@@ -555,7 +555,7 @@ def newsToTaskRun():
 def mainRun():
     import threading
     while True:
-        try:
+
             weibo = threading.Thread(name="weiboTask", target=weiboTaskRun)
             # weiboTaskRun()
 
@@ -591,7 +591,8 @@ def mainRun():
             zhihu.start()
             baike.start()
             douban.start()
-            isonline.start()
+
+
 
             weibo.join()
             ner.join()
@@ -599,10 +600,11 @@ def mainRun():
             zhihu.join()
             baike.join()
             douban.join()
+
+            isonline.start()
             isonline.join()
 
-        except:
-            continue
+
 
 if __name__ == '__main__':
     # weiboTaskRun()
@@ -617,8 +619,8 @@ if __name__ == '__main__':
 
     # baikeTaskRun()
 
-    doubanTaskRun()
-
+    # doubanTaskRun()
+    mainRun()
 
 
 
