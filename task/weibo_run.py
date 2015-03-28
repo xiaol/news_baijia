@@ -529,9 +529,11 @@ def doubanTaskRun():
     tagUrl = "http://www.douban.com/tag/%s/?source=topic_search"
 
 
-    douban_tags = []
+
     for doc in un_runned_docs:
+        douban_tags = []
         title = doc["title"]
+        # title = "厦门飞北京一客机冒烟发出紧急代码后备降合肥"
         url = doc["url"]
 
         tags = extract_tags(title)
@@ -666,11 +668,11 @@ if __name__ == '__main__':
 
     # baikeTaskRun()
 
-    # doubanTaskRun()
+    doubanTaskRun()
     # mainRun()
 
 
-    mainRun()
+    # mainRun()
     # GetZhihu("李光耀")
 
 
