@@ -177,7 +177,6 @@ def getNe(content_after_cut):
     apiUrl = "http://121.41.75.213:8080/ner_mvc/api/ner?sentence=" + content_after_cut
 
     r = requests.get(apiUrl)
-    print '>>>>>>>>>',r.text, "encoding", r.encoding
 
     try:
         json_r = json.loads(r.text)
@@ -308,25 +307,69 @@ def zhihuTaskRun():
     un_runned_docs = conn["news_ver2"]["Task"].find({"zhihuOk": 0})
 
     index = 0
+    no_zhihu = 0
     for doc in un_runned_docs:
+        index += 1
         title = doc["title"]
         keywords = extract_tags(title, 2)
         keywords = "".join(keywords)
 
         response_url = doc["url"]
 
-        sentence = "sh script.sh " + keywords + " " + response_url
-        # import os
-        # print os.getcwd()
-        #
-        # currdir = os.getcwd()
-        p = subprocess.Popen(sentence, shell=True, stdout=subprocess.PIPE)
+        zhihu = GetZhihu(keywords)
+        if zhihu is None:
+            #直呼没有， 也标记为处理过
+            no_zhihu += 1
+            conn["news_ver2"]["Task"].update({"url": response_url}, {"$set": {"zhihuOk": 1}})
 
-        print p
-        time.sleep(10)
+            print "no zhihu question, the url is ==>", response_url, "num:", no_zhihu
+            continue
+        try:
+            conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": response_url}, {"$set": {"zhihu": zhihu}})
 
-        index += 1
+        except:
+            print "update zhihu error, the url is==>", response_url
+            continue
+
+        conn["news_ver2"]["Task"].update({"url": response_url}, {"$set": {"zhihuOk": 1}})
+
+
         print "zhihuTaskRun complete url:", response_url, "num:", index
+
+
+def GetZhihu(keyword):
+
+    time.sleep(1)
+    apiUrl = "http://www.zhihu.com/search?q={0}&type=question".format(keyword)
+
+    r = requests.get(apiUrl)
+
+    dom =etree.HTML(r.text)
+
+    pat = re.compile('<[^<>]+?>')
+    pat_user = re.compile('<[^<>]+?>|[\,，]')
+
+    try:
+        element_title = dom.xpath('//div[@class="title"][1]/a')[0]
+
+        raw_content_title = etree.tostring(element_title, encoding='utf-8')
+
+        title = re.sub(pat, '', raw_content_title)
+
+        url = "http://www.zhihu.com" + dom.xpath('//div[@class="title"][1]/a/@href')[0]
+
+        user = dom.xpath('//a[@class="author"][1]/text()')[0]
+
+        result = {"title": title, "url": url, "user": user}
+
+    except Exception as e:
+
+        print "zhihu page Parse error, the url is===>", apiUrl
+
+        result = None
+
+
+    return result
 
 
 # 所有任务完成后，设置新闻上线， isOnline为1
@@ -479,7 +522,9 @@ def Getner(title):
 #task 豆瓣，标签提取任务
 def doubanTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"doubanOk": 0}, {"doubanOk": {"$exists": 0}}]})
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"doubanOk": 0}, {"doubanOk": {"$exists": 0}}]})
+
+    un_runned_docs = conn["news_ver2"]["Task"].find()
 
     tagUrl = "http://www.douban.com/tag/%s/?source=topic_search"
 
@@ -519,7 +564,7 @@ def doubanTaskRun():
 
 def isDoubanTag(tag):
 
-    time.sleep(3)
+    time.sleep(1)
     url = "http://www.douban.com/tag/%s/?source=topic_search" % tag
 
     r = requests.get(url)
@@ -619,9 +664,10 @@ if __name__ == '__main__':
 
     # baikeTaskRun()
 
-    # doubanTaskRun()
-    mainRun()
+    doubanTaskRun()
+    # mainRun()
 
+    # GetZhihu("李光耀")
 
 
 
