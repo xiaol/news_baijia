@@ -112,8 +112,8 @@ def GetOneWeibo(title):
 # Task : 命名实体识别， 定时分析mongo中新 新闻的命名实体识别
 def nerTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk": 0})
-    un_runned_docs = conn["news_ver2"]["Task"].find()
+    un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk": 0})
+    # un_runned_docs = conn["news_ver2"]["Task"].find()
     index = 0
     for doc in un_runned_docs:
         url = doc["url"]
@@ -522,9 +522,9 @@ def Getner(title):
 #task 豆瓣，标签提取任务
 def doubanTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"doubanOk": 0}, {"doubanOk": {"$exists": 0}}]})
+    un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"doubanOk": 0}, {"doubanOk": {"$exists": 0}}]})
 
-    un_runned_docs = conn["news_ver2"]["Task"].find()
+    # un_runned_docs = conn["news_ver2"]["Task"].find()
 
     tagUrl = "http://www.douban.com/tag/%s/?source=topic_search"
 
