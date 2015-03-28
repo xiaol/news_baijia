@@ -668,8 +668,8 @@ if __name__ == '__main__':
 
     # baikeTaskRun()
 
-    doubanTaskRun()
-    # mainRun()
+    # doubanTaskRun()
+    mainRun()
 
 
     # mainRun()
