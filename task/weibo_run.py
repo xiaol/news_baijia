@@ -664,9 +664,11 @@ if __name__ == '__main__':
 
     # baikeTaskRun()
 
-    doubanTaskRun()
+    # doubanTaskRun()
     # mainRun()
 
+
+    mainRun()
     # GetZhihu("李光耀")
 
 
