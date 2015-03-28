@@ -566,14 +566,16 @@ def isDoubanTag(tag):
 
     time.sleep(1)
     url = "http://www.douban.com/tag/%s/?source=topic_search" % tag
+    try:
+        r = requests.get(url)
 
-    r = requests.get(url)
+        url_after = r.url.encode("utf-8")
+        url_after = urllib.unquote(url_after)
 
-    url_after = r.url.encode("utf-8")
-    url_after = urllib.unquote(url_after)
-
-    if url == url_after:
-        return True
+        if url == url_after:
+            return True
+    except:
+        return False
 
     return False
 
