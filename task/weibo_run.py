@@ -64,6 +64,10 @@ def weiboTaskRun():
             print "weibo connection error, the doc url is:", url
             continue
 
+        if weibo_ready is None:
+
+            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"weiboOk": 1}})
+
         if weibo_ready is not None:
 
             element_weibo = {"sourceName": mapOfSourceName["weibo"], "user": weibo_ready["user"], "url": weibo_ready["url"], "title": weibo_ready["content"]}
