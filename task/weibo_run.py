@@ -603,15 +603,17 @@ def baiduNewsTaskRun():
         url_here = url_title_pair[0]
         title_here = url_title_pair[1]
 
-        topic = extract_tags(title_here, 3)
-        topic = "s".join(topic)
+        topic = Getner(title_here)
+        if not topic:
+            topic = extract_tags(title_here, 2)
 
         # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
         cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
-        subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()
+        rc = child.returncode
 
-        time.sleep(3)
+        print "complete url===>", url_here, "the exit code===>", rc
 
 
 # task 从googleNewsItem 表中取没上线新闻到 Task表
