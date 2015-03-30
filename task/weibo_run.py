@@ -606,6 +606,7 @@ def baiduNewsTaskRun():
         topic = Getner(title_here)
         if not topic:
             topic = extract_tags(title_here, 2)
+            topic = 's'.join(topic)
 
         # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
         cmd = 'sh script.sh ' + url_here + ' ' + topic
