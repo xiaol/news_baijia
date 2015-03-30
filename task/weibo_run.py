@@ -684,47 +684,33 @@ if __name__ == '__main__':
         print arg
         if arg == 'weibo':
             print "weibo start"
-            weiboTaskRun()
+            while True:
+                weiboTaskRun()
 
         elif arg == 'ner':
             print "NER start"
-            nerTaskRun()
+            while True:
+                nerTaskRun()
 
         elif arg == 'abs':
-            abstractTaskRun()
+            while True:
+                abstractTaskRun()
 
         elif arg == 'zhihu':
-            zhihuTaskRun()
+            while True:
+                zhihuTaskRun()
 
         elif arg == 'baike':
-            baikeTaskRun()
+            while True:
+                baikeTaskRun()
 
         elif arg == 'douban':
-            doubanTaskRun()
+            while True:
+                doubanTaskRun()
 
         elif arg == 'baiduNews':
-            baiduNewsTaskRun()
-
-
-
-    # weiboTaskRun()
-
-    # newsToTaskRun()
-
-    # nerTaskRun()
-
-    # abstractTaskRun()
-
-    # zhihuTaskRun()
-
-    # baikeTaskRun()
-
-    # doubanTaskRun()
-    # mainRun()
-
-    # baiduNewsTaskRun()
-    # mainRun()
-    # GetZhihu("李光耀")
+            while True:
+                baiduNewsTaskRun()
 
 
 
