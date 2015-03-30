@@ -13,6 +13,7 @@ import time
 import lxml.etree as etree
 import sys
 import urllib
+import threading
 
 
 reload(sys)
@@ -611,10 +612,23 @@ def baiduNewsTaskRun():
         # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
         cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
-        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate(timeout=200)
-        rc = child.returncode
+        try:
+            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait(timeout=200)
+        except:
+            print "scrapy error"
+            continue
 
-        print "complete url===>", url_here, "the exit code===>", rc
+        # t = threading.Timer(200, timeout, [child])
+        # t.start()
+        # t.join()
+
+        print "complete url===>", url_here,
+
+def timeout(p):
+
+    if p.poll() is None:
+        print 'Error: process taking too long to complete--terminating'
+        p.kill()
 
 
 # task 从googleNewsItem 表中取没上线新闻到 Task表
