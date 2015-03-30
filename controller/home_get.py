@@ -55,7 +55,7 @@ def homeContentFetch(options):
                 sublist.append(doc["weibo"])
                 del doc["weibo"]
 
-            if isinstance(doc["weibo"], list) and len(doc["weibo"]) > 0 :
+            elif isinstance(doc["weibo"], list) and len(doc["weibo"]) > 0 :
                 sublist.append(doc["weibo"][0])
                 del doc["weibo"]
 

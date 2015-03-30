@@ -8,9 +8,17 @@ import os
 # print os.getcwd()
 
 cf = ConfigParser.ConfigParser()
+pwd = os.getcwd()
+pwd_2 = pwd.split('/')
+pwd_2 = pwd_2[:-1]
+pwd_2 = '/'.join(pwd_2)
 
-with open(os.path.join(os.getcwd(),'controller/config/config.ini'),'r') as configfile:
-    cf.readfp(configfile)
+try:
+    with open(os.path.join(pwd,'controller/config/config.ini'),'r') as configfile:
+        cf.readfp(configfile)
+except IOError:
+    with open(os.path.join(pwd_2,'controller/config/config.ini'),'r') as configfile:
+        cf.readfp(configfile)
 
 # cf.read("config.ini")
 
