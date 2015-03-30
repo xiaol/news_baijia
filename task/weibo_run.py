@@ -50,7 +50,7 @@ def weiboTaskRun():
     fail_num = 0
     for doc in un_runned_docs:
         # url = doc["url"]
-        url = doc["sourceUrl"]
+        url = doc["url"]
         title = doc["title"]
 
         keywords = extract_tags(title, 2)
@@ -611,7 +611,7 @@ def baiduNewsTaskRun():
         # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
         cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
-        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()
+        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate(timeout=200)
         rc = child.returncode
 
         print "complete url===>", url_here, "the exit code===>", rc
@@ -635,77 +635,82 @@ def newsToTaskRun():
 
 def mainRun():
     import threading
+
+    exceptNum = 0
     while True:
+            try:
+                weibo = threading.Thread(name="weiboTask", target=weiboTaskRun)
 
-            weibo = threading.Thread(name="weiboTask", target=weiboTaskRun)
-            # weiboTaskRun()
+                ner = threading.Thread(name="nerTask", target=nerTaskRun)
 
+                abst = threading.Thread(name="abstractTask", target=abstractTaskRun)
 
-            ner = threading.Thread(name="nerTask", target=nerTaskRun)
-            # nerTaskRun()
+                zhihu = threading.Thread(name="zhihuTask", target=zhihuTaskRun)
 
+                baike = threading.Thread(name="baikeTask", target=baikeTaskRun)
 
-            abst = threading.Thread(name="abstractTask", target=abstractTaskRun)
-            # abstractTaskRun()
+                douban = threading.Thread(name="doubanTask", target=doubanTaskRun)
 
+                isonline = threading.Thread(name="isOnlineTask", target=isOnlineTaskRun)
 
-
-            zhihu = threading.Thread(name="zhihuTask", target=zhihuTaskRun)
-            # zhihuTaskRun()
-
-
-            baike = threading.Thread(name="baikeTask", target=baikeTaskRun)
-            # baikeTaskRun()
-
-
-            douban = threading.Thread(name="doubanTask", target=doubanTaskRun)
-            # doubanTaskRun()
-
-
-            isonline = threading.Thread(name="isOnlineTask", target=isOnlineTaskRun)
-            # isOnlineTaskRun()
-
-
-            weibo.start()
-            ner.start()
-            abst.start()
-            zhihu.start()
-            baike.start()
-            douban.start()
+                weibo.start()
+                ner.start()
+                abst.start()
+                zhihu.start()
+                baike.start()
+                douban.start()
 
 
 
-            weibo.join()
-            ner.join()
-            abst.join()
-            zhihu.join()
-            baike.join()
-            douban.join()
+                weibo.join()
+                ner.join()
+                abst.join()
+                zhihu.join()
+                baike.join()
+                douban.join()
 
-            isonline.start()
-            isonline.join()
+                isonline.start()
+                isonline.join()
 
+            except:
+                exceptNum += 1
+                print "fialNum====>",exceptNum
 
 
 if __name__ == '__main__':
-    # weiboTaskRun()
 
-    # newsToTaskRun()
 
-    # nerTaskRun()
+    for arg in sys.argv[1:]:
+        print arg
+        if arg == 'weibo':
+            print "weibo start"
+            while True:
+                weiboTaskRun()
 
-    # abstractTaskRun()
+        elif arg == 'ner':
+            print "NER start"
+            while True:
+                nerTaskRun()
 
-    # zhihuTaskRun()
+        elif arg == 'abs':
+            while True:
+                abstractTaskRun()
 
-    # baikeTaskRun()
+        elif arg == 'zhihu':
+            while True:
+                zhihuTaskRun()
 
-    # doubanTaskRun()
-    # mainRun()
+        elif arg == 'baike':
+            while True:
+                baikeTaskRun()
 
-    baiduNewsTaskRun()
-    # mainRun()
-    # GetZhihu("李光耀")
+        elif arg == 'douban':
+            while True:
+                doubanTaskRun()
+
+        elif arg == 'baiduNews':
+            while True:
+                baiduNewsTaskRun()
 
 
 

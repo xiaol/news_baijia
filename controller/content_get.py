@@ -6,13 +6,16 @@ import requests
 
 DBStore = dbConn.GetDateStore()
 
-def fetchContent(url, filterurls):
+def fetchContent(url, filterurls, updateTime=None):
 
     conn = DBStore._connect_news
 
     doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
 
-    docs_relate = conn["news_ver2"]["googleNewsItem"].find({"relateNewsUrls": {"$in": [url]}})
+    if updateTime is None:
+        updateTime = ''
+
+    docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url, "updateTime": {"$lt": updateTime}}).sort([("updateTime",-1)]).limit(10)
 
     result = {}
 
@@ -36,7 +39,7 @@ def fetchContent(url, filterurls):
                 result['zhihu'] = zhihu[0]
 
         if 'weibo' in doc.keys():
-            weibo = result['weibo']
+            weibo = doc['weibo']
             if isinstance(weibo, dict):
                 result['weibo'] = weibo
             elif isinstance(weibo, list) and len(weibo) > 0:
@@ -53,6 +56,15 @@ def fetchContent(url, filterurls):
             baike = doc['baike']
             if isinstance(baike, dict):
                 result['baike'] = baike
+
+        if 'originsourceSiteName' in doc.keys():
+            result['originsourceSiteName'] = doc['originsourceSiteName']
+
+        if 'imgUrls' in doc.keys():
+            imgs = doc['imgUrls']
+            if isinstance(imgs, list) and len(imgs) >0:
+                result['imgUrl'] = imgs[-1]
+
 
 
         left_relate = relate["left"]
@@ -90,12 +102,13 @@ def fetchContent(url, filterurls):
             ls = {}
             url_here = one["url"]
             title_here = one["title"]
-            sourceSiteName = one["originsourceSiteName"]
+            sourceSiteName = one["sourceSiteName"]
+            time = one["updateTime"]
 
             imgUrl = ''
 
-            if "imgUrls" in one.keys():
-                imgUrls = one["imgUrls"]
+            if "imgUrl" in one.keys():
+                imgUrls = one["imgUrl"]
                 if isinstance(imgUrls, list) and len(imgUrls) > 0:
                     imgUrl = imgUrls[-1]
                 else:
