@@ -612,11 +612,10 @@ def baiduNewsTaskRun():
         # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
         cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
-        try:
-            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait(timeout=200)
-        except:
-            print "scrapy error"
-            continue
+
+        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
+
+
 
         # t = threading.Timer(200, timeout, [child])
         # t.start()
