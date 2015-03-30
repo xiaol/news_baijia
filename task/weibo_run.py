@@ -611,7 +611,7 @@ def baiduNewsTaskRun():
         # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
         cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
-        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()
+        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate(timeout=200)
         rc = child.returncode
 
         print "complete url===>", url_here, "the exit code===>", rc
