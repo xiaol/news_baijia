@@ -583,7 +583,7 @@ def isDoubanTag(tag):
 
 def baiduNewsTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"$or":[{"baiduSearchOk": 0}, {"$exists": {"baiduSearchOk": 0}}]})
+    un_runned_docs = conn["news_ver2"]["Task"].find({"$or":[{"baiduSearchOk": 0}, {"baiduSearchOk": {"$exists": 0}}]})
 
     url_title_pairs = []
     for doc in un_runned_docs:
@@ -608,6 +608,7 @@ def baiduNewsTaskRun():
 
         # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
         cmd = 'sh script.sh ' + url_here + ' ' + topic
+        print cmd
         subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
         time.sleep(3)
