@@ -635,59 +635,78 @@ def newsToTaskRun():
 
 def mainRun():
     import threading
+
+    exceptNum = 0
     while True:
+            try:
+                weibo = threading.Thread(name="weiboTask", target=weiboTaskRun)
 
-            weibo = threading.Thread(name="weiboTask", target=weiboTaskRun)
-            # weiboTaskRun()
+                ner = threading.Thread(name="nerTask", target=nerTaskRun)
 
+                abst = threading.Thread(name="abstractTask", target=abstractTaskRun)
 
-            ner = threading.Thread(name="nerTask", target=nerTaskRun)
-            # nerTaskRun()
+                zhihu = threading.Thread(name="zhihuTask", target=zhihuTaskRun)
 
+                baike = threading.Thread(name="baikeTask", target=baikeTaskRun)
 
-            abst = threading.Thread(name="abstractTask", target=abstractTaskRun)
-            # abstractTaskRun()
+                douban = threading.Thread(name="doubanTask", target=doubanTaskRun)
 
+                isonline = threading.Thread(name="isOnlineTask", target=isOnlineTaskRun)
 
-
-            zhihu = threading.Thread(name="zhihuTask", target=zhihuTaskRun)
-            # zhihuTaskRun()
-
-
-            baike = threading.Thread(name="baikeTask", target=baikeTaskRun)
-            # baikeTaskRun()
-
-
-            douban = threading.Thread(name="doubanTask", target=doubanTaskRun)
-            # doubanTaskRun()
-
-
-            isonline = threading.Thread(name="isOnlineTask", target=isOnlineTaskRun)
-            # isOnlineTaskRun()
-
-
-            weibo.start()
-            ner.start()
-            abst.start()
-            zhihu.start()
-            baike.start()
-            douban.start()
+                weibo.start()
+                ner.start()
+                abst.start()
+                zhihu.start()
+                baike.start()
+                douban.start()
 
 
 
-            weibo.join()
-            ner.join()
-            abst.join()
-            zhihu.join()
-            baike.join()
-            douban.join()
+                weibo.join()
+                ner.join()
+                abst.join()
+                zhihu.join()
+                baike.join()
+                douban.join()
 
-            isonline.start()
-            isonline.join()
+                isonline.start()
+                isonline.join()
 
+            except:
+                exceptNum += 1
+                print "fialNum====>",exceptNum
 
 
 if __name__ == '__main__':
+
+
+    for arg in sys.argv[1:]:
+        print arg
+        if arg == 'weibo':
+            print "weibo start"
+            weiboTaskRun()
+
+        elif arg == 'ner':
+            print "NER start"
+            nerTaskRun()
+
+        elif arg == 'abs':
+            abstractTaskRun()
+
+        elif arg == 'zhihu':
+            zhihuTaskRun()
+
+        elif arg == 'baike':
+            baikeTaskRun()
+
+        elif arg == 'douban':
+            doubanTaskRun()
+
+        elif arg == 'baiduNews':
+            baiduNewsTaskRun()
+
+
+
     # weiboTaskRun()
 
     # newsToTaskRun()
@@ -703,7 +722,7 @@ if __name__ == '__main__':
     # doubanTaskRun()
     # mainRun()
 
-    baiduNewsTaskRun()
+    # baiduNewsTaskRun()
     # mainRun()
     # GetZhihu("李光耀")
 
