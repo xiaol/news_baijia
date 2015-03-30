@@ -23,7 +23,7 @@ def fetchContent(url, filterurls, updateTime=None):
 
         relate = doc["relate"]
         if 'abstract' in doc.keys():
-            result['abstract'] = doc['abstract']
+            result['abs'] = doc['abstract']
 
         if 'content' in doc.keys():
             result['content'] = doc['content']
