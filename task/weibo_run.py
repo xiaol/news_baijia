@@ -50,7 +50,7 @@ def weiboTaskRun():
     fail_num = 0
     for doc in un_runned_docs:
         # url = doc["url"]
-        url = doc["sourceUrl"]
+        url = doc["url"]
         title = doc["title"]
 
         keywords = extract_tags(title, 2)
