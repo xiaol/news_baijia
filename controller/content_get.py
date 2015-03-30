@@ -29,7 +29,7 @@ def fetchContent(url, filterurls):
             result['ne'] = doc['ne']
 
         if 'zhihu' in doc.keys():
-            zhihu = result['zhihu']
+            zhihu = doc['zhihu']
             if isinstance(zhihu, dict):
                 result['zhihu'] = doc['zhihu']
             elif isinstance(zhihu, list) and len(zhihu) > 0:
