@@ -1,11 +1,15 @@
 #!/bin/bash
 
-keyword=$1
-response_url=$2
+source /root/text_news_spiders/venv/bin/activate
+
+url=$1
+topic=$2
+
+echo $url  $topic
 
 cd /Users/jianghao/PycharmProjects/scrapy_news/news_spiders
 
-scrapy crawl zhihu -a keyword=${keyword} -a response_url=${response_url}
+scrapy crawl news.baidu.com -a url=${url} -a topic=${topic}
 
 
 

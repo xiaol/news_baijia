@@ -562,12 +562,6 @@ def doubanTaskRun():
 
         print "douban get and set bingo, url==>", url
 
-
-
-
-
-
-
 def isDoubanTag(tag):
 
     time.sleep(1)
@@ -587,6 +581,36 @@ def isDoubanTag(tag):
 
 
 
+def baiduNewsTaskRun():
+
+    un_runned_docs = conn["news_ver2"]["Task"].find({"$or":[{"baiduSearchOk": 0}, {"$exists": {"baiduSearchOk": 0}}]})
+
+    url_title_pairs = []
+    for doc in un_runned_docs:
+
+        url = doc["url"]
+        title = doc["title"]
+        if not url or not title:
+            continue
+
+        ls = [url, title]
+
+        url_title_pairs.append(ls)
+
+
+    for url_title_pair in url_title_pairs:
+
+        url_here = url_title_pair[0]
+        title_here = url_title_pair[1]
+
+        topic = extract_tags(title_here, 3)
+        topic = "s".join(topic)
+
+        # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
+        cmd = 'sh script.sh ' + url_here + ' ' + topic
+        subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+
+        time.sleep(3)
 
 
 # task 从googleNewsItem 表中取没上线新闻到 Task表
@@ -672,8 +696,8 @@ if __name__ == '__main__':
 
     # baikeTaskRun()
 
-    # doubanTaskRun()
-    mainRun()
+    doubanTaskRun()
+    # mainRun()
 
 
     # mainRun()
