@@ -157,7 +157,14 @@ def Get_by_url(url):
     img = (r_img.json())["imgs"]
     text = (r_text.json())["text"]
 
-    result = {"img": img[-1], "content": text}
+    result = {}
+    if not img:
+        result["img"] = ""
+    if not text:
+        result["text"] = ""
+
+
+
 
     return result
 
