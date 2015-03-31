@@ -1,6 +1,5 @@
 #coding=utf-8
 
-
 from config import dbConn
 import requests
 
@@ -161,11 +160,18 @@ def Get_by_url(url):
 
     result['img'] = img[-1]
 
+    # while result['img'].startswith('/'):
+    #     print('!!!!!!!!!!!')
+    #     print(result['img'])
+    if result['img'].startswith('/'):
+        print('!!!!!!!!!!!')
+        print(result['img'])
+        aa = url.find('/', 7)
+        print(url[:aa])
+        result['img'] = url[:aa] + result['img']
+
     return result
 
 
-
-
-
-
-
+if __name__ == '__main__':
+    print(Get_by_url("http://huaxi.media.baidu.com/article/17078455967937459443?qq-pf-to=pcqq.c2c"))
