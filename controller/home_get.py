@@ -51,21 +51,36 @@ def homeContentFetch(options):
 
 
         if "weibo" in doc.keys():
-            if isinstance(doc["weibo"], dict):
-                sublist.append(doc["weibo"])
+            weibo = doc["weibo"]
+            if isinstance(weibo, dict):
+                if "sourceName" in weibo:
+                    weibo["sourceSitename"] = weibo["sourceName"]
+                    del weibo["sourceName"]
+                    sublist.append(weibo)
+
                 del doc["weibo"]
 
-            elif isinstance(doc["weibo"], list) and len(doc["weibo"]) > 0 :
-                sublist.append(doc["weibo"][0])
+            elif isinstance(weibo, list) and len(weibo) > 0:
+                weibo = weibo[0]
+                if "sourceName" in weibo:
+                    weibo["sourceSitename"] = weibo["sourceName"]
+                    del weibo["sourceName"]
+                sublist.append(weibo)
+
                 del doc["weibo"]
 
         if "zhihu" in doc.keys():
-            if isinstance(doc["zhihu"], dict):
-                sublist.append(doc["zhihu"])
+            zhihu = doc["zhihu"]
+
+            if isinstance(zhihu, dict):
+                zhihu["sourceSitename"] = "zhihu"
+                sublist.append(zhihu)
                 del doc["zhihu"]
 
             elif isinstance(doc["zhihu"], list) and len(doc["zhihu"]) > 0 :
-                sublist.append(doc["zhihu"][0])
+                zhihu = doc["zhihu"][0]
+                zhihu["sourceSitename"] = "zhihu"
+                sublist.append(zhihu)
                 del doc["zhihu"]
 
         if "imgUrls" in doc.keys():
@@ -177,12 +192,6 @@ def GetRelateNews(relate):
 
     otherNum = len(sumList) - len(distinctList)
     return distinctList, len(distinctList), distinct_response_urls, otherNum
-
-
-
-
-
-
 
 def GetWeibos(title, num):
 

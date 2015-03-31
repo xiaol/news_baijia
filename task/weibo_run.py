@@ -71,7 +71,7 @@ def weiboTaskRun():
 
         if weibo_ready is not None:
 
-            element_weibo = {"sourceName": mapOfSourceName["weibo"], "user": weibo_ready["user"], "url": weibo_ready["url"], "title": weibo_ready["content"]}
+            element_weibo = {"sourceSitename": mapOfSourceName["weibo"], "user": weibo_ready["user"], "url": weibo_ready["url"], "title": weibo_ready["content"]}
 
             try:
                 conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"weibo": element_weibo}})
@@ -614,9 +614,6 @@ def baiduNewsTaskRun():
         print cmd
 
         child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
-
-
-
         # t = threading.Timer(200, timeout, [child])
         # t.start()
         # t.join()

@@ -87,8 +87,13 @@ if __name__ == "__main__":
     # sched.start()
 
     tornado.options.parse_command_line()
-    sockets = tornado.netutil.bind_sockets(options.port)
-    tornado.process.fork_processes(0)
-    server = tornado.httpserver.HTTPServer(Application())
-    server.add_sockets(sockets)
+    # sockets = tornado.netutil.bind_sockets(options.port)
+    # tornado.process.fork_processes(0)
+    # server = tornado.httpserver.HTTPServer(Application())
+    # server.add_sockets(sockets)
+    # tornado.ioloop.IOLoop.instance().start()
+
+    # app = Application()
+    http_server = tornado.httpserver.HTTPServer(Application())
+    http_server.listen(options.port)
     tornado.ioloop.IOLoop.instance().start()
