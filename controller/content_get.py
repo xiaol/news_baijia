@@ -104,10 +104,11 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
                 if relate_url in filterurls:
                     continue
 
-                ct_img = Get_by_url(relate_url)
-
-                e["img"] = ct_img['img']
-                # e['content'] = ct_img['content']
+                # ct_img = Get_by_url(relate_url)
+                # #
+                # e["img"] = ct_img['img']
+                if not "img" in e.keys():
+                    e["img"] = ""
 
                 allrelate.append(e)
 
@@ -140,9 +141,6 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
     return allrelate
 
 
-
-
-
 def Get_by_url(url):
 
     apiUrl_img = "http://121.41.75.213:8080/extractors_mvc_war/api/getImg?url="
@@ -158,15 +156,10 @@ def Get_by_url(url):
     text = (r_text.json())["text"]
 
     result = {}
-    if not img:
-        result["img"] = ""
-    else:
-        result["img"] = img[-1]
-    if not text:
-        result["text"] = ""
-    else:
-        result["text"] = text
+    if not img or not len(img)>0:
+        return None
 
+    result['img'] = img[-1]
 
     return result
 

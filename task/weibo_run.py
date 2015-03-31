@@ -614,9 +614,6 @@ def baiduNewsTaskRun():
         print cmd
 
         child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
-        # t = threading.Timer(200, timeout, [child])
-        # t.start()
-        # t.join()
 
         print "complete url===>", url_here,
 
