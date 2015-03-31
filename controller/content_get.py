@@ -19,53 +19,69 @@ def fetchContent(url, filterurls, updateTime=None):
 
     result = {}
 
+    allrelate = Get_Relate_docs(doc, docs_relate, filterurls)
+
+    if 'abstract' in doc.keys():
+        result['abs'] = doc['abstract']
+
+    if 'content' in doc.keys():
+        result['content'] = doc['content']
+
+    if 'ne' in doc.keys():
+        result['ne'] = doc['ne']
+
+    if 'zhihu' in doc.keys():
+        zhihu = doc['zhihu']
+        if isinstance(zhihu, dict):
+            result['zhihu'] = doc['zhihu']
+        elif isinstance(zhihu, list) and len(zhihu) > 0:
+            result['zhihu'] = zhihu[0]
+
+    if 'weibo' in doc.keys():
+        weibo = doc['weibo']
+        if isinstance(weibo, dict):
+            result['weibo'] = weibo
+        elif isinstance(weibo, list) and len(weibo) > 0:
+            result['weibo'] = weibo[0]
+
+
+    if 'douban' in doc.keys():
+        douban = doc['douban']
+        if isinstance(douban, list) and len(douban) > 0:
+            result['douban'] = douban
+
+
+    if 'baike' in doc.keys():
+        baike = doc['baike']
+        if isinstance(baike, dict):
+            result['baike'] = baike
+
+    if 'originsourceSiteName' in doc.keys():
+        result['originsourceSiteName'] = doc['originsourceSiteName']
+
+    if 'imgUrls' in doc.keys():
+        imgs = doc['imgUrls']
+        if isinstance(imgs, list) and len(imgs) >0:
+            result['imgUrl'] = imgs[-1]
+
+
+    if "root_class" in doc.keys():
+        result["root_class"] = doc["root_class"]
+
+    result["updateTime"] = doc["updateTime"]
+    result["title"] = doc["title"]
+
+    result["relate"] = allrelate
+    result["rc"] = 200
+
+    return result
+
+def Get_Relate_docs(doc, docs_relate, filterurls):
+
+    allrelate = []
+
     if "relate" in doc.keys():
-
         relate = doc["relate"]
-        if 'abstract' in doc.keys():
-            result['abs'] = doc['abstract']
-
-        if 'content' in doc.keys():
-            result['content'] = doc['content']
-
-        if 'ne' in doc.keys():
-            result['ne'] = doc['ne']
-
-        if 'zhihu' in doc.keys():
-            zhihu = doc['zhihu']
-            if isinstance(zhihu, dict):
-                result['zhihu'] = doc['zhihu']
-            elif isinstance(zhihu, list) and len(zhihu) > 0:
-                result['zhihu'] = zhihu[0]
-
-        if 'weibo' in doc.keys():
-            weibo = doc['weibo']
-            if isinstance(weibo, dict):
-                result['weibo'] = weibo
-            elif isinstance(weibo, list) and len(weibo) > 0:
-                result['weibo'] = weibo[0]
-
-
-        if 'douban' in doc.keys():
-            douban = doc['douban']
-            if isinstance(douban, list) and len(douban) > 0:
-                result['douban'] = douban
-
-
-        if 'baike' in doc.keys():
-            baike = doc['baike']
-            if isinstance(baike, dict):
-                result['baike'] = baike
-
-        if 'originsourceSiteName' in doc.keys():
-            result['originsourceSiteName'] = doc['originsourceSiteName']
-
-        if 'imgUrls' in doc.keys():
-            imgs = doc['imgUrls']
-            if isinstance(imgs, list) and len(imgs) >0:
-                result['imgUrl'] = imgs[-1]
-
-
 
         left_relate = relate["left"]
         mid_relate = relate["middle"]
@@ -74,8 +90,6 @@ def fetchContent(url, filterurls, updateTime=None):
         deep_relate = relate["deep_report"]
 
         allList = [left_relate, mid_relate, bottom_relate, opinion, deep_relate]
-
-        allrelate = []
 
         for ones in allList:
 
@@ -97,38 +111,34 @@ def fetchContent(url, filterurls, updateTime=None):
 
                 allrelate.append(e)
 
+    for one in docs_relate:
+        ls = {}
+        url_here = one["url"]
+        title_here = one["title"]
+        sourceSiteName = one["sourceSiteName"]
+        updatetime = one["updateTime"]
 
-        for one in docs_relate:
-            ls = {}
-            url_here = one["url"]
-            title_here = one["title"]
-            sourceSiteName = one["sourceSiteName"]
-            time = one["updateTime"]
+        imgUrl = ''
 
-            imgUrl = ''
-
-            if "imgUrl" in one.keys():
-                imgUrls = one["imgUrl"]
-                if isinstance(imgUrls, list) and len(imgUrls) > 0:
-                    imgUrl = imgUrls[-1]
-                else:
-                    continue
-            if not imgUrl:
+        if "imgUrl" in one.keys():
+            imgUrls = one["imgUrl"]
+            if isinstance(imgUrls, list) and len(imgUrls) > 0:
+                imgUrl = imgUrls[-1]
+            else:
                 continue
+        if not imgUrl:
+            continue
 
-            # ls = [url_here, title_here, imgUrl, originsourceSiteName]
-            ls["title"] = title_here
-            ls["url"] = url_here
-            ls["img"] = imgUrl
-            ls["sourceSitename"] = sourceSiteName
+        ls["title"] = title_here
+        ls["url"] = url_here
+        ls["img"] = imgUrl
+        ls["sourceSitename"] = sourceSiteName
+        ls["updateTime"] = updatetime
 
+        allrelate.append(ls)
 
-            allrelate.append(ls)
+    return allrelate
 
-        result["relate"] = allrelate
-        result["rc"] = 200
-
-        return result
 
 
 

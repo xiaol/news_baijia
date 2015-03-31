@@ -142,6 +142,7 @@ def GetRelateNews(relate):
         if not e["title"]:
             continue
         if e["sourceSitename"] not in sourceNameSet:
+            e["user"]=""
             distinctList.append(e)
             distinct_response_urls.append(e["url"])
             sourceNameSet.add(e["sourceSitename"])
@@ -152,6 +153,7 @@ def GetRelateNews(relate):
         if not e["title"]:
             continue
         if e["sourceSitename"] not in sourceNameSet:
+            e["user"]=""
             distinctList.append(e)
             distinct_response_urls.append(e["url"])
             sourceNameSet.add(e["sourceSitename"])
@@ -164,6 +166,7 @@ def GetRelateNews(relate):
         if not e["title"]:
             continue
         if e["sourceSitename"] not in sourceNameSet:
+            e["user"]=""
             distinctList.append(e)
             distinct_response_urls.append(e["url"])
             sourceNameSet.add(e["sourceSitename"])
@@ -174,6 +177,7 @@ def GetRelateNews(relate):
         if not e["title"]:
             continue
         if e["sourceSitename"] not in sourceNameSet:
+            e["user"]=""
             distinctList.append(e)
             distinct_response_urls.append(e["url"])
             sourceNameSet.add(e["sourceSitename"])
@@ -184,6 +188,7 @@ def GetRelateNews(relate):
         if not e["title"]:
             continue
         if e["sourceSitename"] not in sourceNameSet:
+            e["user"]=""
             distinctList.append(e)
             distinct_response_urls.append(e["url"])
             sourceNameSet.add(e["sourceSitename"])
