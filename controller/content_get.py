@@ -160,10 +160,12 @@ def Get_by_url(url):
     result = {}
     if not img:
         result["img"] = ""
+    else:
+        result["img"] = img[-1]
     if not text:
         result["text"] = ""
-
-
+    else:
+        result["text"] = text
 
 
     return result
