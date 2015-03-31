@@ -376,22 +376,24 @@ def GetZhihu(keyword):
     zhihus = []
 
     for element in elements:
+        try:
+            element_title = element.xpath('./div[@class="title"]/a')[0]
 
-        element_title = element.xpath('./div[@class="title"]/a')[0]
+            raw_content_title = etree.tostring(element_title, encoding='utf-8')
 
-        raw_content_title = etree.tostring(element_title, encoding='utf-8')
+            title = re.sub(pat, '', raw_content_title)
 
-        title = re.sub(pat, '', raw_content_title)
+            # s = element.xpath('./div[@class="title"]/a[1]/@href')[0]
 
-        s = element.xpath('./div[@class="title"]/a[1]/@href')[0]
+            url = "http://www.zhihu.com" + element.xpath('./div[@class="title"]/a[1]/@href')[0]
 
-        url = "http://www.zhihu.com" + element.xpath('./div[@class="title"]/a[1]/@href')[0]
+            user = element.xpath('.//a[@class="author"]/text()')[0]
 
-        user = element.xpath('.//a[@class="author"][1]/text()')[0]
+            zhihu = {"title": title, "url": url, "user": user}
 
-        zhihu = {"title": title, "url": url, "user": user}
-
-        zhihus.append(zhihu)
+            zhihus.append(zhihu)
+        except:
+            continue
 
     return zhihus
 
