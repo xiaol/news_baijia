@@ -46,9 +46,8 @@ def weiboTaskRun():
     # un_runned_docs = conn["news_ver2"]["googleNewsItem"].find()
     un_runned_docs = conn["news_ver2"]["Task"].find({"weiboOk": 0})
 
-
     success_num = 0
-    fail_num = 0
+
     for doc in un_runned_docs:
         # url = doc["url"]
         url = doc["url"]
@@ -58,7 +57,7 @@ def weiboTaskRun():
         keywords = " ".join(keywords)
 
         try:
-            weibo_ready = GetOneWeibo(keywords)
+            weibo_ready = GetWeibo(keywords)
 
         except ConnectionError as e:
 
@@ -70,14 +69,11 @@ def weiboTaskRun():
             conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"weiboOk": 1}})
 
         if weibo_ready is not None:
-
-            element_weibo = {"sourceSitename": mapOfSourceName["weibo"], "user": weibo_ready["user"], "url": weibo_ready["url"], "title": weibo_ready["content"]}
-
+            # element_weibo = {"sourceSitename": mapOfSourceName["weibo"], "user": weibo_ready["user"], "url": weibo_ready["url"], "title": weibo_ready["content"]}
             try:
-                conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"weibo": element_weibo}})
+                conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"weibo": weibo_ready}})
             except Exception as e:
-
-                print "weiboTaskRun fail, the doc url is:", url
+                print "weiboTaskRun save weibo fail, the doc url is:", url
                 continue
 
             conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"weiboOk": 1}})
@@ -85,32 +81,47 @@ def weiboTaskRun():
             success_num += 1
             print "weiboTaskRun success, the doc url is:" + url, "sucess num:", success_num
 
-            continue
-
-        fail_num += 1
-        print "weiboTaskRun fail, the doc url is:" + url, "fail num:", fail_num
 
 
+        # fail_num += 1
+        # print "weiboTaskRun fail, the doc url is:" + url, "fail num:", fail_num
 
 
-def GetOneWeibo(title):
+
+
+def GetWeibo(title):
+
+    # if one:
     weibos = weibo_relate_docs_get.search_relate_docs(title,1)
+    # else:
+    #     weibos = weibo_relate_docs_get.search_relate_docs(title, 7)
+
     weibos = json.loads(weibos)
-
-    if len(weibos) <= 0:
+    if isinstance(weibos, list) and len(weibos) <= 0:
         return
-
 
     if isinstance(weibos, dict) and "error" in weibos.keys():
-        return
-
-    weibo = weibos[0]
-    weibo_id = weibo["weibo_id"]
-    user = user_info_get.get_weibo_user(weibo_id)
-    weibo["user"] = user["name"]
+        raise ConnectionError
 
 
-    return weibo
+    weibos_of_return = []
+    for weibo in weibos:
+        weibo_id = weibo["weibo_id"]
+        del weibo["weibo_id"]
+        user = user_info_get.get_weibo_user(weibo_id)
+        weibo["user"] = user["name"]
+        weibo["sourceSitename"] = "weibo"
+        weibo["title"] = weibo["content"]
+        del weibo["content"]
+        weibos_of_return.append(weibo)
+
+    # weibo = weibos[0]
+    # weibo_id = weibo["weibo_id"]
+    # user = user_info_get.get_weibo_user(weibo_id)
+    # weibo["user"] = user["name"]
+
+
+    return weibos_of_return
 
 
 
@@ -309,8 +320,8 @@ def cont_pic_titleTaskRun():
 # 对应新闻，相关知乎的话题，task
 def zhihuTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"zhihuOk": 0})
-
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"zhihuOk": 0})
+    un_runned_docs = conn["news_ver2"]["Task"].find()
     index = 0
     no_zhihu = 0
     for doc in un_runned_docs:
@@ -338,7 +349,6 @@ def zhihuTaskRun():
 
         conn["news_ver2"]["Task"].update({"url": response_url}, {"$set": {"zhihuOk": 1}})
 
-
         print "zhihuTaskRun complete url:", response_url, "num:", index
 
 
@@ -355,26 +365,35 @@ def GetZhihu(keyword):
     pat_user = re.compile('<[^<>]+?>|[\,，]')
 
     try:
-        element_title = dom.xpath('//div[@class="title"][1]/a')[0]
-
-        raw_content_title = etree.tostring(element_title, encoding='utf-8')
-
-        title = re.sub(pat, '', raw_content_title)
-
-        url = "http://www.zhihu.com" + dom.xpath('//div[@class="title"][1]/a/@href')[0]
-
-        user = dom.xpath('//a[@class="author"][1]/text()')[0]
-
-        result = {"title": title, "url": url, "user": user}
+        elements = dom.xpath('//li[@class="item clearfix"]')
 
     except Exception as e:
 
         print "zhihu page Parse error, the url is===>", apiUrl
 
-        result = None
+        return None
 
+    zhihus = []
 
-    return result
+    for element in elements:
+
+        element_title = element.xpath('./div[@class="title"]/a')[0]
+
+        raw_content_title = etree.tostring(element_title, encoding='utf-8')
+
+        title = re.sub(pat, '', raw_content_title)
+
+        s = element.xpath('./div[@class="title"]/a[1]/@href')[0]
+
+        url = "http://www.zhihu.com" + element.xpath('./div[@class="title"]/a[1]/@href')[0]
+
+        user = element.xpath('.//a[@class="author"][1]/text()')[0]
+
+        zhihu = {"title": title, "url": url, "user": user}
+
+        zhihus.append(zhihu)
+
+    return zhihus
 
 
 # 所有任务完成后，设置新闻上线， isOnline为1
@@ -390,13 +409,30 @@ def isOnlineTaskRun():
         contentOk = doc["contentOk"]
         abstractOk = doc["abstractOk"]
         nerOk = doc["nerOk"]
+
+        doubanOk = 0
+        baikeOk = 0
+        weiboOk = 0
+        zhihuOk = 0
+        baiduSearchOk = 0
+
+        if "baiduSearchOk" in doc.keys():
+            baiduSearchOk = doc["baiduSearchOk"]
+
+        if "zhihuOk" in doc.keys():
+            zhihuOk = doc["zhihuOk"]
+
+        if "weiboOk" in doc.keys():
+            weiboOk = doc["weiboOk"]
+
         if "douban" in doc.keys():
             doubanOk = doc["douban"]
 
         if "baikeOk" in doc.keys():
             baikeOk = doc["baikeOk"]
 
-        if contentOk==1 and abstractOk==1 and nerOk==1 and doubanOk == 1 and baikeOk == 1:
+        if contentOk==1 and abstractOk==1 and nerOk==1 and doubanOk == 1 and baikeOk == 1 and weiboOk == 1 \
+                and zhihuOk == 1 and baiduSearchOk == 1:
             try:
                 conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"isOnline": 1}})
 
@@ -492,9 +528,6 @@ def parseBaike(keyword):
 
     return result
 
-
-
-
 def Getner(title):
 
     apiUrl = "http://121.41.75.213:8080/ner_mvc/api/ner?sentence=" + title
@@ -527,26 +560,35 @@ def Getner(title):
 #task 豆瓣，标签提取任务
 def doubanTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"doubanOk": 0}, {"doubanOk": {"$exists": 0}}]})
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"doubanOk": 0}, {"doubanOk": {"$exists": 0}}]})
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find()
+    un_runned_docs = conn["news_ver2"]["Task"].find()
 
     tagUrl = "http://www.douban.com/tag/%s/?source=topic_search"
 
 
-
+    title_url_pairs = []
     for doc in un_runned_docs:
         douban_tags = []
         title = doc["title"]
         # title = "厦门飞北京一客机冒烟发出紧急代码后备降合肥"
         url = doc["url"]
 
+        title_url_pairs.append([title, url])
+
+
+    for title, url in title_url_pairs:
+
+
+        title = "财政部：去年超8成土地出让收入用于拆迁征地"
+        url = "http://www.hinews.cn/news/system/2015/03/24/017426253.shtml"
         tags = extract_tags(title)
 
         is_db_error = False
 
         for tag in tags:
             if isDoubanTag(tag):
+                print "douban tag======>", tag
                 url_tag = tagUrl%tag
                 tag_url_pairs = [tag, url_tag]
                 douban_tags.append(tag_url_pairs)
@@ -565,19 +607,29 @@ def doubanTaskRun():
 
 def isDoubanTag(tag):
 
-    time.sleep(1)
+    time.sleep(10)
     url = "http://www.douban.com/tag/%s/?source=topic_search" % tag
     try:
-        r = requests.get(url)
+        headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.101 Safari/537.36"}
+        r = requests.get(url, headers=headers)
+        print "status code:", r.status_code
 
         url_after = r.url.encode("utf-8")
         url_after = urllib.unquote(url_after)
 
-        if url == url_after:
+        if url_after == url:
             return True
+
+        # dom = etree.HTML(r.text)
+        # element = dom.xpath('//title')[0]
+        #
+        # pat = "没上线"
+        # content_str = etree.tostring(element, encoding="utf-8")
+        # if re.match(pat, content_str):
+        #     return False
+
     except:
         return False
-
     return False
 
 
@@ -640,48 +692,58 @@ def newsToTaskRun():
         print "title", title, "num:", index
     print "newsToTaskRun complete"
 
-def mainRun():
-    import threading
+#task , img get
+def GetImagTaskRun():
 
-    exceptNum = 0
-    while True:
-            try:
-                weibo = threading.Thread(name="weiboTask", target=weiboTaskRun)
+    un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"relateImgOk": 0}, {"relateImgOk": {"$exists": 0}}]})
 
-                ner = threading.Thread(name="nerTask", target=nerTaskRun)
+    for doc in un_runned_docs:
+        url = doc["url"]
 
-                abst = threading.Thread(name="abstractTask", target=abstractTaskRun)
+        if "relate" in doc.keys():
+            relate = doc["relate"]
 
-                zhihu = threading.Thread(name="zhihuTask", target=zhihuTaskRun)
+        keys = ["left", "middle", "bottom", "opinion", "deep_report"]
 
-                baike = threading.Thread(name="baikeTask", target=baikeTaskRun)
-
-                douban = threading.Thread(name="doubanTask", target=doubanTaskRun)
-
-                isonline = threading.Thread(name="isOnlineTask", target=isOnlineTaskRun)
-
-                weibo.start()
-                ner.start()
-                abst.start()
-                zhihu.start()
-                baike.start()
-                douban.start()
+        for k in keys:
+            doImgGetAndSave(k, relate, url)
 
 
 
-                weibo.join()
-                ner.join()
-                abst.join()
-                zhihu.join()
-                baike.join()
-                douban.join()
+def doImgGetAndSave(k, relate, url):
 
-                isonline.start()
-                isonline.join()
+    sub_relate = relate[k]
+    ls = []
 
-            except:
-                exceptNum += 1
-                print "fialNum====>",exceptNum
+    for e in sub_relate:
+        if not "url" in e.keys():
+            continue
+        img = GetImgByUrl(url)
+        e["img"] = img
+        ls.append(e)
+        try:
+            conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"relate."+k: ls}})
+        except Exception:
+            print "save relate." + k, " error, the url====> ", url
+            continue
+
+        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"relateImgOk": 1}})
+
+
+def GetImgByUrl(url):
+
+    apiUrl_img = "http://121.41.75.213:8080/extractors_mvc_war/api/getImg?url="+url
+
+    r_img = requests.get(apiUrl_img)
+
+    imgs = (r_img.json())["imgs"]
+
+    if isinstance(imgs, list) and len(imgs) > 0:
+        img = imgs[-1]
+    else:
+        img = ""
+
+    return img
 
 
 if __name__ == '__main__':
@@ -718,6 +780,15 @@ if __name__ == '__main__':
         elif arg == 'baiduNews':
             while True:
                 baiduNewsTaskRun()
+        elif arg == 'relateimg':
+            while True:
+                GetImagTaskRun()
+        elif arg == "isOnline":
+            while True:
+                isOnlineTaskRun()
+
+        elif arg=='help':
+            print "need one or more argument of: weibo, ner, abs, zhihu, baike, douban, baiduNews, relateimg"
 
 
 
