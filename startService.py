@@ -28,10 +28,13 @@ define("host", default="127.0.0.1", help="run on the given host", type=str)
 class FetchHomeHandler(tornado.web.RequestHandler):
     def get(self):
 
-        updateTime = self.get_argument("updateTime", None)
+        # updateTime = self.get_argument("updateTime", None)
+        page = self.get_argument("page", 1)
         options = {}
-        if updateTime:
-            options["updateTime"] = updateTime
+
+        options["page"] = int(page)
+        # if updateTime:
+            # options["updateTime"] = updateTime
         result = home_get.homeContentFetch(options)
 
         print result
