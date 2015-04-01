@@ -801,7 +801,8 @@ def doImgGetAndSave(k, relate, url):
     for e in sub_relate:
         if not "url" in e.keys():
             continue
-        img = GetImgByUrl(url)['img']
+        url_here = e["url"]
+        img = GetImgByUrl(url_here)['img']
         e["img"] = img
 
     try:
