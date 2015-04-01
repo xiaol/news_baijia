@@ -19,15 +19,17 @@ def homeContentFetch(options):
     :rtype :
     """
     updateTime = ''
-    limit = 5
-    if "updateTime" in options.keys():
-        updateTime = options["updateTime"]
+    limit = 10
+    # if "updateTime" in options.keys():
+    #     updateTime = options["updateTime"]
+    if "page" in options.keys():
+        page = options["page"]
     if 'limit' in options.keys():
         limit = options["limit"]
 
     conn = DBStore._connect_news
 
-    docs = conn['news_ver2']['googleNewsItem'].find({"updateTime": {"$gt": updateTime}, "content": {"$exists": 1}}).sort([("updateTime",-1)]).limit(limit)
+    docs = conn['news_ver2']['googleNewsItem'].find({"updateTime": {"$gt": updateTime}, "content": {"$exists": 1}}).sort([("updateTime",-1)]).skip((page-1)*limit).limit(limit)
 
     index = 0
 
@@ -48,7 +50,6 @@ def homeContentFetch(options):
             continue
 
         del doc["relate"]
-
 
         if "weibo" in doc.keys():
             weibo = doc["weibo"]
