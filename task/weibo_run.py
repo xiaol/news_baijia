@@ -497,6 +497,7 @@ def baikeTaskRun():
     for url, title in url_title_pairs:
         keword = Getner(title)
         if keword is None:
+
             logging.warn("Getner is None, the url==>" + url)
             conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"baikeOk": 1}})
             continue
