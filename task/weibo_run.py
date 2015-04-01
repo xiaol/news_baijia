@@ -319,39 +319,47 @@ def zhihuTaskRun():
 
     # un_runned_docs = conn["news_ver2"]["Task"].find({"zhihuOk": 0})
     un_runned_docs = conn["news_ver2"]["Task"].find()
+
+
+    url_title_pairs = []
+
+    for doc in un_runned_docs:
+
+        title = doc["title"]
+        url = doc["url"]
+        url_title_pairs.append([url, title])
+
     index = 0
     no_zhihu = 0
-    for doc in un_runned_docs:
+    for url, title in url_title_pairs:
+
         index += 1
-        title = doc["title"]
         keywords = extract_tags(title, 2)
         keywords = "".join(keywords)
-
-        response_url = doc["url"]
 
         zhihu = GetZhihu(keywords)
         if zhihu is None:
             #直呼没有， 也标记为处理过
             no_zhihu += 1
-            conn["news_ver2"]["Task"].update({"url": response_url}, {"$set": {"zhihuOk": 1}})
+            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"zhihuOk": 1}})
 
-            print "no zhihu question, the url is ==>", response_url, "num:", no_zhihu
+            print "no zhihu question, the url is ==>", url, "num:", no_zhihu
             continue
         try:
-            conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": response_url}, {"$set": {"zhihu": zhihu}})
+            conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"zhihu": zhihu}})
 
         except:
-            print "update zhihu error, the url is==>", response_url
+            print "update zhihu error, the url is==>", url
             continue
 
-        conn["news_ver2"]["Task"].update({"url": response_url}, {"$set": {"zhihuOk": 1}})
+        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"zhihuOk": 1}})
 
-        print "zhihuTaskRun complete url:", response_url, "num:", index
+        print "zhihuTaskRun complete url:", url, "num:", index
 
 
 def GetZhihu(keyword):
 
-    time.sleep(1)
+    time.sleep(4)
     apiUrl = "http://www.zhihu.com/search?q={0}&type=question".format(keyword)
 
     r = requests.get(apiUrl)
@@ -772,6 +780,7 @@ if __name__ == '__main__':
             print "weibo start"
             index=0
             while True:
+                time.sleep(300)
                 index += 1
                 weiboTaskRun()
             logging.warn(str(index) + " round of weiboTask complete")
@@ -779,35 +788,43 @@ if __name__ == '__main__':
         elif arg == 'ner':
             print "NER start"
             while True:
+                time.sleep(300)
                 nerTaskRun()
 
         elif arg == 'abs':
             while True:
+                time.sleep(300)
                 abstractTaskRun()
 
         elif arg == 'zhihu':
             while True:
+                time.sleep(300)
                 zhihuTaskRun()
 
         elif arg == 'baike':
             while True:
+                time.sleep(300)
                 baikeTaskRun()
 
         elif arg == 'douban':
             index =0
             while True:
+                time.sleep(300)
                 index += 1
                 doubanTaskRun()
             logging.warn(str(index) + " round of weiboTask complete")
 
         elif arg == 'baiduNews':
             while True:
+                time.sleep(300)
                 baiduNewsTaskRun()
         elif arg == 'relateimg':
             while True:
+                time.sleep(300)
                 GetImagTaskRun()
         elif arg == "isOnline":
             while True:
+                time.sleep(300)
                 isOnlineTaskRun()
 
         elif arg=='help':
