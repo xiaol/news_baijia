@@ -8,7 +8,7 @@ ACCESS_TOKEN = "2.004t5RdCHB_LqCd7d61482d5iGDbcD"
 
 def get_weibo_user(weibo_id):
 
-    time.sleep(10)
+    time.sleep(4)
     result = {}
     try:
         api_url = "https://api.weibo.com/2/statuses/queryid.json?type=1" + "&mid=" + weibo_id + "&access_token=" + ACCESS_TOKEN
@@ -34,7 +34,9 @@ def get_weibo_user(weibo_id):
 
     except Exception as e:
 
+
         print "get_weibo_user error", e
+        return None
 
 
     return result
