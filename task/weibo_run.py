@@ -496,7 +496,7 @@ def ImgMeetCondition(url):
 
     img_url = doc['imgUrls']
 
-    img_url = 'http://www.01happy.com/wp-content/uploads/2012/09/bg.png'
+    # img_url = 'http://www.01happy.com/wp-content/uploads/2012/09/bg.png'
     file = cStringIO.StringIO(urllib.urlopen(img_url).read())
 
     im = Image.open(file)
@@ -504,8 +504,9 @@ def ImgMeetCondition(url):
     width, height = im.size
 
     if width >= 300 and height >= 300:
-        return  True
-    print width, "+", height
+        return True
+
+    print width, "+", height, " url=======>", img_url
 
     return False
 
@@ -908,7 +909,6 @@ if __name__ == '__main__':
                 logging.warn("===============this round of relateimg complete====================")
         elif arg == "isOnline":
             while True:
-
                 time.sleep(300)
                 isOnlineTaskRun()
                 logging.warn("===============this round of isonline complete====================")
