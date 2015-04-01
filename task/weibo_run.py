@@ -503,7 +503,7 @@ def ImgMeetCondition(url):
 
     width, height = im.size
 
-    if width >= 300 and height >= 300:
+    if width >= 200 and height >= 200:
         return True
 
     print width, "+", height, " url=======>", img_url
