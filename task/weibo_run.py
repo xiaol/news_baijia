@@ -122,7 +122,7 @@ def GetWeibo(title):
 # Task : 命名实体识别， 定时分析mongo中新 新闻的命名实体识别
 def nerTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk": 0})
+    un_runned_docs = conn["news_ver2"]["Task"].find({"$or":[{"nerOK": 0}, {"nerOk":0}]})   #OK 大写
     # un_runned_docs = conn["news_ver2"]["Task"].find()
     index = 0
 
@@ -270,7 +270,7 @@ def isTime(string):
 #摘要抽取任务，对每条新闻进行摘要抽取候，存入mongo
 def abstractTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"abstractOk": 0})
+    un_runned_docs = conn["news_ver2"]["Task"].find({"$or",[{"abstractOK": 0}, {"abstractOk": 0}]})
     # un_runned_docs = conn["news_ver2"]["Task"].find()
     success_num = 0
     urls = []
@@ -805,7 +805,7 @@ if __name__ == '__main__':
             print "weibo start"
             index=0
             while True:
-                time.sleep(300)
+                time.sleep(60)
                 index += 1
                 weiboTaskRun()
             logging.warn(str(index) + " round of weiboTask complete")
@@ -813,28 +813,29 @@ if __name__ == '__main__':
         elif arg == 'ner':
             print "NER start"
             while True:
-                time.sleep(300)
+                time.sleep(60)
                 nerTaskRun()
+                logging.warn("===============this round of NER complete====================")
 
         elif arg == 'abs':
             while True:
-                time.sleep(300)
+                time.sleep(40)
                 abstractTaskRun()
 
         elif arg == 'zhihu':
             while True:
-                time.sleep(300)
+                time.sleep(60)
                 zhihuTaskRun()
 
         elif arg == 'baike':
             while True:
-                time.sleep(300)
+                time.sleep(30)
                 baikeTaskRun()
 
         elif arg == 'douban':
             index =0
             while True:
-                time.sleep(300)
+                time.sleep(30)
                 index += 1
                 doubanTaskRun()
             logging.warn(str(index) + " round of weiboTask complete")
@@ -845,7 +846,7 @@ if __name__ == '__main__':
                 baiduNewsTaskRun()
         elif arg == 'relateimg':
             while True:
-                time.sleep(300)
+                time.sleep(40)
                 GetImagTaskRun()
         elif arg == "isOnline":
             while True:
