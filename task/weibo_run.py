@@ -110,8 +110,8 @@ def GetWeibo(title):
         weibo_id = weibo["weibo_id"]
         del weibo["weibo_id"]
         user = user_info_get.get_weibo_user(weibo_id)
-        weibo["user"] = user["screen_name"]
-        weibo["profileImageUrl"] = user["profile_image_url"]
+        weibo["user"] = user["screenName"]
+        weibo["profileImageUrl"] = user["profileImageUrl"]
         weibo["sourceSitename"] = "weibo"
         weibo["title"] = weibo["content"]
         del weibo["content"]
@@ -128,7 +128,7 @@ def GetWeibo(title):
 # Task : 命名实体识别， 定时分析mongo中新 新闻的命名实体识别
 def nerTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"$or":[{"nerOK": 0}, {"nerOk":0}]}).sort([("updateTime", -1)])   #OK 大写
+    un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk":0}).sort([("updateTime", -1)])   #OK 大写
     # un_runned_docs = conn["news_ver2"]["Task"].find()
     index = 0
 
@@ -274,7 +274,7 @@ def isTime(string):
 #摘要抽取任务，对每条新闻进行摘要抽取候，存入mongo
 def abstractTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"$or",[{"abstractOK": 0}, {"abstractOk": 0}]}).sort([("updateTime", -1)])
+    un_runned_docs = conn["news_ver2"]["Task"].find({"abstractOk": 0}).sort([("updateTime", -1)])
     # un_runned_docs = conn["news_ver2"]["Task"].find()
     success_num = 0
     urls = []
