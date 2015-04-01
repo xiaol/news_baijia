@@ -11,6 +11,9 @@ def fetchContent(url, filterurls, updateTime=None):
 
     doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
 
+    if not doc:
+        return
+
     if updateTime is None:
         updateTime = ''
 
@@ -19,6 +22,9 @@ def fetchContent(url, filterurls, updateTime=None):
     result = {}
 
     allrelate = Get_Relate_docs(doc, docs_relate, filterurls)
+
+    if "imgUrls" in doc.keys():
+        result['imgUrl'] = doc['imgUrls']
 
     if 'abstract' in doc.keys():
         result['abs'] = doc['abstract']
@@ -166,11 +172,11 @@ def Get_by_url(url):
     for i in img:
         if i.endswith('.gif'):
             img.remove(i)
+        if 'weima' in i:
+            img.remove(i)
     result['img'] = img[0]
 
-    # while result['img'].startswith('/'):
-    #     print('!!!!!!!!!!!')
-    #     print(result['img'])
+
     if result['img'].startswith('/'):
         print('!!!!!!!!!!!')
         print(result['img'])
@@ -182,4 +188,5 @@ def Get_by_url(url):
 
 
 if __name__ == '__main__':
-    print(Get_by_url("http://sports.sina.com.cn/l/s/2015-03-24/10287553303.shtml"))
+    print(Get_by_url("http://www.jfdaily.com/guonei/new/201503/t20150323_1348362.html"))
+    # print(Get_by_url("http://sports.sina.com.cn/l/s/2015-03-24/10287553303.shtml"))

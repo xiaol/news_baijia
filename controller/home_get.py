@@ -29,7 +29,7 @@ def homeContentFetch(options):
 
     conn = DBStore._connect_news
 
-    docs = conn['news_ver2']['googleNewsItem'].find({"updateTime": {"$gt": updateTime}, "content": {"$exists": 1}}).sort([("updateTime",-1)]).skip((page-1)*limit).limit(limit)
+    docs = conn['news_ver2']['googleNewsItem'].find({"updateTime": {"$gt": updateTime}, "isOnline": 1}).sort([("updateTime",-1)]).skip((page-1)*limit).limit(limit)
 
     index = 0
 
@@ -88,7 +88,7 @@ def homeContentFetch(options):
             if not doc["imgUrls"]:
                 continue
             if len(doc["imgUrls"]) > 0:
-                doc["imgUrl"] = doc["imgUrls"][-1]
+                doc["imgUrl"] = doc["imgUrls"]
                 del doc["imgUrls"]
 
         if "content" in doc.keys():

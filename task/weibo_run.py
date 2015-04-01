@@ -15,7 +15,9 @@ import sys
 import urllib
 import threading
 import logging
-
+import os
+from PIL import Image
+print "=========",os.getcwd()
 reload(sys)
 sys.setdefaultencoding('utf8')
 
@@ -130,8 +132,8 @@ def GetWeibo(title):
 # Task : 命名实体识别， 定时分析mongo中新 新闻的命名实体识别
 def nerTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk":0}).sort([("updateTime", -1)])   #OK 大写
-    # un_runned_docs = conn["news_ver2"]["Task"].find()
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk":0}).sort([("updateTime", -1)])   #OK 大写
+    un_runned_docs = conn["news_ver2"]["Task"].find()
     index = 0
 
     url_title_pairs = []
@@ -473,7 +475,7 @@ def isOnlineTaskRun():
             baikeOk = doc["baikeOk"]
 
         if contentOk==1 and abstractOk==1 and nerOk==1 and doubanOk == 1 and baikeOk == 1 and weiboOk == 1 \
-                and zhihuOk == 1 and baiduSearchOk == 1:
+                and zhihuOk == 1 and baiduSearchOk == 1 and ImgMeetCondition(url):
             try:
                 conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"isOnline": 1}})
 
@@ -484,6 +486,29 @@ def isOnlineTaskRun():
             conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"isOnline": 1}})
 
             print "isOnlineTaskRun success, the doc url is:", url
+
+import urllib, cStringIO
+def ImgMeetCondition(url):
+
+    doc = conn['news_ver2']['googleNewsItem'].find_one({"sourceUrl": url})
+    if not "imgUrls" in doc.keys() or not doc['imgUrls']:
+        return False
+
+    img_url = doc['imgUrls']
+
+    # img_url = 'http://www.01happy.com/wp-content/uploads/2012/09/bg.png'
+    file = cStringIO.StringIO(urllib.urlopen(img_url).read())
+
+    im = Image.open(file)
+
+    width, height = im.size
+
+    if width >= 300 and height >= 300:
+        return True
+
+    print width, "+", height, " url=======>", img_url
+
+    return False
 
 # task 百科
 def baikeTaskRun():
@@ -607,16 +632,16 @@ def Getner(title):
 #task 豆瓣，标签提取任务
 def doubanTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"doubanOk": 0}, {"doubanOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"doubanOk": 0}, {"doubanOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find()
+    un_runned_docs = conn["news_ver2"]["Task"].find()
 
     tagUrl = "http://www.douban.com/tag/%s/?source=topic_search"
 
 
     title_url_pairs = []
     for doc in un_runned_docs:
-        douban_tags = []
+
         title = doc["title"]
         # title = "厦门飞北京一客机冒烟发出紧急代码后备降合肥"
         url = doc["url"]
@@ -626,7 +651,7 @@ def doubanTaskRun():
 
     for title, url in title_url_pairs:
 
-
+        douban_tags = []
         # title = "财政部：去年超8成土地出让收入用于拆迁征地"
         # url = "http://www.hinews.cn/news/system/2015/03/24/017426253.shtml"
         tags = extract_tags(title)
@@ -683,7 +708,9 @@ def isDoubanTag(tag):
 
 def baiduNewsTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"$or":[{"baiduSearchOk": 0}, {"baiduSearchOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"$or":[{"baiduSearchOk": 0}, {"baiduSearchOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
+
+    un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
 
     url_title_pairs = []
     for doc in un_runned_docs:
@@ -709,9 +736,10 @@ def baiduNewsTaskRun():
             topic = 's'.join(topic)
 
         # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
+
         cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
-
+        print "=======>", sys.get
         child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
 
         print "complete url===>", url_here,
@@ -767,8 +795,6 @@ def GetImagTaskRun():
         for k in keys:
             doImgGetAndSave(k, relate, url)
 
-
-
 def doImgGetAndSave(k, relate, url):
 
     sub_relate = relate[k]
@@ -785,6 +811,7 @@ def doImgGetAndSave(k, relate, url):
         return
 
     conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"relateImgOk": 1}})
+    print "doImgGetAndSave ok , url :", url
 
 
 def GetImgByUrl(url):
@@ -801,6 +828,8 @@ def GetImgByUrl(url):
 
         for i in imgs:
             if i.endswith('.gif'):
+                imgs.remove(i)
+            if 'weima' in i:
                 imgs.remove(i)
         result['img'] = imgs[0]
 
@@ -832,7 +861,7 @@ if __name__ == '__main__':
                 time.sleep(60)
                 index += 1
                 weiboTaskRun()
-            logging.warn(str(index) + " round of weiboTask complete")
+                logging.warn("===============this round of weibo complete====================")
 
         elif arg == 'ner':
             print "NER start"
@@ -845,16 +874,19 @@ if __name__ == '__main__':
             while True:
                 time.sleep(40)
                 abstractTaskRun()
+                logging.warn("===============this round of abs complete====================")
 
         elif arg == 'zhihu':
             while True:
                 time.sleep(60)
                 zhihuTaskRun()
+                logging.warn("===============this round of zhihu complete====================")
 
         elif arg == 'baike':
             while True:
                 time.sleep(30)
                 baikeTaskRun()
+                logging.warn("===============this round of baike complete====================")
 
         elif arg == 'douban':
             index =0
@@ -862,20 +894,24 @@ if __name__ == '__main__':
                 time.sleep(30)
                 index += 1
                 doubanTaskRun()
-            logging.warn(str(index) + " round of weiboTask complete")
+                logging.warn("===============this round of douban complete====================")
+
 
         elif arg == 'baiduNews':
             while True:
                 # time.sleep(300)
                 baiduNewsTaskRun()
+                logging.warn("===============this round of baiduNews complete====================")
         elif arg == 'relateimg':
             while True:
                 time.sleep(40)
                 GetImagTaskRun()
+                logging.warn("===============this round of relateimg complete====================")
         elif arg == "isOnline":
             while True:
                 time.sleep(300)
                 isOnlineTaskRun()
+                logging.warn("===============this round of isonline complete====================")
 
         elif arg=='help':
             print "need one or more argument of: weibo, ner, abs, zhihu, baike, douban, baiduNews, relateimg"
