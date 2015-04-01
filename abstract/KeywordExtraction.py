@@ -34,8 +34,8 @@ def abstract(doc,use_tf=True):
       sentence_pair.append(scoreSentence(keyWords,sentence))
       sentence_score_pairs.append(sentence_pair)
   sorted_sentence=sorted(sentence_score_pairs,key=operator.itemgetter(1),reverse=True)
-  for sort_sentence_pair in sorted_sentence:
-      print "sentence is %s and the score is %f\n" %(sort_sentence_pair[0],sort_sentence_pair[1])
+  # for sort_sentence_pair in sorted_sentence:
+  #     print "sentence is %s and the score is %f\n" %(sort_sentence_pair[0],sort_sentence_pair[1])
 
   return sorted_sentence[0][0]
 

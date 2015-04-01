@@ -594,7 +594,6 @@ def Getner(title):
     elif "org" in ne.keys() and len(ne['org']) > 0:
         keyword = ne['org'][0]
 
-
     return keyword
 
 
