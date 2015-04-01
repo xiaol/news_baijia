@@ -170,9 +170,7 @@ def Get_by_url(url):
             img.remove(i)
     result['img'] = img[0]
 
-    # while result['img'].startswith('/'):
-    #     print('!!!!!!!!!!!')
-    #     print(result['img'])
+
     if result['img'].startswith('/'):
         print('!!!!!!!!!!!')
         print(result['img'])
