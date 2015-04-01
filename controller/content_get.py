@@ -161,7 +161,12 @@ def Get_by_url(url):
     if not img or not len(img)>0:
         return None
 
-    result['img'] = img[-1]
+    # result['img'] = img[-1]
+
+    for i in img:
+        if i.endswith('.gif'):
+            img.remove(i)
+    result['img'] = img[0]
 
     # while result['img'].startswith('/'):
     #     print('!!!!!!!!!!!')
@@ -177,4 +182,4 @@ def Get_by_url(url):
 
 
 if __name__ == '__main__':
-    print(Get_by_url("http://huaxi.media.baidu.com/article/17078455967937459443?qq-pf-to=pcqq.c2c"))
+    print(Get_by_url("http://sports.sina.com.cn/l/s/2015-03-24/10287553303.shtml"))
