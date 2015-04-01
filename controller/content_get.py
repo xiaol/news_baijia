@@ -23,6 +23,9 @@ def fetchContent(url, filterurls, updateTime=None):
 
     allrelate = Get_Relate_docs(doc, docs_relate, filterurls)
 
+    if "imgUrls" in doc.keys():
+        result['imgUrl'] = doc['imgUrls']
+
     if 'abstract' in doc.keys():
         result['abs'] = doc['abstract']
 

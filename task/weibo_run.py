@@ -16,6 +16,7 @@ import urllib
 import threading
 import logging
 import os
+from PIL import Image
 print "=========",os.getcwd()
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -486,7 +487,7 @@ def isOnlineTaskRun():
 
             print "isOnlineTaskRun success, the doc url is:", url
 
-
+import urllib, cStringIO
 def ImgMeetCondition(url):
 
     doc = conn['news_ver2']['googleNewsItem'].find_one({"sourceUrl": url})
@@ -495,8 +496,18 @@ def ImgMeetCondition(url):
 
     img_url = doc['imgUrls']
 
+    img_url = 'http://www.01happy.com/wp-content/uploads/2012/09/bg.png'
+    file = cStringIO.StringIO(urllib.urlopen(img_url).read())
 
-    return True
+    im = Image.open(file)
+
+    width, height = im.size
+
+    if width >= 300 and height >= 300:
+        return  True
+    print width, "+", height
+
+    return False
 
 # task 百科
 def baikeTaskRun():
