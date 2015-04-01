@@ -14,6 +14,7 @@ import lxml.etree as etree
 import sys
 import urllib
 import threading
+import logging
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -266,8 +267,12 @@ def abstractTaskRun():
     un_runned_docs = conn["news_ver2"]["Task"].find({"abstractOk": 0})
 
     success_num = 0
+    urls = []
     for doc in un_runned_docs:
         url = doc["url"]
+        urls.append(url)
+
+    for url in urls:
         content = get_content_by_url(url)
 
         if not content:
@@ -397,12 +402,28 @@ def isOnlineTaskRun():
     for doc in un_runned_docs:
 
         url = doc["url"]
-        weiboOk = doc["weiboOk"]
-        zhihuOk = doc["zhihuOk"]
 
-        contentOk = doc["contentOk"]
-        abstractOk = doc["abstractOk"]
-        nerOk = doc["nerOk"]
+        weiboOk = 0
+        zhihuOk = 0
+        contentOk = 0
+
+
+        abstractOk = 0
+        nerOk = 0
+        if "contentOk" in doc.keys():
+            contentOk = doc["contentOk"]
+
+        if "weiboOk" in doc.keys():
+            weiboOk = doc["weiboOk"]
+
+        if "zhihuOk" in doc.keys():
+            zhihuOk = doc["zhihuOk"]
+
+        if "abstractOk" in doc.keys():
+            abstractOk = doc["abstractOk"]
+
+        if "nerOk" in doc.keys():
+            nerOk = doc["nerOk"]
 
         doubanOk = 0
         baikeOk = 0
@@ -451,7 +472,7 @@ def baikeTaskRun():
         keword = Getner(title)
 
         if keword is None:
-            print "Getner is None, the url==>", url
+            logging.warn("Getner is None, the url==>" + url)
             conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"baikeOk": 1}})
             continue
 
@@ -459,7 +480,7 @@ def baikeTaskRun():
 
         if re is None:
 
-            print "baike is None, the url==>", url
+            logging.warn("baike is None, the url==>" + url)
             conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"baikeOk": 1}})
             continue
 
@@ -472,11 +493,12 @@ def baikeTaskRun():
 
         conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"baikeOk": 1}})
         index += 1
-        print "baikeTaskRun, the url is:", url, "num==>", index
+        logging.warn("baikeTaskRun, the url is:" + url + "num==>" + str(index))
 
 
 def parseBaike(keyword):
 
+    time.sleep(4)
     url = "http://baike.baidu.com/search/none?word=%s&pn=0&rn=10&enc=utf8" % keyword
 
     print "$$$$$$$$$$====>",url
@@ -517,7 +539,7 @@ def parseBaike(keyword):
         result = {"title": title, "url": url, "abstract": abstract}
 
     except Exception:
-
+        logging.warn("parse exception, keyword:"+keyword)
         result = None
 
     return result
@@ -743,12 +765,16 @@ def GetImgByUrl(url):
 if __name__ == '__main__':
 
 
+
     for arg in sys.argv[1:]:
         print arg
         if arg == 'weibo':
             print "weibo start"
+            index=0
             while True:
+                index += 1
                 weiboTaskRun()
+            logging.warn(str(index) + " round of weiboTask complete")
 
         elif arg == 'ner':
             print "NER start"
@@ -768,8 +794,11 @@ if __name__ == '__main__':
                 baikeTaskRun()
 
         elif arg == 'douban':
+            index =0
             while True:
+                index += 1
                 doubanTaskRun()
+            logging.warn(str(index) + " round of weiboTask complete")
 
         elif arg == 'baiduNews':
             while True:
