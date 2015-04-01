@@ -34,14 +34,14 @@ def fetchContent(url, filterurls, updateTime=None):
         if isinstance(zhihu, dict):
             result['zhihu'] = [zhihu]
         elif isinstance(zhihu, list) and len(zhihu) > 0:
-            result['zhihu'] = zhihu[0]
+            result['zhihu'] = zhihu
 
     if 'weibo' in doc.keys():
         weibo = doc['weibo']
         if isinstance(weibo, dict):
             result['weibo'] = [weibo]
         elif isinstance(weibo, list) and len(weibo) > 0:
-            result['weibo'] = weibo[0]
+            result['weibo'] = weibo
 
 
     if 'douban' in doc.keys():
@@ -54,6 +54,9 @@ def fetchContent(url, filterurls, updateTime=None):
         baike = doc['baike']
         if isinstance(baike, dict):
             result['baike'] = [baike]
+
+        if isinstance(baike, list) and len(baike) > 0:
+            result['baike'] = baike
 
     if 'originsourceSiteName' in doc.keys():
         result['originsourceSiteName'] = doc['originsourceSiteName']
