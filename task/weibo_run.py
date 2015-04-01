@@ -48,10 +48,14 @@ def weiboTaskRun():
 
     success_num = 0
 
+    url_title_pairs = []
     for doc in un_runned_docs:
         # url = doc["url"]
         url = doc["url"]
         title = doc["title"]
+        url_title_pairs.append([url, title])
+
+    for url, title in url_title_pairs:
 
         keywords = extract_tags(title, 2)
         keywords = " ".join(keywords)
@@ -121,10 +125,15 @@ def nerTaskRun():
     # un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk": 0})
     un_runned_docs = conn["news_ver2"]["Task"].find()
     index = 0
+
+    url_title_pairs = []
     for doc in un_runned_docs:
         url = doc["url"]
         title = doc["title"]
+        url_title_pairs.append([url, title])
 
+
+    for url, title in url_title_pairs:
         content = get_content_by_url(url)
 
         #获取内容 有问题，跳过
@@ -295,8 +304,13 @@ def cont_pic_titleTaskRun():
 
     # un_runned_docs = conn["news_ver2"]["Task"].find({"contentOk": 0})
     un_runned_docs = conn["news_ver2"]["Task"].find()
+
+    urls = []
     for doc in un_runned_docs:
         url = doc["url"]
+        urls.append(url)
+
+    for url in urls:
         content_pic = get_content_by_url(url)
 
         try:
@@ -472,12 +486,16 @@ def baikeTaskRun():
 
     un_runned_docs = conn["news_ver2"]["Task"].find()
     index = 0
+
+    url_title_pairs = []
     for doc in un_runned_docs:
 
         url = doc["url"]
         title = doc["title"]
-        keword = Getner(title)
+        url_title_pairs.append([url, title])
 
+    for url, title in url_title_pairs:
+        keword = Getner(title)
         if keword is None:
             logging.warn("Getner is None, the url==>" + url)
             conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"baikeOk": 1}})
@@ -705,10 +723,15 @@ def newsToTaskRun():
     offline_docs = conn["news_ver2"]["googleNewsItem"].find({"$or": [{"isOnline": 0}, {"isOnline": {"$exists": 0}}]})
 
     index = 0
+
+    url_title_pairs = []
     for doc in offline_docs:
-        index += 1
+
         url = doc["sourceUrl"]
         title = doc["title"]
+        url_title_pairs.append([url, title])
+
+    for url, title in url_title_pairs:
 
         conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"url": url, "title": title, "weiboOk": 0, "zhihuOk": 0,
                                                                  "abstractOk": 0, "contentOk": 0, "nerOk": 0, "isOnline": 0, "baikeOk": 0, "baiduSearchOk": 0}}, upsert=True)
