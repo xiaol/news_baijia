@@ -739,7 +739,7 @@ def baiduNewsTaskRun():
 
         cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
-        print "=======>", sys.get
+
         child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
 
         print "complete url===>", url_here,
