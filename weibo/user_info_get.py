@@ -36,6 +36,7 @@ def get_weibo_user(weibo_id):
 
 
         print "get_weibo_user error", e
+        return None
 
 
     return result

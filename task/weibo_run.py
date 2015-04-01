@@ -109,9 +109,11 @@ def GetWeibo(title):
     for weibo in weibos:
         weibo_id = weibo["weibo_id"]
         del weibo["weibo_id"]
-        user = user_info_get.get_weibo_user(weibo_id)
-        weibo["user"] = user["screenName"]
-        weibo["profileImageUrl"] = user["profileImageUrl"]
+        # user = user_info_get.get_weibo_user(weibo_id)
+        # weibo["user"] = user["screenName"]
+        # weibo["profileImageUrl"] = user["profileImageUrl"]
+        weibo["user"] = ""
+        weibo["profileImageUrl"] = ""
         weibo["sourceSitename"] = "weibo"
         weibo["title"] = weibo["content"]
         del weibo["content"]
