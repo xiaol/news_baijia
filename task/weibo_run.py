@@ -43,8 +43,8 @@ mapOfSourceName = {"weibo":"微博"}
 # Task : 微博获取任务，定时获取数据，存到mongo
 def weiboTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find()
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"weiboOk": 0})
+    # un_runned_docs = conn["news_ver2"]["Task"].find()
+    un_runned_docs = conn["news_ver2"]["Task"].find({"weiboOk": 0})
 
     success_num = 0
 
@@ -122,8 +122,8 @@ def GetWeibo(title):
 # Task : 命名实体识别， 定时分析mongo中新 新闻的命名实体识别
 def nerTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk": 0})
-    un_runned_docs = conn["news_ver2"]["Task"].find()
+    un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk": 0})
+    # un_runned_docs = conn["news_ver2"]["Task"].find()
     index = 0
 
     url_title_pairs = []
@@ -270,8 +270,8 @@ def isTime(string):
 #摘要抽取任务，对每条新闻进行摘要抽取候，存入mongo
 def abstractTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"abstractOk": 0})
-    un_runned_docs = conn["news_ver2"]["Task"].find()
+    un_runned_docs = conn["news_ver2"]["Task"].find({"abstractOk": 0})
+    # un_runned_docs = conn["news_ver2"]["Task"].find()
     success_num = 0
     urls = []
     for doc in un_runned_docs:
@@ -329,8 +329,8 @@ def cont_pic_titleTaskRun():
 # 对应新闻，相关知乎的话题，task
 def zhihuTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"zhihuOk": 0})
-    un_runned_docs = conn["news_ver2"]["Task"].find()
+    un_runned_docs = conn["news_ver2"]["Task"].find({"zhihuOk": 0})
+    # un_runned_docs = conn["news_ver2"]["Task"].find()
 
 
     url_title_pairs = []
@@ -482,9 +482,9 @@ def isOnlineTaskRun():
 # task 百科
 def baikeTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"baikeOk": 0})
+    un_runned_docs = conn["news_ver2"]["Task"].find({"baikeOk": 0})
 
-    un_runned_docs = conn["news_ver2"]["Task"].find()
+    # un_runned_docs = conn["news_ver2"]["Task"].find()
     index = 0
 
     url_title_pairs = []
@@ -594,16 +594,15 @@ def Getner(title):
     elif "org" in ne.keys() and len(ne['org']) > 0:
         keyword = ne['org'][0]
 
-
     return keyword
 
 
 #task 豆瓣，标签提取任务
 def doubanTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"doubanOk": 0}, {"doubanOk": {"$exists": 0}}]})
+    un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"doubanOk": 0}, {"doubanOk": {"$exists": 0}}]})
 
-    un_runned_docs = conn["news_ver2"]["Task"].find()
+    # un_runned_docs = conn["news_ver2"]["Task"].find()
 
     tagUrl = "http://www.douban.com/tag/%s/?source=topic_search"
 
@@ -741,14 +740,16 @@ def newsToTaskRun():
 #task , img get
 def GetImagTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["googleNewsItem"].find({"$or": [{"relateImgOk": 0}, {"relateImgOk": {"$exists": 0}}]})
+    un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"relateImgOk": 0}, {"relateImgOk": {"$exists": 0}}]})
 
-    un_runned_docs = conn["news_ver2"]["googleNewsItem"].find()
+    # un_runned_docs = conn["news_ver2"]["googleNewsItem"].find()
 
     for doc in un_runned_docs:
         url = doc["url"]
 
-        if "relate" in doc.keys():
+        doc_google = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
+
+        if "relate" in doc_google.keys():
             relate = doc["relate"]
 
         keys = ["left", "middle", "bottom", "opinion", "deep_report"]
@@ -840,7 +841,7 @@ if __name__ == '__main__':
 
         elif arg == 'baiduNews':
             while True:
-                time.sleep(300)
+                # time.sleep(300)
                 baiduNewsTaskRun()
         elif arg == 'relateimg':
             while True:

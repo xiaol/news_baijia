@@ -32,16 +32,16 @@ def fetchContent(url, filterurls, updateTime=None):
     if 'zhihu' in doc.keys():
         zhihu = doc['zhihu']
         if isinstance(zhihu, dict):
-            result['zhihu'] = doc['zhihu']
+            result['zhihu'] = [zhihu]
         elif isinstance(zhihu, list) and len(zhihu) > 0:
-            result['zhihu'] = zhihu[0]
+            result['zhihu'] = zhihu
 
     if 'weibo' in doc.keys():
         weibo = doc['weibo']
         if isinstance(weibo, dict):
-            result['weibo'] = weibo
+            result['weibo'] = [weibo]
         elif isinstance(weibo, list) and len(weibo) > 0:
-            result['weibo'] = weibo[0]
+            result['weibo'] = weibo
 
 
     if 'douban' in doc.keys():
@@ -53,6 +53,9 @@ def fetchContent(url, filterurls, updateTime=None):
     if 'baike' in doc.keys():
         baike = doc['baike']
         if isinstance(baike, dict):
+            result['baike'] = [baike]
+
+        if isinstance(baike, list) and len(baike) > 0:
             result['baike'] = baike
 
     if 'originsourceSiteName' in doc.keys():
@@ -158,7 +161,12 @@ def Get_by_url(url):
     if not img or not len(img)>0:
         return None
 
-    result['img'] = img[-1]
+    # result['img'] = img[-1]
+
+    for i in img:
+        if i.endswith('.gif'):
+            img.remove(i)
+    result['img'] = img[0]
 
     # while result['img'].startswith('/'):
     #     print('!!!!!!!!!!!')
@@ -174,4 +182,4 @@ def Get_by_url(url):
 
 
 if __name__ == '__main__':
-    print(Get_by_url("http://huaxi.media.baidu.com/article/17078455967937459443?qq-pf-to=pcqq.c2c"))
+    print(Get_by_url("http://sports.sina.com.cn/l/s/2015-03-24/10287553303.shtml"))
