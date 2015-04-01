@@ -43,8 +43,8 @@ mapOfSourceName = {"weibo":"微博"}
 # Task : 微博获取任务，定时获取数据，存到mongo
 def weiboTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["googleNewsItem"].find()
-    un_runned_docs = conn["news_ver2"]["Task"].find({"weiboOk": 0})
+    un_runned_docs = conn["news_ver2"]["googleNewsItem"].find()
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"weiboOk": 0})
 
     success_num = 0
 
@@ -61,7 +61,6 @@ def weiboTaskRun():
 
         except ConnectionError as e:
 
-            print "weibo connection error, the doc url is:", url
             continue
 
         if weibo_ready is None:
@@ -69,7 +68,7 @@ def weiboTaskRun():
             conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"weiboOk": 1}})
 
         if weibo_ready is not None:
-            # element_weibo = {"sourceSitename": mapOfSourceName["weibo"], "user": weibo_ready["user"], "url": weibo_ready["url"], "title": weibo_ready["content"]}
+
             try:
                 conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"weibo": weibo_ready}})
             except Exception as e:
@@ -113,16 +112,14 @@ def GetWeibo(title):
     # user = user_info_get.get_weibo_user(weibo_id)
     # weibo["user"] = user["name"]
 
-
     return weibos_of_return
-
 
 
 # Task : 命名实体识别， 定时分析mongo中新 新闻的命名实体识别
 def nerTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk": 0})
-    # un_runned_docs = conn["news_ver2"]["Task"].find()
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk": 0})
+    un_runned_docs = conn["news_ver2"]["Task"].find()
     index = 0
     for doc in un_runned_docs:
         url = doc["url"]
@@ -264,8 +261,8 @@ def isTime(string):
 #摘要抽取任务，对每条新闻进行摘要抽取候，存入mongo
 def abstractTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"abstractOk": 0})
-
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"abstractOk": 0})
+    un_runned_docs = conn["news_ver2"]["Task"].find()
     success_num = 0
     urls = []
     for doc in un_runned_docs:
@@ -296,7 +293,8 @@ def abstractTaskRun():
 # 正文，和图片获取 task
 def cont_pic_titleTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"contentOk": 0})
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"contentOk": 0})
+    un_runned_docs = conn["news_ver2"]["Task"].find()
     for doc in un_runned_docs:
         url = doc["url"]
         content_pic = get_content_by_url(url)
@@ -470,8 +468,9 @@ def isOnlineTaskRun():
 # task 百科
 def baikeTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"baikeOk": 0})
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"baikeOk": 0})
 
+    un_runned_docs = conn["news_ver2"]["Task"].find()
     index = 0
     for doc in un_runned_docs:
 
@@ -719,7 +718,9 @@ def newsToTaskRun():
 #task , img get
 def GetImagTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"relateImgOk": 0}, {"relateImgOk": {"$exists": 0}}]})
+    # un_runned_docs = conn["news_ver2"]["googleNewsItem"].find({"$or": [{"relateImgOk": 0}, {"relateImgOk": {"$exists": 0}}]})
+
+    un_runned_docs = conn["news_ver2"]["googleNewsItem"].find()
 
     for doc in un_runned_docs:
         url = doc["url"]
