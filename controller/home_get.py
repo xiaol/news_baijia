@@ -88,7 +88,7 @@ def homeContentFetch(options):
             if not doc["imgUrls"]:
                 continue
             if len(doc["imgUrls"]) > 0:
-                doc["imgUrl"] = doc["imgUrls"][-1]
+                doc["imgUrl"] = doc["imgUrls"]
                 del doc["imgUrls"]
 
         if "content" in doc.keys():

@@ -130,8 +130,8 @@ def GetWeibo(title):
 # Task : 命名实体识别， 定时分析mongo中新 新闻的命名实体识别
 def nerTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk":0}).sort([("updateTime", -1)])   #OK 大写
-    # un_runned_docs = conn["news_ver2"]["Task"].find()
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk":0}).sort([("updateTime", -1)])   #OK 大写
+    un_runned_docs = conn["news_ver2"]["Task"].find()
     index = 0
 
     url_title_pairs = []
@@ -785,6 +785,7 @@ def doImgGetAndSave(k, relate, url):
         return
 
     conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"relateImgOk": 1}})
+    print "doImgGetAndSave ok , url :", url
 
 
 def GetImgByUrl(url):
