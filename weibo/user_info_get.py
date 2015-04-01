@@ -34,6 +34,7 @@ def get_weibo_user(weibo_id):
 
     except Exception as e:
 
+
         print "get_weibo_user error", e
 
 
