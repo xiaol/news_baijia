@@ -841,7 +841,7 @@ if __name__ == '__main__':
 
         elif arg == 'baiduNews':
             while True:
-                time.sleep(300)
+                # time.sleep(300)
                 baiduNewsTaskRun()
         elif arg == 'relateimg':
             while True:
