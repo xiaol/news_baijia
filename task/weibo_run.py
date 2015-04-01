@@ -43,7 +43,7 @@ mapOfSourceName = {"weibo":"微博"}
 # Task : 微博获取任务，定时获取数据，存到mongo
 def weiboTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["googleNewsItem"].find()
+    un_runned_docs = conn["news_ver2"]["Task"].find()
     # un_runned_docs = conn["news_ver2"]["Task"].find({"weiboOk": 0})
 
     success_num = 0
