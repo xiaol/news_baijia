@@ -11,6 +11,9 @@ def fetchContent(url, filterurls, updateTime=None):
 
     doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
 
+    if not doc:
+        return
+
     if updateTime is None:
         updateTime = ''
 

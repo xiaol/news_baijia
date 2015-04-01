@@ -474,7 +474,7 @@ def isOnlineTaskRun():
             baikeOk = doc["baikeOk"]
 
         if contentOk==1 and abstractOk==1 and nerOk==1 and doubanOk == 1 and baikeOk == 1 and weiboOk == 1 \
-                and zhihuOk == 1 and baiduSearchOk == 1:
+                and zhihuOk == 1 and baiduSearchOk == 1 and ImgMeetCondition(url):
             try:
                 conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"isOnline": 1}})
 
@@ -485,6 +485,18 @@ def isOnlineTaskRun():
             conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"isOnline": 1}})
 
             print "isOnlineTaskRun success, the doc url is:", url
+
+
+def ImgMeetCondition(url):
+
+    doc = conn['news_ver2']['googleNewsItem'].find_one({"sourceUrl": url})
+    if not "imgUrls" in doc.keys() or not doc['imgUrls']:
+        return False
+
+    img_url = doc['imgUrls']
+
+
+    return True
 
 # task 百科
 def baikeTaskRun():
@@ -770,8 +782,6 @@ def GetImagTaskRun():
 
         for k in keys:
             doImgGetAndSave(k, relate, url)
-
-
 
 def doImgGetAndSave(k, relate, url):
 
