@@ -15,7 +15,6 @@ import sys
 import urllib
 import threading
 
-
 reload(sys)
 sys.setdefaultencoding('utf8')
 
@@ -80,13 +79,6 @@ def weiboTaskRun():
 
             success_num += 1
             print "weiboTaskRun success, the doc url is:" + url, "sucess num:", success_num
-
-
-
-        # fail_num += 1
-        # print "weiboTaskRun fail, the doc url is:" + url, "fail num:", fail_num
-
-
 
 
 def GetWeibo(title):
@@ -582,8 +574,8 @@ def doubanTaskRun():
     for title, url in title_url_pairs:
 
 
-        title = "财政部：去年超8成土地出让收入用于拆迁征地"
-        url = "http://www.hinews.cn/news/system/2015/03/24/017426253.shtml"
+        # title = "财政部：去年超8成土地出让收入用于拆迁征地"
+        # url = "http://www.hinews.cn/news/system/2015/03/24/017426253.shtml"
         tags = extract_tags(title)
 
         is_db_error = False
@@ -609,7 +601,7 @@ def doubanTaskRun():
 
 def isDoubanTag(tag):
 
-    time.sleep(10)
+    time.sleep(6)
     url = "http://www.douban.com/tag/%s/?source=topic_search" % tag
     try:
         headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.101 Safari/537.36"}
