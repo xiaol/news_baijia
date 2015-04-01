@@ -16,10 +16,6 @@ def search_relate_docs(topic, page):
     param = {"text": topic, "page": str(page)}
     r = requests.post(api_url, data=json.dumps(param))
 
-    # if r.raise_for_status():
-    #     print "search_relate_docs request error", r.raise_for_status()
-
-    # print r.text
     return r.text
 
 

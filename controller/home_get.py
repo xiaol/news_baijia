@@ -19,15 +19,17 @@ def homeContentFetch(options):
     :rtype :
     """
     updateTime = ''
-    limit = 5
-    if "updateTime" in options.keys():
-        updateTime = options["updateTime"]
+    limit = 10
+    # if "updateTime" in options.keys():
+    #     updateTime = options["updateTime"]
+    if "page" in options.keys():
+        page = options["page"]
     if 'limit' in options.keys():
         limit = options["limit"]
 
     conn = DBStore._connect_news
 
-    docs = conn['news_ver2']['googleNewsItem'].find({"updateTime": {"$gt": updateTime}, "content": {"$exists": 1}}).sort([("updateTime",-1)]).limit(limit)
+    docs = conn['news_ver2']['googleNewsItem'].find({"updateTime": {"$gt": updateTime}, "content": {"$exists": 1}}).sort([("updateTime",-1)]).skip((page-1)*limit).limit(limit)
 
     index = 0
 
@@ -49,23 +51,37 @@ def homeContentFetch(options):
 
         del doc["relate"]
 
-
         if "weibo" in doc.keys():
-            if isinstance(doc["weibo"], dict):
-                sublist.append(doc["weibo"])
+            weibo = doc["weibo"]
+            if isinstance(weibo, dict):
+                if "sourceName" in weibo:
+                    weibo["sourceSitename"] = weibo["sourceName"]
+                    del weibo["sourceName"]
+                    sublist.append(weibo)
+
                 del doc["weibo"]
 
-            elif isinstance(doc["weibo"], list) and len(doc["weibo"]) > 0 :
-                sublist.append(doc["weibo"][0])
+            elif isinstance(weibo, list) and len(weibo) > 0:
+                weibo = weibo[0]
+                if "sourceName" in weibo:
+                    weibo["sourceSitename"] = weibo["sourceName"]
+                    del weibo["sourceName"]
+                sublist.append(weibo)
+
                 del doc["weibo"]
 
         if "zhihu" in doc.keys():
-            if isinstance(doc["zhihu"], dict):
-                sublist.append(doc["zhihu"])
+            zhihu = doc["zhihu"]
+
+            if isinstance(zhihu, dict):
+                zhihu["sourceSitename"] = "zhihu"
+                sublist.append(zhihu)
                 del doc["zhihu"]
 
             elif isinstance(doc["zhihu"], list) and len(doc["zhihu"]) > 0 :
-                sublist.append(doc["zhihu"][0])
+                zhihu = doc["zhihu"][0]
+                zhihu["sourceSitename"] = "zhihu"
+                sublist.append(zhihu)
                 del doc["zhihu"]
 
         if "imgUrls" in doc.keys():
@@ -127,6 +143,7 @@ def GetRelateNews(relate):
         if not e["title"]:
             continue
         if e["sourceSitename"] not in sourceNameSet:
+            e["user"]=""
             distinctList.append(e)
             distinct_response_urls.append(e["url"])
             sourceNameSet.add(e["sourceSitename"])
@@ -137,6 +154,7 @@ def GetRelateNews(relate):
         if not e["title"]:
             continue
         if e["sourceSitename"] not in sourceNameSet:
+            e["user"]=""
             distinctList.append(e)
             distinct_response_urls.append(e["url"])
             sourceNameSet.add(e["sourceSitename"])
@@ -149,6 +167,7 @@ def GetRelateNews(relate):
         if not e["title"]:
             continue
         if e["sourceSitename"] not in sourceNameSet:
+            e["user"]=""
             distinctList.append(e)
             distinct_response_urls.append(e["url"])
             sourceNameSet.add(e["sourceSitename"])
@@ -159,6 +178,7 @@ def GetRelateNews(relate):
         if not e["title"]:
             continue
         if e["sourceSitename"] not in sourceNameSet:
+            e["user"]=""
             distinctList.append(e)
             distinct_response_urls.append(e["url"])
             sourceNameSet.add(e["sourceSitename"])
@@ -169,6 +189,7 @@ def GetRelateNews(relate):
         if not e["title"]:
             continue
         if e["sourceSitename"] not in sourceNameSet:
+            e["user"]=""
             distinctList.append(e)
             distinct_response_urls.append(e["url"])
             sourceNameSet.add(e["sourceSitename"])
@@ -177,12 +198,6 @@ def GetRelateNews(relate):
 
     otherNum = len(sumList) - len(distinctList)
     return distinctList, len(distinctList), distinct_response_urls, otherNum
-
-
-
-
-
-
 
 def GetWeibos(title, num):
 
