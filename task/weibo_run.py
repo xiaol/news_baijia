@@ -45,8 +45,8 @@ mapOfSourceName = {"weibo":"微博"}
 # Task : 微博获取任务，定时获取数据，存到mongo
 def weiboTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find()
-    un_runned_docs = conn["news_ver2"]["Task"].find({"weiboOk": 0}).sort([("updateTime", -1)])
+    un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"weiboOk": 0}).sort([("updateTime", -1)])
 
     success_num = 0
 
@@ -59,19 +59,28 @@ def weiboTaskRun():
 
     for url, title in url_title_pairs:
 
+
         keywords = extract_tags(title, 2)
-        keywords = " ".join(keywords)
+        keyword = " ".join(keywords)
+        ner = Getner(title)
+
+        if ner and not ner in keywords:
+            keyword = ner + " " + keyword
 
         try:
-            weibo_ready = GetWeibo(keywords)
+            weibo_ready = GetWeibo(keyword)
 
         except ConnectionError as e:
 
             continue
 
+        if weibo_ready is None and ner:
+            weibo_ready = GetWeibo(ner)
+
         if weibo_ready is None:
 
             conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"weiboOk": 1}})
+            print "there is no weibo of this news, the url and title is===>", url," || ", title
 
         if weibo_ready is not None:
 
@@ -877,7 +886,7 @@ if __name__ == '__main__':
             print "weibo start"
             index=0
             while True:
-                time.sleep(60)
+                # time.sleep(60)
                 index += 1
                 weiboTaskRun()
                 logging.warn("===============this round of weibo complete====================")
