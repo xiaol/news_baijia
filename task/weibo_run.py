@@ -149,8 +149,8 @@ def GetWeibo(title):
 # Task : 命名实体识别， 定时分析mongo中新 新闻的命名实体识别
 def nerTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk":0}).sort([("updateTime", -1)])   #OK 大写
-    un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
+    un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk":0}).sort([("updateTime", -1)])   #OK 大写
+    # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
     index = 0
 
     url_title_pairs = []
@@ -746,9 +746,9 @@ def isDoubanTag(tag):
 
 def baiduNewsTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"$or":[{"baiduSearchOk": 0}, {"baiduSearchOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
+    un_runned_docs = conn["news_ver2"]["Task"].find({"$or":[{"baiduSearchOk": 0}, {"baiduSearchOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
 
-    un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
+    # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
 
     url_title_pairs = []
     for doc in un_runned_docs:
@@ -818,9 +818,9 @@ def newsToTaskRun():
 #task , img get
 def GetImagTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"relateImgOk": 0}, {"relateImgOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
+    un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"relateImgOk": 0}, {"relateImgOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
 
-    un_runned_docs = conn["news_ver2"]["Task"].find()
+    # un_runned_docs = conn["news_ver2"]["Task"].find()
 
     urls = []
     for doc in un_runned_docs:
@@ -1002,7 +1002,7 @@ if __name__ == '__main__':
 
         elif arg == 'baiduNews':
             while True:
-                time.sleep(300)
+                time.sleep(50)
                 baiduNewsTaskRun()
                 logging.warn("===============this round of baiduNews complete====================")
         elif arg == 'relateimg':
@@ -1012,7 +1012,7 @@ if __name__ == '__main__':
                 logging.warn("===============this round of relateimg complete====================")
         elif arg == "isOnline":
             while True:
-                # time.sleep(300)
+                time.sleep(40)
                 isOnlineTaskRun()
                 logging.warn("===============this round of isonline complete====================")
 
