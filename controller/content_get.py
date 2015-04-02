@@ -59,6 +59,8 @@ def fetchContent(url, filterurls, updateTime=None):
     if 'baike' in doc.keys():
         baike = doc['baike']
         if isinstance(baike, dict):
+            baike['abs'] = baike['abstract']
+            del baike['abstract']
             result['baike'] = [baike]
 
         if isinstance(baike, list) and len(baike) > 0:
