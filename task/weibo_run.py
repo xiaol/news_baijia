@@ -45,8 +45,8 @@ mapOfSourceName = {"weibo":"微博"}
 # Task : 微博获取任务，定时获取数据，存到mongo
 def weiboTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"weiboOk": 0}).sort([("updateTime", -1)])
+    # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
+    un_runned_docs = conn["news_ver2"]["Task"].find({"weiboOk": 0}).sort([("updateTime", -1)])
 
     success_num = 0
 
@@ -60,12 +60,7 @@ def weiboTaskRun():
     for url, title in url_title_pairs:
 
 
-        keywords = extract_tags(title, 2)
-        keyword = " ".join(keywords)
-        ner = Getner(title)
-
-        if ner and not ner in keywords:
-            keyword = ner + " " + keyword
+        keyword, ner = GetLastKeyWord(title)
 
         try:
             weibo_ready = GetWeibo(keyword)
@@ -94,6 +89,19 @@ def weiboTaskRun():
 
             success_num += 1
             print "weiboTaskRun success, the doc url is:" + url, "sucess num:", success_num
+
+def GetLastKeyWord(title):
+
+    keywords = extract_tags(title, 2)
+    keyword = " ".join(keywords)
+
+    ner = Getner(title)
+    if ner and not ner in keywords:
+        keyword = ner + " " + keyword
+
+    return keyword, ner
+
+
 
 
 def GetWeibo(title):
@@ -141,8 +149,8 @@ def GetWeibo(title):
 # Task : 命名实体识别， 定时分析mongo中新 新闻的命名实体识别
 def nerTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk":0}).sort([("updateTime", -1)])   #OK 大写
-    un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
+    un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk":0}).sort([("updateTime", -1)])   #OK 大写
+    # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
     index = 0
 
     url_title_pairs = []
@@ -347,8 +355,7 @@ def cont_pic_titleTaskRun():
 def zhihuTaskRun():
 
     un_runned_docs = conn["news_ver2"]["Task"].find({"zhihuOk": 0}).sort([("updateTime", -1)])
-    # un_runned_docs = conn["news_ver2"]["Task"].find()
-
+    # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
 
     url_title_pairs = []
 
@@ -363,8 +370,15 @@ def zhihuTaskRun():
     for url, title in url_title_pairs:
 
         index += 1
-        keywords = extract_tags(title, 2)
-        keywords = "".join(keywords)
+
+        ner = Getner(title)
+
+        if ner:
+            keywords = ner
+        else:
+            print "when get zhihu, the  ner is None, the url, title==>", url, "|| ", title
+            keywords = extract_tags(title, 2)
+            keywords = "".join(keywords)
 
         zhihu = GetZhihu(keywords)
         if zhihu is None:
