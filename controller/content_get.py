@@ -175,6 +175,7 @@ def Get_by_url(url):
         if 'weima' in i:
             img.remove(i)
     result['img'] = img[0]
+    # result['img'] = img[3]
 
 
     if result['img'].startswith('/'):
@@ -183,10 +184,28 @@ def Get_by_url(url):
         aa = url.find('/', 7)
         print(url[:aa])
         result['img'] = url[:aa] + result['img']
+    elif result['img'].startswith('..'):
+        count = 0
+        while result['img'].startswith('..'):
+            count += 1
+            result['img'] = result['img'][3:]
+        print(result['img'])
+        get_list = url.split('/')
+        last_list = get_list[2:-1-count]
+        result['img'] = get_list[0] + '//' + '/'.join(last_list) + '/' + result['img']
+        print(result['img'])
+    elif result['img'].startswith('.'):
+        get_list = url.split('/')
+        print(get_list)
+        last_list = get_list[2:-1]
+        print(last_list)
+        result['img'] = get_list[0] + '//' + '/'.join(last_list) + result['img'][1:]
+        print(result['img'])
 
     return result
 
 
 if __name__ == '__main__':
-    print(Get_by_url("http://www.jfdaily.com/guonei/new/201503/t20150323_1348362.html"))
+    print(Get_by_url("http://xinmin.news365.com.cn/tyxw/201503/t20150323_1779650.html"))
+    # print(Get_by_url("http://www.jfdaily.com/guonei/new/201503/t20150323_1348362.html"))
     # print(Get_by_url("http://sports.sina.com.cn/l/s/2015-03-24/10287553303.shtml"))
