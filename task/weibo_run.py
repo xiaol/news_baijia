@@ -141,8 +141,8 @@ def GetWeibo(title):
 # Task : 命名实体识别， 定时分析mongo中新 新闻的命名实体识别
 def nerTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk":0}).sort([("updateTime", -1)])   #OK 大写
-    # un_runned_docs = conn["news_ver2"]["Task"].find()
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk":0}).sort([("updateTime", -1)])   #OK 大写
+    un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
     index = 0
 
     url_title_pairs = []
@@ -167,7 +167,7 @@ def nerTaskRun():
 
         #ner 有问题，跳过
         if not ne:
-            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"nerOk": 1}})
+            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"nerOk": 1, "contentOk": 1}})
             continue
 
         try:
@@ -886,7 +886,7 @@ if __name__ == '__main__':
             print "weibo start"
             index=0
             while True:
-                # time.sleep(60)
+                time.sleep(30)
                 index += 1
                 weiboTaskRun()
                 logging.warn("===============this round of weibo complete====================")
@@ -894,7 +894,7 @@ if __name__ == '__main__':
         elif arg == 'ner':
             print "NER start"
             while True:
-                time.sleep(60)
+                time.sleep(20)
                 nerTaskRun()
                 logging.warn("===============this round of NER complete====================")
 
@@ -906,7 +906,7 @@ if __name__ == '__main__':
 
         elif arg == 'zhihu':
             while True:
-                time.sleep(60)
+                time.sleep(40)
                 zhihuTaskRun()
                 logging.warn("===============this round of zhihu complete====================")
 
