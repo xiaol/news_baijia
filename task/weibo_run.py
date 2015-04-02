@@ -149,8 +149,8 @@ def GetWeibo(title):
 # Task : 命名实体识别， 定时分析mongo中新 新闻的命名实体识别
 def nerTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk":0}).sort([("updateTime", -1)])   #OK 大写
-    # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"nerOk":0}).sort([("updateTime", -1)])   #OK 大写
+    un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
     index = 0
 
     url_title_pairs = []
@@ -201,6 +201,9 @@ def get_content_by_url(url):
     r_text = requests.get(apiUrl_text)
     text = (r_text.json())["text"]
     img = GetImgByUrl(url)['img']
+
+    if not img or not text:
+        return None
 
     try:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"imgUrls": img, "content": text}})
@@ -743,9 +746,9 @@ def isDoubanTag(tag):
 
 def baiduNewsTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"$or":[{"baiduSearchOk": 0}, {"baiduSearchOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"$or":[{"baiduSearchOk": 0}, {"baiduSearchOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
+    un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
 
     url_title_pairs = []
     for doc in un_runned_docs:
@@ -774,12 +777,15 @@ def baiduNewsTaskRun():
 
 
 
-        cmd = 'sh /root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
+        # cmd = 'sh /root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
+        cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
 
         child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
 
         print "complete url===>", url_here,
+
+        conn["news_ver2"]["Task"].update({"url": url_here}, {"$set": {"baiduSearchOk": 1}})
 
 def timeout(p):
 
@@ -812,9 +818,9 @@ def newsToTaskRun():
 #task , img get
 def GetImagTaskRun():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"relateImgOk": 0}, {"relateImgOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
+    # un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"relateImgOk": 0}, {"relateImgOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find()
+    un_runned_docs = conn["news_ver2"]["Task"].find()
 
     urls = []
     for doc in un_runned_docs:
@@ -840,6 +846,11 @@ def doImgGetAndSave(k, relate, url):
             continue
         url_here = e["url"]
         img = GetImgByUrl(url_here)['img']
+
+        if not img:
+            sub_relate.remove(e)
+            continue
+
         e["img"] = img
 
     try:
@@ -864,31 +875,81 @@ def GetImgByUrl(url):
 
     if isinstance(imgs, list) and len(imgs) > 0:
 
-        for i in imgs:
-            if i.endswith('.gif'):
-                imgs.remove(i)
-            if 'weima' in i:
-                imgs.remove(i)
+        img_result = []
 
+        for i in imgs:
+            # result['img'] = i
+            result_i = i
+            if result_i.startswith('/'):
+                print('!!!!!!!!!!!')
+                print(result_i)
+                aa = url.find('/', 7)
+                print(url[:aa])
+                result_i = url[:aa] + result_i
+                print(result_i)
+                # img.remove(i)
+                # img.append(result_i)
+                img_result.append(result_i)
+            elif result_i.startswith('..'):
+                count = 0
+                while result_i.startswith('..'):
+                    count += 1
+                    result_i = result_i[3:]
+                print(result_i)
+                get_list = url.split('/')
+                last_list = get_list[2:-1-count]
+                result_i = get_list[0] + '//' + '/'.join(last_list) + '/' + result_i
+                print(result_i)
+                # img.remove(i)
+                # img.append(result_i)
+                img_result.append(result_i)
+
+            elif result_i.startswith('.'):
+                get_list = url.split('/')
+                print(get_list)
+                last_list = get_list[2:-1]
+                print(last_list)
+                result_i = get_list[0] + '//' + '/'.join(last_list) + result_i[1:]
+                print(result_i)
+                # img.remove(i)
+                # img.append(resuolt_i)
+                img_result.append(result_i)
+            try:
+                if result_i.endswith('.gif'):
+                    # img.remove(result_i)
+                    img_result.remove(result_i)
+                if 'weima' in result_i:
+                    img_result.remove(result_i)
+                if ImgMeetCondition_ver2(result_i) == True:
+                    img_result.remove(result_i)
+            except ValueError:
+                # print "Value Error"
+                pass
         try:
-            result['img'] = imgs[0]
+            result['img'] = img_result[0]
         except IndexError:
-            result["img"] = ""
-            return result
-    # while result['img'].startswith('/'):
-    #     print('!!!!!!!!!!!')
-    #     print(result['img'])
-        if result['img'].startswith('/'):
-            # print('!!!!!!!!!!!')
-            # print(result['img'])
-            aa = url.find('/', 7)
-            # print(url[:aa])
-            result['img'] = url[:aa] + result['img']
+            print "result None"
+            result["img"] = ''
     else:
         result['img'] = ""
 
     return result
 
+def ImgMeetCondition_ver2(url):
+        img_url = url
+
+        try:
+            file = cStringIO.StringIO(urllib.urlopen(img_url).read())
+            im = Image.open(file)
+        except IOError:
+            print "IOError, imgurl===>", img_url, "url ====>", url
+            return True
+        width, height = im.size
+        print(width, height)
+        if width <= 200 or height <= 200:
+            return True
+        print width, "+", height, " url=======>", img_url
+        return False
 
 if __name__ == '__main__':
 
@@ -908,7 +969,7 @@ if __name__ == '__main__':
         elif arg == 'ner':
             print "NER start"
             while True:
-                time.sleep(20)
+                # time.sleep(20)
                 nerTaskRun()
                 logging.warn("===============this round of NER complete====================")
 

@@ -1,5 +1,5 @@
 #coding=utf-8
-import Image
+from PIL import Image
 
 from config import dbConn
 import requests
