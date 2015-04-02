@@ -1,4 +1,5 @@
 #coding=utf-8
+import Image
 
 from config import dbConn
 import requests
@@ -163,18 +164,22 @@ def Get_by_url(url):
     r_text = requests.get(apiUrl_text)
 
     img = (r_img.json())["imgs"]
+    print(type(img))
     text = (r_text.json())["text"]
 
     result = {}
+    img_result = []
     if not img or not len(img)>0:
         return None
 
     # result['img'] = img[-1]
-
+    '''
     for i in img:
         if i.endswith('.gif'):
             img.remove(i)
         if 'weima' in i:
+            img.remove(i)
+        if ImgMeetCondition(i) == False:
             img.remove(i)
     result['img'] = img[0]
     # result['img'] = img[3]
@@ -203,11 +208,75 @@ def Get_by_url(url):
         print(last_list)
         result['img'] = get_list[0] + '//' + '/'.join(last_list) + result['img'][1:]
         print(result['img'])
+    '''
+    for i in img:
+        # result['img'] = i
+        result_i = i
+        if result_i.startswith('/'):
+            print('!!!!!!!!!!!')
+            print(result_i)
+            aa = url.find('/', 7)
+            print(url[:aa])
+            result_i = url[:aa] + result_i
+            print(result_i)
+            # img.remove(i)
+            # img.append(result_i)
+            img_result.append(result_i)
+        elif result_i.startswith('..'):
+            count = 0
+            while result_i.startswith('..'):
+                count += 1
+                result_i = result_i[3:]
+            print(result_i)
+            get_list = url.split('/')
+            last_list = get_list[2:-1-count]
+            result_i = get_list[0] + '//' + '/'.join(last_list) + '/' + result_i
+            print(result_i)
+            # img.remove(i)
+            # img.append(result_i)
+            img_result.append(result_i)
 
+        elif result_i.startswith('.'):
+            get_list = url.split('/')
+            print(get_list)
+            last_list = get_list[2:-1]
+            print(last_list)
+            result_i = get_list[0] + '//' + '/'.join(last_list) + result_i[1:]
+            print(result_i)
+            # img.remove(i)
+            # img.append(resuolt_i)
+            img_result.append(result_i)
+        if result_i.endswith('.gif'):
+            # img.remove(result_i)
+            img_result.remove(result_i)
+        if 'weima' in result_i:
+            img_result.remove(result_i)
+        if ImgMeetCondition(result_i) == True:
+            img_result.remove(result_i)
+    result['img'] = img_result[0]
     return result
+
+
+import urllib, cStringIO
+def ImgMeetCondition(url):
+    img_url = url
+    # img_url = 'http://www.01happy.com/wp-content/uploads/2012/09/bg.png'
+    try:
+        file = cStringIO.StringIO(urllib.urlopen(img_url).read())
+        im = Image.open(file)
+    except IOError:
+        print "IOError, imgurl===>", img_url, "url ====>", url
+        return True
+    width, height = im.size
+    print(width, height)
+    if width <= 200 or height <= 200:
+        return True
+    print width, "+", height, " url=======>", img_url
+    return False
 
 
 if __name__ == '__main__':
     print(Get_by_url("http://xinmin.news365.com.cn/tyxw/201503/t20150323_1779650.html"))
     # print(Get_by_url("http://www.jfdaily.com/guonei/new/201503/t20150323_1348362.html"))
     # print(Get_by_url("http://sports.sina.com.cn/l/s/2015-03-24/10287553303.shtml"))
+    # print(ImgMeetCondition("http://xinmin.news365.com.cn/images/index_3.jpg"))
