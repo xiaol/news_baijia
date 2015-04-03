@@ -201,6 +201,7 @@ def get_content_by_url(url):
     img = GetImgByUrl(url)['img']
 
     if not img or not text:
+        print "when do ner task, img or text is None"
         return None
 
     try:
@@ -488,7 +489,6 @@ def isOnlineTaskRun():
         if "nerOk" in doc.keys():
             nerOk = doc["nerOk"]
 
-
         if "baiduSearchOk" in doc.keys():
             baiduSearchOk = doc["baiduSearchOk"]
 
@@ -526,8 +526,6 @@ def ImgMeetCondition(url):
         return False
 
     img_url = doc['imgUrls']
-
-    # img_url = 'http://www.01happy.com/wp-content/uploads/2012/09/bg.png'
     try:
         file = cStringIO.StringIO(urllib.urlopen(img_url).read())
         im = Image.open(file)
@@ -535,11 +533,9 @@ def ImgMeetCondition(url):
         print "IOError, imgurl===>", img_url, "url ====>", url
         return False
 
-
-
     width, height = im.size
 
-    if width >= 200 and height >= 200:
+    if width * height >= 40000:
         return True
 
     print width, "+", height, " url=======>", img_url
@@ -754,6 +750,7 @@ def baiduNewsTaskRun():
         url = doc["url"]
         title = doc["title"]
         if not url or not title:
+            print "when doing baiduNewsTask, there is no url or title, url==>", url, "title===>", title
             continue
 
         ls = [url, title]
@@ -873,72 +870,94 @@ def GetImgByUrl(url):
 
     if isinstance(imgs, list) and len(imgs) > 0:
 
-        img_result = []
+        img_result = preCopyImg(url, imgs)
 
-        for i in imgs:
-            # result['img'] = i
-            result_i = i
-            # img_result.append(i)
-            # result_i = "http://himg2.huanqiu.com/attachment2010/2015/0402/16/55/20150402045552915.jpg"
-            if result_i.startswith('/'):
-                print('!!!!!!!!!!!')
-                print(result_i)
-                aa = url.find('/', 7)
-                print(url[:aa])
-                result_i = url[:aa] + result_i
-                print(result_i)
-                # img.remove(i)
-                # img.append(result_i)
-                img_result.append(result_i)
-            elif result_i.startswith('..'):
-                count = 0
-                while result_i.startswith('..'):
-                    count += 1
-                    result_i = result_i[3:]
-                print(result_i)
-                get_list = url.split('/')
-                last_list = get_list[2:-1-count]
-                result_i = get_list[0] + '//' + '/'.join(last_list) + '/' + result_i
-                print(result_i)
-                # img.remove(i)
-                # img.append(result_i)
-                img_result.append(result_i)
+        img_result = copyNormalImg(img_result)
 
-            elif result_i.startswith('.'):
-                get_list = url.split('/')
-                print(get_list)
-                last_list = get_list[2:-1]
-                print(last_list)
-                result_i = get_list[0] + '//' + '/'.join(last_list) + result_i[1:]
-                print(result_i)
-                # img.remove(i)
-                # img.append(resuolt_i)
-                img_result.append(result_i)
-            else:
-                try:
-                    img_result.append(result_i)
-                    if result_i.endswith('.gif'):
-                        # img.remove(result_i)
-                        img_result.remove(result_i)
-                    if 'weima' in result_i:
-                        img_result.remove(result_i)
-                    if ImgMeetCondition_ver2(result_i) == True:
-                        img_result.remove(result_i)
-                except ValueError:
-                    # print "Value Error"
-                    pass
-        try:
-            result['img'] = img_result[0]
-        except IndexError:
-            print "result None"
-            result["img"] = ''
+        if img_result is None:
+            result['img'] = ''
+
     else:
-        result['img'] = ""
+        result['img'] = ''
 
     return result
 
-def ImgMeetCondition_ver2(url):
+def preCopyImg(url, img_urls):
+
+    img_result = []
+    for result_i in img_urls:
+        if result_i.startswith('/'):
+            aa = url.find('/', 7)
+            result_i = url[:aa] + result_i
+            img_result.append(result_i)
+
+        elif result_i.startswith('..'):
+            count = 0
+            while result_i.startswith('..'):
+                count += 1
+                result_i = result_i[3:]
+            get_list = url.split('/')
+            last_list = get_list[2:-1-count]
+            result_i = get_list[0] + '//' + '/'.join(last_list) + '/' + result_i
+            img_result.append(result_i)
+
+        elif result_i.startswith('.'):
+            get_list = url.split('/')
+            last_list = get_list[2:-1]
+            result_i = get_list[0] + '//' + '/'.join(last_list) + result_i[1:]
+            img_result.append(result_i)
+
+        else:
+            img_result.append(result_i)
+
+    return img_result
+
+def copyNormalImg(img_result):
+
+    result = []
+    for i in img_result:
+
+        result.append(i)
+        if i.endswith('.gif') or 'weima' in i or ImgMeetCondition_ver2(i):
+            result.remove(i)
+
+    if len(result) > 0:
+        return result[0]
+    else:
+        return None
+
+
+def GetBigImg(img_result):
+
+    if not len(img_result)>0:
+        raise IndexError
+
+    big_img = ''
+    big_size = 0
+    for img in img_result:
+        img_size = ImgMeetCondition_ver2(img, True)
+        if img_size > big_size:
+            big_size = img_size
+            big_img = img
+
+    return big_img
+
+
+
+
+def ImgMeetCondition_ver2(url, getSize=False):
         img_url = url
+
+        if getSize:
+
+            try:
+                file = cStringIO.StringIO(urllib.urlopen(img_url).read())
+                im = Image.open(file)
+            except IOError:
+                print "IOError, imgurl===>", img_url, "url ====>", url
+                return 0
+            width, height = im.size
+            return width*height
 
         try:
             file = cStringIO.StringIO(urllib.urlopen(img_url).read())
@@ -948,7 +967,7 @@ def ImgMeetCondition_ver2(url):
             return True
         width, height = im.size
         print(width, height)
-        if width <= 200 or height <= 200:
+        if width * height <= 40000:
             return True
         print width, "+", height, " url=======>", img_url
         return False
