@@ -6,7 +6,7 @@ from pymongo.read_preferences import ReadPreference
 import json
 import sys
 from requests.exceptions import ConnectionError
-from requests_with_sleep import requests
+import requests_with_sleep as requests
 import re
 import subprocess
 import time
