@@ -568,6 +568,7 @@ def ImgMeetCondition(url):
 
     img_url = doc['imgUrls']
     try:
+        img_url = img_url.encode("utf-8")
         file = cStringIO.StringIO(urllib.urlopen(img_url).read())
         im = Image.open(file)
     except IOError:
