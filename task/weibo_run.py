@@ -102,8 +102,6 @@ def GetLastKeyWord(title):
     return keyword, ner
 
 
-
-
 def GetWeibo(title):
 
     # if one:
@@ -880,6 +878,8 @@ def GetImgByUrl(url):
         for i in imgs:
             # result['img'] = i
             result_i = i
+            # img_result.append(i)
+            # result_i = "http://himg2.huanqiu.com/attachment2010/2015/0402/16/55/20150402045552915.jpg"
             if result_i.startswith('/'):
                 print('!!!!!!!!!!!')
                 print(result_i)
@@ -914,17 +914,19 @@ def GetImgByUrl(url):
                 # img.remove(i)
                 # img.append(resuolt_i)
                 img_result.append(result_i)
-            try:
-                if result_i.endswith('.gif'):
-                    # img.remove(result_i)
-                    img_result.remove(result_i)
-                if 'weima' in result_i:
-                    img_result.remove(result_i)
-                if ImgMeetCondition_ver2(result_i) == True:
-                    img_result.remove(result_i)
-            except ValueError:
-                # print "Value Error"
-                pass
+            else:
+                try:
+                    img_result.append(result_i)
+                    if result_i.endswith('.gif'):
+                        # img.remove(result_i)
+                        img_result.remove(result_i)
+                    if 'weima' in result_i:
+                        img_result.remove(result_i)
+                    if ImgMeetCondition_ver2(result_i) == True:
+                        img_result.remove(result_i)
+                except ValueError:
+                    # print "Value Error"
+                    pass
         try:
             result['img'] = img_result[0]
         except IndexError:
