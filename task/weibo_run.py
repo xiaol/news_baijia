@@ -855,8 +855,11 @@ def newsToTaskRun():
 #task , img get
 def GetImagTaskRun():
 
+
+    print "start GetImagTaskRun"
     un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"relateImgOk": 0}, {"relateImgOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
 
+    print "fetch mongo ok"
     # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
 
     urls = []
@@ -875,8 +878,11 @@ def GetImagTaskRun():
         for k in keys:
             doImgGetAndSave(k, relate, url)
 
+        print "complete relate url,==>", url
+
 def doImgGetAndSave(k, relate, url):
 
+    print "doImgGetAndSave start"
     sub_relate = relate[k]
     for e in sub_relate:
         if not "url" in e.keys():
@@ -889,6 +895,7 @@ def doImgGetAndSave(k, relate, url):
             continue
 
         e["img"] = img
+
 
     try:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"relate."+k: sub_relate}})
