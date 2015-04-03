@@ -909,6 +909,7 @@ def doImgGetAndSave(k, relate, url):
 
 def GetImgByUrl(url):
 
+    time.sleep(1)
     apiUrl_img = "http://121.41.75.213:8080/extractors_mvc_war/api/getImg?url="+url
 
     r_img = requests.get(apiUrl_img)
@@ -1088,7 +1089,7 @@ if __name__ == '__main__':
                 logging.warn("===============this round of baiduNews complete====================")
         elif arg == 'relateimg':
             while True:
-                time.sleep(40)
+                # time.sleep(40)
                 GetImagTaskRun()
                 logging.warn("===============this round of relateimg complete====================")
         elif arg == "isOnline":
