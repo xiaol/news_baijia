@@ -17,6 +17,7 @@ import threading
 import logging
 import os
 from PIL import Image
+import datetime
 print "=========",os.getcwd()
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -102,12 +103,10 @@ def GetLastKeyWord(title):
     return keyword, ner
 
 
-
-
 def GetWeibo(title):
 
     # if one:
-    weibos = weibo_relate_docs_get.search_relate_docs(title,1)
+    weibos = weibo_relate_docs_get.search_relate_docs(title, 1)
     # else:
     #     weibos = weibo_relate_docs_get.search_relate_docs(title, 7)
 
@@ -165,6 +164,10 @@ def nerTaskRun():
 
         #获取内容 有问题，跳过
         if not content:
+            today = datetime.date.today()
+            yesterday = today - datetime.timedelta(days=1)
+            yesterday = yesterday.strftime("%Y-%m-%d %H:%M:%S")
+            conn["news_ver2"]["Task"].update({"url": url, "updateTime":{"$lt": yesterday}}, {"$set": {"contentOk": -1}})
             continue
 
         title_after_cut = jieba.cut(title)
@@ -188,11 +191,9 @@ def nerTaskRun():
         index += 1
         print "ne set success, the doc url is:", url, "num===> ", index
 
-
-
-
 def get_content_by_url(url):
 
+    print "get content for url====>", url
     time.sleep(4)
     apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url="
 
@@ -202,7 +203,15 @@ def get_content_by_url(url):
     text = (r_text.json())["text"]
     img = GetImgByUrl(url)['img']
 
-    if not img or not text:
+    if not img:
+        print "when do ner task, img or text is None"
+
+        img = CopyImgAfterFail(url)   #取左侧图片
+
+        if not img:
+            return None
+
+    if not text:
         return None
 
     try:
@@ -212,6 +221,19 @@ def get_content_by_url(url):
         return None
 
     return text
+
+def CopyImgAfterFail(url):
+
+    doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
+
+    left = doc["relate"]["left"]
+
+    if "img" in left:
+        return left["img"]
+    else:
+        return None
+
+
 
 
 def getNe(content_after_cut):
@@ -232,7 +254,6 @@ def getNe(content_after_cut):
     ne = parseNerResult(json_r)
 
     return ne
-
 
 def parseNerResult(json_r):
 
@@ -307,9 +328,13 @@ def abstractTaskRun():
         urls.append(url)
 
     for url in urls:
-        content = get_content_by_url(url)
+        content = GetContent(url)
 
         if not content:
+            today = datetime.date.today()
+            yesterday = today - datetime.timedelta(days=1)
+            yesterday = yesterday.strftime("%Y-%m-%d %H:%M:%S")
+            conn["news_ver2"]["Task"].update({"url": url, "updateTime":{"$lt": yesterday}}, {"$set": {"contentOk": -1}})
             continue
 
         abstract_here = KeywordExtraction.abstract(content)
@@ -325,6 +350,21 @@ def abstractTaskRun():
 
         success_num += 1
         print "abstract update success, the doc url is: ", url, "success num:", success_num
+
+
+def GetContent(url):
+
+    time.sleep(4)
+    apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url="+url
+
+    try:
+        r_text = requests.get(apiUrl_text)
+        text = (r_text.json())["text"]
+    except Exception:
+        print "get content exception"
+        return None
+
+    return text
 
 
 # 正文，和图片获取 task
@@ -490,7 +530,6 @@ def isOnlineTaskRun():
         if "nerOk" in doc.keys():
             nerOk = doc["nerOk"]
 
-
         if "baiduSearchOk" in doc.keys():
             baiduSearchOk = doc["baiduSearchOk"]
 
@@ -528,8 +567,6 @@ def ImgMeetCondition(url):
         return False
 
     img_url = doc['imgUrls']
-
-    # img_url = 'http://www.01happy.com/wp-content/uploads/2012/09/bg.png'
     try:
         file = cStringIO.StringIO(urllib.urlopen(img_url).read())
         im = Image.open(file)
@@ -537,11 +574,9 @@ def ImgMeetCondition(url):
         print "IOError, imgurl===>", img_url, "url ====>", url
         return False
 
-
-
     width, height = im.size
 
-    if width >= 200 and height >= 200:
+    if width * height >= 40000:
         return True
 
     print width, "+", height, " url=======>", img_url
@@ -756,6 +791,7 @@ def baiduNewsTaskRun():
         url = doc["url"]
         title = doc["title"]
         if not url or not title:
+            print "when doing baiduNewsTask, there is no url or title, url==>", url, "title===>", title
             continue
 
         ls = [url, title]
@@ -777,8 +813,8 @@ def baiduNewsTaskRun():
 
 
 
-        # cmd = 'sh /root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
-        cmd = 'sh script.sh ' + url_here + ' ' + topic
+        cmd = 'sh /root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
+        # cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
 
         child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
@@ -820,7 +856,7 @@ def GetImagTaskRun():
 
     un_runned_docs = conn["news_ver2"]["Task"].find({"$or": [{"relateImgOk": 0}, {"relateImgOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find()
+    # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
 
     urls = []
     for doc in un_runned_docs:
@@ -875,70 +911,108 @@ def GetImgByUrl(url):
 
     if isinstance(imgs, list) and len(imgs) > 0:
 
-        img_result = []
+        img_result = preCopyImg(url, imgs)
 
-        for i in imgs:
-            # result['img'] = i
-            result_i = i
-            if result_i.startswith('/'):
-                print('!!!!!!!!!!!')
-                print(result_i)
-                aa = url.find('/', 7)
-                print(url[:aa])
-                result_i = url[:aa] + result_i
-                print(result_i)
-                # img.remove(i)
-                # img.append(result_i)
-                img_result.append(result_i)
-            elif result_i.startswith('..'):
-                count = 0
-                while result_i.startswith('..'):
-                    count += 1
-                    result_i = result_i[3:]
-                print(result_i)
-                get_list = url.split('/')
-                last_list = get_list[2:-1-count]
-                result_i = get_list[0] + '//' + '/'.join(last_list) + '/' + result_i
-                print(result_i)
-                # img.remove(i)
-                # img.append(result_i)
-                img_result.append(result_i)
+        img_result = copyNormalImg(img_result)
 
-            elif result_i.startswith('.'):
-                get_list = url.split('/')
-                print(get_list)
-                last_list = get_list[2:-1]
-                print(last_list)
-                result_i = get_list[0] + '//' + '/'.join(last_list) + result_i[1:]
-                print(result_i)
-                # img.remove(i)
-                # img.append(resuolt_i)
-                img_result.append(result_i)
-            try:
-                if result_i.endswith('.gif'):
-                    # img.remove(result_i)
-                    img_result.remove(result_i)
-                if 'weima' in result_i:
-                    img_result.remove(result_i)
-                if ImgMeetCondition_ver2(result_i) == True:
-                    img_result.remove(result_i)
-            except ValueError:
-                # print "Value Error"
-                pass
-        try:
-            result['img'] = img_result[0]
-        except IndexError:
-            print "result None"
-            result["img"] = ''
+        if img_result is None:
+            result['img'] = ''
+        else:
+            result['img'] = img_result
+
     else:
-        result['img'] = ""
+        result['img'] = ''
 
     return result
 
-def ImgMeetCondition_ver2(url):
+def preCopyImg(url, img_urls):
+
+    img_result = []
+    for result_i in img_urls:
+        if result_i.startswith('/'):
+            aa = url.find('/', 7)
+            result_i = url[:aa] + result_i
+            img_result.append(result_i)
+
+        elif result_i.startswith('..'):
+            count = 0
+            while result_i.startswith('..'):
+                count += 1
+                result_i = result_i[3:]
+            get_list = url.split('/')
+            last_list = get_list[2:-1-count]
+            result_i = get_list[0] + '//' + '/'.join(last_list) + '/' + result_i
+            img_result.append(result_i)
+
+        elif result_i.startswith('.'):
+            get_list = url.split('/')
+            last_list = get_list[2:-1]
+            result_i = get_list[0] + '//' + '/'.join(last_list) + result_i[1:]
+            img_result.append(result_i)
+
+        elif re.search(r'^[^http://].*?([\w0-9]*?.jpg)',result_i):
+            preurl=re.search(r'(http://.*/)',url)
+            if preurl:
+                url_result=preurl.group(1)
+                url_result=url_result+result_i
+                img_result.append(url_result)
+        else:
+            img_result.append(result_i)
+
+    return img_result
+
+def copyNormalImg(img_result):
+
+    result = []
+    for i in img_result:
+
+        result.append(i)
+        if i.endswith('.gif') or 'weima' in i or ImgMeetCondition_ver2(i):
+            result.remove(i)
+
+    if len(result) > 0:
+        return result[0]
+    else:
+        return None
+
+
+def GetBigImg(img_result):
+
+    if not len(img_result)>0:
+        raise IndexError
+
+    big_img = ''
+    big_size = 0
+    for img in img_result:
+        img_size = ImgMeetCondition_ver2(img, True)
+        if img_size > big_size:
+            big_size = img_size
+            big_img = img
+
+    return big_img
+
+
+
+
+def ImgMeetCondition_ver2(url, getSize=False):
+
+
         img_url = url
 
+        # img_url = "http://news.ittime.com.cn/uploadimage/images/窝窝团大.jpg"
+        if getSize:
+
+            try:
+                file = cStringIO.StringIO(urllib.urlopen(img_url).read())
+                im = Image.open(file)
+            except IOError:
+                print "IOError, imgurl===>", img_url, "url ====>", url
+                return 0
+            width, height = im.size
+            return width*height
+
         try:
+            img_url = img_url.encode('utf-8')
             file = cStringIO.StringIO(urllib.urlopen(img_url).read())
             im = Image.open(file)
         except IOError:
@@ -946,14 +1020,14 @@ def ImgMeetCondition_ver2(url):
             return True
         width, height = im.size
         print(width, height)
-        if width <= 200 or height <= 200:
+        if width * height <= 40000:
             return True
         print width, "+", height, " url=======>", img_url
         return False
 
 if __name__ == '__main__':
 
-
+    # ImgMeetCondition_ver2("111")
 
     for arg in sys.argv[1:]:
         print arg
@@ -998,7 +1072,6 @@ if __name__ == '__main__':
                 index += 1
                 doubanTaskRun()
                 logging.warn("===============this round of douban complete====================")
-
 
         elif arg == 'baiduNews':
             while True:
