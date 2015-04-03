@@ -1,14 +1,14 @@
 __author__ = 'jianghao'
 
 import time
-import requests
+from task import requests_with_sleep as requests
 
 ACCESS_TOKEN = "2.004t5RdCHB_LqCd7d61482d5iGDbcD"
 
 
 def get_weibo_user(weibo_id):
 
-    time.sleep(4)
+
     result = {}
     try:
         api_url = "https://api.weibo.com/2/statuses/queryid.json?type=1" + "&mid=" + weibo_id + "&access_token=" + ACCESS_TOKEN

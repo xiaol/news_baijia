@@ -160,8 +160,8 @@ def Get_by_url(url):
     apiUrl_img += url
     apiUrl_text += url
 
-    r_img = requests.get(apiUrl_img)
-    r_text = requests.get(apiUrl_text)
+    r_img = requests_with_sleep.get(apiUrl_img)
+    r_text = requests_with_sleep.get(apiUrl_text)
 
     img = (r_img.json())["imgs"]
     print(type(img))

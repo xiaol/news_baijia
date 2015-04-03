@@ -6,14 +6,12 @@ from pymongo.read_preferences import ReadPreference
 import json
 import sys
 from requests.exceptions import ConnectionError
-import requests
+import requests_with_sleep as requests
 import re
 import subprocess
 import time
 import lxml.etree as etree
 import sys
-import urllib
-import threading
 import logging
 import os
 from PIL import Image
@@ -194,7 +192,6 @@ def nerTaskRun():
 def get_content_by_url(url):
 
     print "get content for url====>", url
-    time.sleep(4)
     apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url="
 
     apiUrl_text += url
@@ -354,7 +351,6 @@ def abstractTaskRun():
 
 def GetContent(url):
 
-    time.sleep(4)
     apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url="+url
 
     try:
@@ -445,7 +441,6 @@ def zhihuTaskRun():
 
 def GetZhihu(keyword):
 
-    time.sleep(4)
     apiUrl = "http://www.zhihu.com/search?q={0}&type=question".format(keyword)
 
     r = requests.get(apiUrl)
@@ -629,7 +624,6 @@ def baikeTaskRun():
 
 def parseBaike(keyword):
 
-    time.sleep(4)
     url = "http://baike.baidu.com/search/none?word=%s&pn=0&rn=10&enc=utf8" % keyword
 
     print "$$$$$$$$$$====>",url
@@ -753,7 +747,6 @@ def doubanTaskRun():
 
 def isDoubanTag(tag):
 
-    time.sleep(6)
     url = "http://www.douban.com/tag/%s/?source=topic_search" % tag
     try:
         headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.101 Safari/537.36"}
@@ -823,12 +816,6 @@ def baiduNewsTaskRun():
         print "complete url===>", url_here,
 
         conn["news_ver2"]["Task"].update({"url": url_here}, {"$set": {"baiduSearchOk": 1}})
-
-def timeout(p):
-
-    if p.poll() is None:
-        print 'Error: process taking too long to complete--terminating'
-        p.kill()
 
 
 # task 从googleNewsItem 表中取没上线新闻到 Task表
@@ -909,7 +896,6 @@ def doImgGetAndSave(k, relate, url):
 
 def GetImgByUrl(url):
 
-    time.sleep(1)
     apiUrl_img = "http://121.41.75.213:8080/extractors_mvc_war/api/getImg?url="+url
 
     r_img = requests.get(apiUrl_img)
@@ -1052,7 +1038,7 @@ if __name__ == '__main__':
         elif arg == 'ner':
             print "NER start"
             while True:
-                # time.sleep(20)
+                time.sleep(20)
                 nerTaskRun()
                 logging.warn("===============this round of NER complete====================")
 
@@ -1089,7 +1075,7 @@ if __name__ == '__main__':
                 logging.warn("===============this round of baiduNews complete====================")
         elif arg == 'relateimg':
             while True:
-                # time.sleep(40)
+                time.sleep(40)
                 GetImagTaskRun()
                 logging.warn("===============this round of relateimg complete====================")
         elif arg == "isOnline":
