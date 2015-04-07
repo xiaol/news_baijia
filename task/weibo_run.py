@@ -159,15 +159,7 @@ def nerTaskRun():
 
 
     for url, title in url_title_pairs:
-        content = get_content_by_url(url)
 
-        #获取内容 有问题，跳过
-        if not content:
-            today = datetime.date.today()
-            yesterday = today - datetime.timedelta(days=1)
-            yesterday = yesterday.strftime("%Y-%m-%d %H:%M:%S")
-            conn["news_ver2"]["Task"].update({"url": url, "updateTime":{"$lt": yesterday}}, {"$set": {"contentOk": -1}})
-            continue
 
         title_after_cut = jieba.cut(title)
 
@@ -177,7 +169,7 @@ def nerTaskRun():
 
         #ner 有问题，跳过
         if not ne:
-            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"nerOk": 1, "contentOk": 1}})
+            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"nerOk": 1}})
             continue
 
         try:
@@ -186,11 +178,11 @@ def nerTaskRun():
             print "ne set fail, the doc url is===> ", url
             continue
 
-        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"nerOk": 1, "contentOk": 1}})
+        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"nerOk": 1}})
         index += 1
         print "ne set success, the doc url is:", url, "num===> ", index
 
-def get_content_by_url(url):
+def fetch_and_save_content_by_url(url):
 
     print "get content for url====>", url
     apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url="
@@ -207,10 +199,10 @@ def get_content_by_url(url):
         img = CopyImgAfterFail(url)   #取左侧图片
 
         if not img:
-            return None
+            return False
 
     if not text:
-        return None
+        return False
 
     try:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"imgUrls": img, "content": text}})
@@ -218,7 +210,7 @@ def get_content_by_url(url):
         print ">>>>>>>>save content error", e, "the url is :", url
         return None
 
-    return text
+    return True
 
 def CopyImgAfterFail(url):
 
@@ -367,8 +359,8 @@ def GetContent(url):
 # 正文，和图片获取 task
 def cont_pic_titleTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"contentOk": 0})
-    un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
+    un_runned_docs = conn["news_ver2"]["Task"].find({"contentOk": 0}).sort([("updateTime", -1)])
+    # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
 
     urls = []
     for doc in un_runned_docs:
@@ -376,17 +368,21 @@ def cont_pic_titleTaskRun():
         urls.append(url)
 
     for url in urls:
-        content_pic = get_content_by_url(url)
+        status = fetch_and_save_content_by_url(url)
 
-        try:
-            conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"content": content_pic}})
+        if status:
 
-        except Exception as e:
+            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"contentOk": 1}})
+
+        else:
+            today = datetime.date.today()
+            yesterday = today - datetime.timedelta(days=1)
+            yesterday = yesterday.strftime("%Y-%m-%d %H:%M:%S")
+            conn["news_ver2"]["Task"].update({"url": url, "updateTime":{"$lt": yesterday}}, {"$set": {"contentOk": -1}})
 
             print "cont_pic_titleTaskRun fail, the doc url is:", url
+            print "this doc will be copied in next round if it is not too late"
             continue
-
-        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"contentOk": 1}})
 
         print "cont_pic_titleTaskRun success, the doc url is:", url
 
@@ -1039,7 +1035,7 @@ if __name__ == '__main__':
         elif arg == 'ner':
             print "NER start"
             while True:
-                # time.sleep(20)
+                time.sleep(20)
                 nerTaskRun()
                 logging.warn("===============this round of NER complete====================")
 
@@ -1081,9 +1077,14 @@ if __name__ == '__main__':
                 logging.warn("===============this round of relateimg complete====================")
         elif arg == "isOnline":
             while True:
-                # time.sleep(40)
+                time.sleep(40)
                 isOnlineTaskRun()
                 logging.warn("===============this round of isonline complete====================")
+        elif arg == "content":
+            while True:
+                time.sleep(30)
+                cont_pic_titleTaskRun()
+                logging.warn("===============this round of content complete====================")
 
         elif arg=='help':
             print "need one or more argument of: weibo, ner, abs, zhihu, baike, douban, baiduNews, relateimg"
