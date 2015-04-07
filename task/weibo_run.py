@@ -40,6 +40,7 @@ conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replic
                                                              read_preference=ReadPreference.SECONDARY)
 mapOfSourceName = {"weibo":"微博"}
 
+HOST_API="121.41.75.213"
 
 # Task : 微博获取任务，定时获取数据，存到mongo
 def weiboTaskRun():
@@ -541,7 +542,7 @@ def isOnlineTaskRun():
             baikeOk = doc["baikeOk"]
 
         if contentOk==1 and abstractOk==1 and nerOk==1 and doubanOk == 1 and baikeOk == 1 and weiboOk == 1 \
-                and zhihuOk == 1 and baiduSearchOk == 1 and ImgMeetCondition(url):
+                and zhihuOk == 1 and baiduSearchOk == 1:
             try:
                 conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"isOnline": 1}})
 
@@ -1030,7 +1031,7 @@ if __name__ == '__main__':
             print "weibo start"
             index=0
             while True:
-                time.sleep(30)
+                # time.sleep(30)
                 index += 1
                 weiboTaskRun()
                 logging.warn("===============this round of weibo complete====================")
@@ -1038,7 +1039,7 @@ if __name__ == '__main__':
         elif arg == 'ner':
             print "NER start"
             while True:
-                time.sleep(20)
+                # time.sleep(20)
                 nerTaskRun()
                 logging.warn("===============this round of NER complete====================")
 
@@ -1080,7 +1081,7 @@ if __name__ == '__main__':
                 logging.warn("===============this round of relateimg complete====================")
         elif arg == "isOnline":
             while True:
-                time.sleep(40)
+                # time.sleep(40)
                 isOnlineTaskRun()
                 logging.warn("===============this round of isonline complete====================")
 
