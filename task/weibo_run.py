@@ -40,6 +40,7 @@ conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replic
                                                              read_preference=ReadPreference.SECONDARY)
 mapOfSourceName = {"weibo":"微博"}
 
+HOST_NER="60.28.29.47"
 
 # Task : 微博获取任务，定时获取数据，存到mongo
 def weiboTaskRun():
@@ -158,15 +159,7 @@ def nerTaskRun():
 
 
     for url, title in url_title_pairs:
-        content = get_content_by_url(url)
 
-        #获取内容 有问题，跳过
-        if not content:
-            today = datetime.date.today()
-            yesterday = today - datetime.timedelta(days=1)
-            yesterday = yesterday.strftime("%Y-%m-%d %H:%M:%S")
-            conn["news_ver2"]["Task"].update({"url": url, "updateTime":{"$lt": yesterday}}, {"$set": {"contentOk": -1}})
-            continue
 
         title_after_cut = jieba.cut(title)
 
@@ -176,7 +169,7 @@ def nerTaskRun():
 
         #ner 有问题，跳过
         if not ne:
-            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"nerOk": 1, "contentOk": 1}})
+            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"nerOk": 1}})
             continue
 
         try:
@@ -185,11 +178,11 @@ def nerTaskRun():
             print "ne set fail, the doc url is===> ", url
             continue
 
-        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"nerOk": 1, "contentOk": 1}})
+        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"nerOk": 1}})
         index += 1
         print "ne set success, the doc url is:", url, "num===> ", index
 
-def get_content_by_url(url):
+def fetch_and_save_content_by_url(url):
 
     print "get content for url====>", url
     apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url="
@@ -206,10 +199,10 @@ def get_content_by_url(url):
         img = CopyImgAfterFail(url)   #取左侧图片
 
         if not img:
-            return None
+            return False
 
     if not text:
-        return None
+        return False
 
     try:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"imgUrls": img, "content": text}})
@@ -217,7 +210,7 @@ def get_content_by_url(url):
         print ">>>>>>>>save content error", e, "the url is :", url
         return None
 
-    return text
+    return True
 
 def CopyImgAfterFail(url):
 
@@ -236,7 +229,7 @@ def CopyImgAfterFail(url):
 def getNe(content_after_cut):
 
     print "content_after_cut", content_after_cut
-    apiUrl = "http://121.41.75.213:8080/ner_mvc/api/ner?sentence=" + content_after_cut
+    apiUrl = "http://%s:8080/ner_mvc/api/ner?sentence="%(HOST_NER) + content_after_cut
 
     r = requests.get(apiUrl)
 
@@ -366,28 +359,49 @@ def GetContent(url):
 # 正文，和图片获取 task
 def cont_pic_titleTaskRun():
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find({"contentOk": 0})
-    un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
+    un_runned_docs = conn["news_ver2"]["Task"].find({"contentOk": 0}).sort([("updateTime", -1)])
+    # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
 
     urls = []
     for doc in un_runned_docs:
         url = doc["url"]
+
+        left_url = get_left_url(doc)
+        if left_url:
+            url = left_url
+
         urls.append(url)
 
     for url in urls:
-        content_pic = get_content_by_url(url)
+        status = fetch_and_save_content_by_url(url)
 
-        try:
-            conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"content": content_pic}})
+        if status:
 
-        except Exception as e:
+            conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"contentOk": 1}})
+
+        else:
+            today = datetime.date.today()
+            yesterday = today - datetime.timedelta(days=1)
+            yesterday = yesterday.strftime("%Y-%m-%d %H:%M:%S")
+            conn["news_ver2"]["Task"].update({"url": url, "updateTime":{"$lt": yesterday}}, {"$set": {"contentOk": -1}})
 
             print "cont_pic_titleTaskRun fail, the doc url is:", url
+            print "this doc will be copied in next round if it is not too late"
             continue
 
-        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"contentOk": 1}})
-
         print "cont_pic_titleTaskRun success, the doc url is:", url
+
+def get_left_url(doc):
+
+    left_url = None
+    if "relate" in doc.keys():
+            left = doc["relate"]["left"]
+            if len(left)>0:
+                left_url = left[0]["url"]
+
+    return left_url
+
+
 
 
 # 对应新闻，相关知乎的话题，task
@@ -541,7 +555,7 @@ def isOnlineTaskRun():
             baikeOk = doc["baikeOk"]
 
         if contentOk==1 and abstractOk==1 and nerOk==1 and doubanOk == 1 and baikeOk == 1 and weiboOk == 1 \
-                and zhihuOk == 1 and baiduSearchOk == 1 and ImgMeetCondition(url):
+                and zhihuOk == 1 and baiduSearchOk == 1:
             try:
                 conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"isOnline": 1}})
 
@@ -1083,6 +1097,11 @@ if __name__ == '__main__':
                 time.sleep(40)
                 isOnlineTaskRun()
                 logging.warn("===============this round of isonline complete====================")
+        elif arg == "content":
+            while True:
+                time.sleep(30)
+                cont_pic_titleTaskRun()
+                logging.warn("===============this round of content complete====================")
 
         elif arg=='help':
             print "need one or more argument of: weibo, ner, abs, zhihu, baike, douban, baiduNews, relateimg"
