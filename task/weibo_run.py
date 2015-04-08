@@ -4,7 +4,6 @@ import jieba
 import pymongo
 from pymongo.read_preferences import ReadPreference
 import json
-import sys
 from requests.exceptions import ConnectionError
 import requests_with_sleep as requests
 import re
@@ -16,7 +15,8 @@ import logging
 import os
 from PIL import Image
 import datetime
-print "=========",os.getcwd()
+from requests.exceptions import Timeout
+
 reload(sys)
 sys.setdefaultencoding('utf8')
 
@@ -26,7 +26,6 @@ path_add = '/'.join(path_add)
 
 sys.path.append(path_add+"/weibo/")
 sys.path.append(path_add)
-print sys.path
 try:
     from weibo import weibo_relate_docs_get, user_info_get
 except ImportError:
@@ -64,13 +63,15 @@ def weiboTaskRun():
 
         try:
             weibo_ready = GetWeibo(keyword)
-
-        except ConnectionError as e:
-
+        except ConnectionError,Timeout:
             continue
 
         if weibo_ready is None and ner:
-            weibo_ready = GetWeibo(ner)
+
+            try:
+                weibo_ready = GetWeibo(ner)
+            except ConnectionError, Timeout:
+                continue
 
         if weibo_ready is None:
 
@@ -160,12 +161,14 @@ def nerTaskRun():
 
     for url, title in url_title_pairs:
 
-
         title_after_cut = jieba.cut(title)
 
         title_after_cut = " ".join(title_after_cut)
 
-        ne = getNe(title_after_cut)
+        try:
+            ne = getNe(title_after_cut)
+        except Timeout:
+            continue
 
         #ner 有问题，跳过
         if not ne:
@@ -318,7 +321,10 @@ def abstractTaskRun():
         urls.append(url)
 
     for url in urls:
-        content = GetContent(url)
+        try:
+            content = GetContent(url)
+        except Timeout:
+            continue
 
         if not content:
             today = datetime.date.today()
@@ -373,7 +379,12 @@ def cont_pic_titleTaskRun():
         urls.append(url)
 
     for url in urls:
-        status = fetch_and_save_content_by_url(url)
+
+        try:
+            status = fetch_and_save_content_by_url(url)
+        except Timeout:
+            print "timeout of url ==>", url
+            continue
 
         if status:
 
@@ -423,8 +434,11 @@ def zhihuTaskRun():
     for url, title in url_title_pairs:
 
         index += 1
-
-        ner = Getner(title)
+        try:
+            ner = Getner(title)
+        except Timeout:
+            print "timeout of this url==>", url
+            continue
 
         if ner:
             keywords = ner
@@ -433,7 +447,11 @@ def zhihuTaskRun():
             keywords = extract_tags(title, 2)
             keywords = "".join(keywords)
 
-        zhihu = GetZhihu(keywords)
+        try:
+            zhihu = GetZhihu(keywords)
+        except Timeout:
+            print "get zhihu timeout, the url is ==>", url
+            continue
         if zhihu is None:
             #直呼没有， 也标记为处理过
             no_zhihu += 1
@@ -530,8 +548,8 @@ def isOnlineTaskRun():
         if "weiboOk" in doc.keys():
             weiboOk = doc["weiboOk"]
 
-        if "zhihuOk" in doc.keys():
-            zhihuOk = doc["zhihuOk"]
+        # if "zhihuOk" in doc.keys():
+        #     zhihuOk = doc["zhihuOk"]
 
         if "abstractOk" in doc.keys():
             abstractOk = doc["abstractOk"]
@@ -545,8 +563,8 @@ def isOnlineTaskRun():
         if "zhihuOk" in doc.keys():
             zhihuOk = doc["zhihuOk"]
 
-        if "weiboOk" in doc.keys():
-            weiboOk = doc["weiboOk"]
+        # if "weiboOk" in doc.keys():
+        #     weiboOk = doc["weiboOk"]
 
         if "doubanOk" in doc.keys():
             doubanOk = doc["doubanOk"]
@@ -609,7 +627,11 @@ def baikeTaskRun():
         url_title_pairs.append([url, title])
 
     for url, title in url_title_pairs:
-        keword = Getner(title)
+        try:
+            keword = Getner(title)
+
+        except Timeout:
+            continue
         if keword is None:
 
             logging.warn("Getner is None, the url==>" + url)
