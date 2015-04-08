@@ -816,4 +816,6 @@ def fetch_url_title_lefturl_pairs(docs):
 
 
 if __name__ == '__main__':
-    total_task()
+    while True:
+        time.sleep(40)
+        total_task()
