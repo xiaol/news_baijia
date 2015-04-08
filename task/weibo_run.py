@@ -40,7 +40,7 @@ conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replic
                                                              read_preference=ReadPreference.SECONDARY)
 mapOfSourceName = {"weibo":"微博"}
 
-HOST_API="121.41.75.213"
+HOST_NER="60.28.29.47"
 
 # Task : 微博获取任务，定时获取数据，存到mongo
 def weiboTaskRun():
@@ -229,7 +229,7 @@ def CopyImgAfterFail(url):
 def getNe(content_after_cut):
 
     print "content_after_cut", content_after_cut
-    apiUrl = "http://121.41.75.213:8080/ner_mvc/api/ner?sentence=" + content_after_cut
+    apiUrl = "http://%s:8080/ner_mvc/api/ner?sentence="%(HOST_NER) + content_after_cut
 
     r = requests.get(apiUrl)
 
@@ -1044,7 +1044,7 @@ if __name__ == '__main__':
             print "weibo start"
             index=0
             while True:
-                # time.sleep(30)
+                time.sleep(30)
                 index += 1
                 weiboTaskRun()
                 logging.warn("===============this round of weibo complete====================")
