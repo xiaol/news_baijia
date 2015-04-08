@@ -365,6 +365,11 @@ def cont_pic_titleTaskRun():
     urls = []
     for doc in un_runned_docs:
         url = doc["url"]
+
+        left_url = get_left_url(doc)
+        if left_url:
+            url = left_url
+
         urls.append(url)
 
     for url in urls:
@@ -385,6 +390,18 @@ def cont_pic_titleTaskRun():
             continue
 
         print "cont_pic_titleTaskRun success, the doc url is:", url
+
+def get_left_url(doc):
+
+    left_url = None
+    if "relate" in doc.keys():
+            left = doc["relate"]["left"]
+            if len(left)>0:
+                left_url = left[0]["url"]
+
+    return left_url
+
+
 
 
 # 对应新闻，相关知乎的话题，task
