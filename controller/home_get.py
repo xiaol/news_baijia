@@ -29,7 +29,7 @@ def homeContentFetch(options):
 
     conn = DBStore._connect_news
 
-    docs = conn['news_ver2']['googleNewsItem'].find({"updateTime": {"$gt": updateTime}, "isOnline": 1}).sort([("updateTime",-1)]).skip((page-1)*limit).limit(limit)
+    docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1}).sort([("updateTime",-1)]).skip((page-1)*limit).limit(limit)
 
     index = 0
 
@@ -43,13 +43,13 @@ def homeContentFetch(options):
         relate = []
 
         if "relate" in doc.keys():
-            relate = doc["relate"]
+            if doc["relate"]:
+                relate = doc["relate"]
+            del doc["relate"]
 
         #不取没有相关的
-        if not relate:
-            continue
-
-        del doc["relate"]
+        # if not relate:
+        #     continue
 
         if "weibo" in doc.keys():
             weibo = doc["weibo"]
@@ -107,7 +107,15 @@ def homeContentFetch(options):
             del doc["baiduSearch"]
 
         #相关新闻每一个来源 选一条
-        distinctList, distinctNum, distinct_response_urls, otherNum = GetRelateNews(relate)
+        if relate:
+            distinctList, distinctNum, distinct_response_urls, otherNum = GetRelateNews(relate)
+
+        else:
+            distinctList = []
+            distinctNum = 0
+            distinct_response_urls = []
+            otherNum = 0
+
 
         sublist.extend(distinctList)
 
@@ -125,8 +133,8 @@ def homeContentFetch(options):
 # 相关新闻的获取
 def GetRelateNews(relate):
 
-    if not relate:
-        return
+    # if not relate:
+    #     return
 
     left_relate = relate["left"]
     mid_relate = relate["middle"]

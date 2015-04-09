@@ -18,7 +18,7 @@ def fetchContent(url, filterurls, updateTime=None):
     if updateTime is None:
         updateTime = ''
 
-    docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url, "updateTime": {"$lt": updateTime}}).sort([("updateTime",-1)]).limit(10)
+    docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime",-1)]).limit(10)
 
     result = {}
 
@@ -91,7 +91,7 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
 
     allrelate = []
 
-    if "relate" in doc.keys():
+    if "relate" in doc.keys() and doc["relate"]:
         relate = doc["relate"]
 
         left_relate = relate["left"]
@@ -152,109 +152,109 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
     return allrelate
 
 
-def Get_by_url(url):
-
-    apiUrl_img = "http://121.41.75.213:8080/extractors_mvc_war/api/getImg?url="
-    apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url="
-
-    apiUrl_img += url
-    apiUrl_text += url
-
-    r_img = requests_with_sleep.get(apiUrl_img)
-    r_text = requests_with_sleep.get(apiUrl_text)
-
-    img = (r_img.json())["imgs"]
-    print(type(img))
-    text = (r_text.json())["text"]
-
-    result = {}
-    img_result = []
-    if not img or not len(img)>0:
-        return None
-
-    # result['img'] = img[-1]
-    '''
-    for i in img:
-        if i.endswith('.gif'):
-            img.remove(i)
-        if 'weima' in i:
-            img.remove(i)
-        if ImgMeetCondition(i) == False:
-            img.remove(i)
-    result['img'] = img[0]
-    # result['img'] = img[3]
-
-
-    if result['img'].startswith('/'):
-        print('!!!!!!!!!!!')
-        print(result['img'])
-        aa = url.find('/', 7)
-        print(url[:aa])
-        result['img'] = url[:aa] + result['img']
-    elif result['img'].startswith('..'):
-        count = 0
-        while result['img'].startswith('..'):
-            count += 1
-            result['img'] = result['img'][3:]
-        print(result['img'])
-        get_list = url.split('/')
-        last_list = get_list[2:-1-count]
-        result['img'] = get_list[0] + '//' + '/'.join(last_list) + '/' + result['img']
-        print(result['img'])
-    elif result['img'].startswith('.'):
-        get_list = url.split('/')
-        print(get_list)
-        last_list = get_list[2:-1]
-        print(last_list)
-        result['img'] = get_list[0] + '//' + '/'.join(last_list) + result['img'][1:]
-        print(result['img'])
-    '''
-    for i in img:
-        # result['img'] = i
-        result_i = i
-        if result_i.startswith('/'):
-            print('!!!!!!!!!!!')
-            print(result_i)
-            aa = url.find('/', 7)
-            print(url[:aa])
-            result_i = url[:aa] + result_i
-            print(result_i)
-            # img.remove(i)
-            # img.append(result_i)
-            img_result.append(result_i)
-        elif result_i.startswith('..'):
-            count = 0
-            while result_i.startswith('..'):
-                count += 1
-                result_i = result_i[3:]
-            print(result_i)
-            get_list = url.split('/')
-            last_list = get_list[2:-1-count]
-            result_i = get_list[0] + '//' + '/'.join(last_list) + '/' + result_i
-            print(result_i)
-            # img.remove(i)
-            # img.append(result_i)
-            img_result.append(result_i)
-
-        elif result_i.startswith('.'):
-            get_list = url.split('/')
-            print(get_list)
-            last_list = get_list[2:-1]
-            print(last_list)
-            result_i = get_list[0] + '//' + '/'.join(last_list) + result_i[1:]
-            print(result_i)
-            # img.remove(i)
-            # img.append(resuolt_i)
-            img_result.append(result_i)
-        if result_i.endswith('.gif'):
-            # img.remove(result_i)
-            img_result.remove(result_i)
-        if 'weima' in result_i:
-            img_result.remove(result_i)
-        if ImgMeetCondition(result_i) == True:
-            img_result.remove(result_i)
-    result['img'] = img_result[0]
-    return result
+# def Get_by_url(url):
+#
+#     apiUrl_img = "http://121.41.75.213:8080/extractors_mvc_war/api/getImg?url="
+#     apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url="
+#
+#     apiUrl_img += url
+#     apiUrl_text += url
+#
+#     r_img = requests_with_sleep.get(apiUrl_img)
+#     r_text = requests_with_sleep.get(apiUrl_text)
+#
+#     img = (r_img.json())["imgs"]
+#     print(type(img))
+#     text = (r_text.json())["text"]
+#
+#     result = {}
+#     img_result = []
+#     if not img or not len(img)>0:
+#         return None
+#
+#     # result['img'] = img[-1]
+#     '''
+#     for i in img:
+#         if i.endswith('.gif'):
+#             img.remove(i)
+#         if 'weima' in i:
+#             img.remove(i)
+#         if ImgMeetCondition(i) == False:
+#             img.remove(i)
+#     result['img'] = img[0]
+#     # result['img'] = img[3]
+#
+#
+#     if result['img'].startswith('/'):
+#         print('!!!!!!!!!!!')
+#         print(result['img'])
+#         aa = url.find('/', 7)
+#         print(url[:aa])
+#         result['img'] = url[:aa] + result['img']
+#     elif result['img'].startswith('..'):
+#         count = 0
+#         while result['img'].startswith('..'):
+#             count += 1
+#             result['img'] = result['img'][3:]
+#         print(result['img'])
+#         get_list = url.split('/')
+#         last_list = get_list[2:-1-count]
+#         result['img'] = get_list[0] + '//' + '/'.join(last_list) + '/' + result['img']
+#         print(result['img'])
+#     elif result['img'].startswith('.'):
+#         get_list = url.split('/')
+#         print(get_list)
+#         last_list = get_list[2:-1]
+#         print(last_list)
+#         result['img'] = get_list[0] + '//' + '/'.join(last_list) + result['img'][1:]
+#         print(result['img'])
+#     '''
+#     for i in img:
+#         # result['img'] = i
+#         result_i = i
+#         if result_i.startswith('/'):
+#             print('!!!!!!!!!!!')
+#             print(result_i)
+#             aa = url.find('/', 7)
+#             print(url[:aa])
+#             result_i = url[:aa] + result_i
+#             print(result_i)
+#             # img.remove(i)
+#             # img.append(result_i)
+#             img_result.append(result_i)
+#         elif result_i.startswith('..'):
+#             count = 0
+#             while result_i.startswith('..'):
+#                 count += 1
+#                 result_i = result_i[3:]
+#             print(result_i)
+#             get_list = url.split('/')
+#             last_list = get_list[2:-1-count]
+#             result_i = get_list[0] + '//' + '/'.join(last_list) + '/' + result_i
+#             print(result_i)
+#             # img.remove(i)
+#             # img.append(result_i)
+#             img_result.append(result_i)
+#
+#         elif result_i.startswith('.'):
+#             get_list = url.split('/')
+#             print(get_list)
+#             last_list = get_list[2:-1]
+#             print(last_list)
+#             result_i = get_list[0] + '//' + '/'.join(last_list) + result_i[1:]
+#             print(result_i)
+#             # img.remove(i)
+#             # img.append(resuolt_i)
+#             img_result.append(result_i)
+#         if result_i.endswith('.gif'):
+#             # img.remove(result_i)
+#             img_result.remove(result_i)
+#         if 'weima' in result_i:
+#             img_result.remove(result_i)
+#         if ImgMeetCondition(result_i) == True:
+#             img_result.remove(result_i)
+#     result['img'] = img_result[0]
+#     return result
 
 
 import urllib, cStringIO
@@ -275,8 +275,11 @@ def ImgMeetCondition(url):
     return False
 
 
+
 if __name__ == '__main__':
-    print(Get_by_url("http://xinmin.news365.com.cn/tyxw/201503/t20150323_1779650.html"))
+
+    # print(Get_by_url("http://xinmin.news365.com.cn/tyxw/201503/t20150323_1779650.html"))
     # print(Get_by_url("http://www.jfdaily.com/guonei/new/201503/t20150323_1348362.html"))
     # print(Get_by_url("http://sports.sina.com.cn/l/s/2015-03-24/10287553303.shtml"))
     # print(ImgMeetCondition("http://xinmin.news365.com.cn/images/index_3.jpg"))
+    print (ImgMeetCondition("http://img6.cutv.com/forum/201406/04/150731hffegglg1es9bufa.jpg"))

@@ -57,10 +57,10 @@ def total_task():
             do_zhihu_task(params)
             do_baike_task(params)
             do_douban_task(params)
-            do_relateimg_task(params)
 
             if sourceSiteName != "网易新闻图片":
                 is_content_ok = do_content_img_task(params)
+                do_relateimg_task(params)
             else:
                 is_content_ok = True
 
@@ -81,7 +81,7 @@ def do_isOnline_task(params):
 
     url = params["url"]
 
-    must_meet_field_list = ["weiboOk", "doubanOk", "zhihuOk", "baikeOk", "nerOk", "abstractOk", "contentOk", "baiduSearchOk"]
+    must_meet_field_list = ["weiboOk", "doubanOk", "zhihuOk", "baikeOk", "nerOk", "abstractOk", "contentOk"]
 
     isOk = is_condition_meet(url, must_meet_field_list)
 
@@ -129,7 +129,7 @@ def handle_relate(url, relate):
 def doImgGetAndSave(k, relate, url):
 
     if not relate:
-        set_task_ok_by_url_and_field(url, "relateimg")
+        set_task_ok_by_url_and_field(url, "relateimgOk")
         print "relate is None, set task and leave"
         return
 
@@ -151,7 +151,7 @@ def doImgGetAndSave(k, relate, url):
     except Exception:
         print "save relate." + k, " error, the url====> ", url
         return
-    set_task_ok_by_url_and_field(url, "relateimg")
+    set_task_ok_by_url_and_field(url, "relateimgOk")
 
 def get_relate_news_by_url(url):
 
@@ -816,4 +816,6 @@ def fetch_url_title_lefturl_pairs(docs):
 
 
 if __name__ == '__main__':
-    total_task()
+    while True:
+        time.sleep(40)
+        total_task()
