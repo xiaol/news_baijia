@@ -125,7 +125,7 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
 
     for one in docs_relate:
         ls = {}
-        url_here = one["url"]
+        url_here = one["sourceUrl"]
         title_here = one["title"]
         sourceSiteName = one["sourceSiteName"]
         updatetime = one["updateTime"]
