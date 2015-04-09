@@ -88,6 +88,8 @@ def do_isOnline_task(params):
     if isOk:
         set_googlenews_by_url_with_field_and_value(url, "isOnline", 1)
 
+        set_task_ok_by_url_and_field(url, "isOnlineOk")
+
 
 
 def is_condition_meet(url, must_meet_field_list):
@@ -817,5 +819,5 @@ def fetch_url_title_lefturl_pairs(docs):
 
 if __name__ == '__main__':
     while True:
-        time.sleep(40)
+        # time.sleep(40)
         total_task()
