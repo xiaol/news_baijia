@@ -43,7 +43,8 @@ def homeContentFetch(options):
         relate = []
 
         if "relate" in doc.keys():
-            relate = doc["relate"]
+            if doc["relate"]:
+                relate = doc["relate"]
             del doc["relate"]
 
         #不取没有相关的
@@ -106,7 +107,15 @@ def homeContentFetch(options):
             del doc["baiduSearch"]
 
         #相关新闻每一个来源 选一条
-        distinctList, distinctNum, distinct_response_urls, otherNum = GetRelateNews(relate)
+        if relate:
+            distinctList, distinctNum, distinct_response_urls, otherNum = GetRelateNews(relate)
+
+        else:
+            distinctList = []
+            distinctNum = 0
+            distinct_response_urls = []
+            otherNum = 0
+
 
         sublist.extend(distinctList)
 
@@ -124,8 +133,8 @@ def homeContentFetch(options):
 # 相关新闻的获取
 def GetRelateNews(relate):
 
-    if not relate:
-        return
+    # if not relate:
+    #     return
 
     left_relate = relate["left"]
     mid_relate = relate["middle"]

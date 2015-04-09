@@ -91,7 +91,7 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
 
     allrelate = []
 
-    if "relate" in doc.keys():
+    if "relate" in doc.keys() and doc["relate"]:
         relate = doc["relate"]
 
         left_relate = relate["left"]
@@ -273,6 +273,7 @@ def ImgMeetCondition(url):
         return True
     print width, "+", height, " url=======>", img_url
     return False
+
 
 
 if __name__ == '__main__':
