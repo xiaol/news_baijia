@@ -81,7 +81,7 @@ def do_isOnline_task(params):
 
     url = params["url"]
 
-    must_meet_field_list = ["weiboOk", "doubanOk", "zhihuOk", "baikeOk", "nerOk", "abstractOk", "contentOk", "baiduSearchOk"]
+    must_meet_field_list = ["weiboOk", "doubanOk", "zhihuOk", "baikeOk", "nerOk", "abstractOk", "contentOk"]
 
     isOk = is_condition_meet(url, must_meet_field_list)
 
@@ -129,7 +129,7 @@ def handle_relate(url, relate):
 def doImgGetAndSave(k, relate, url):
 
     if not relate:
-        set_task_ok_by_url_and_field(url, "relateimg")
+        set_task_ok_by_url_and_field(url, "relateimgOk")
         print "relate is None, set task and leave"
         return
 
@@ -151,7 +151,7 @@ def doImgGetAndSave(k, relate, url):
     except Exception:
         print "save relate." + k, " error, the url====> ", url
         return
-    set_task_ok_by_url_and_field(url, "relateimg")
+    set_task_ok_by_url_and_field(url, "relateimgOk")
 
 def get_relate_news_by_url(url):
 

@@ -29,7 +29,7 @@ def homeContentFetch(options):
 
     conn = DBStore._connect_news
 
-    docs = conn['news_ver2']['googleNewsItem'].find({"updateTime": {"$gt": updateTime}, "isOnline": 1}).sort([("updateTime",-1)]).skip((page-1)*limit).limit(limit)
+    docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1}).sort([("updateTime",-1)]).skip((page-1)*limit).limit(limit)
 
     index = 0
 
@@ -44,12 +44,11 @@ def homeContentFetch(options):
 
         if "relate" in doc.keys():
             relate = doc["relate"]
+            del doc["relate"]
 
         #不取没有相关的
-        if not relate:
-            continue
-
-        del doc["relate"]
+        # if not relate:
+        #     continue
 
         if "weibo" in doc.keys():
             weibo = doc["weibo"]
