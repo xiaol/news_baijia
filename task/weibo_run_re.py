@@ -57,10 +57,10 @@ def total_task():
             do_zhihu_task(params)
             do_baike_task(params)
             do_douban_task(params)
-            do_relateimg_task(params)
 
             if sourceSiteName != "网易新闻图片":
                 is_content_ok = do_content_img_task(params)
+                do_relateimg_task(params)
             else:
                 is_content_ok = True
 
