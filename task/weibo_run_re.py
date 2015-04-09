@@ -85,8 +85,12 @@ def do_isOnline_task(params):
 
     isOk = is_condition_meet(url, must_meet_field_list)
 
+    now = datetime.datetime.now()
+    str_now = now.strftime("%Y-%m-%d %H:%M:%S")
+
     if isOk:
         set_googlenews_by_url_with_field_and_value(url, "isOnline", 1)
+        set_googlenews_by_url_with_field_and_value(url, "updateTime", str_now)
 
         set_task_ok_by_url_and_field(url, "isOnlineOk")
 
@@ -541,6 +545,7 @@ def find_first_img_meet_condition(img_result):
 
 
     for i in img_result:
+        time.sleep(3)
         if not i.endswith('.gif') and (not 'weima' in i) and (not ImgNotMeetCondition(i, 40000)):
             return i
 
