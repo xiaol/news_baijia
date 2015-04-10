@@ -43,11 +43,16 @@ HOST_NER="60.28.29.47"
 
 def total_task():
 
+    logging.warning("##################### task start ********************")
+
+    doc_num = 0
+
     docs = fetch_unrunned_docs()
 
     url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
+        doc_num += 1
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
         try:
 
@@ -80,6 +85,14 @@ def total_task():
             print "timeout of url==>", url
             continue
 
+    logging.warning("##################### task complete ********************")
+    if doc_num == 0:
+        return "no_doc"
+    else:
+        return "have_doc"
+
+
+
 def do_isOnline_task(params):
 
     print "==================isOnline task start================"
@@ -97,7 +110,7 @@ def do_isOnline_task(params):
         set_googlenews_by_url_with_field_and_value(url, "isOnline", 1)
         set_googlenews_by_url_with_field_and_value(url, "updateTime", str_now)
 
-        set_task_ok_by_url_and_field(url, "isOnlineOk")
+        set_task_ok_by_url_and_field(url, "isOnline")
         print "isOnline ok"
 
     else:
@@ -457,7 +470,7 @@ def do_content_img_task(params):
     else:
         print "left url is None, set it's img is None"
         set_googlenews_by_url_with_field_and_value(url, "imgUrls", "")
-        set_task_ok_by_url_and_field(url, "isOnlineOk") #标记为处理过， 接口取新闻会判断图片是否为空
+        set_task_ok_by_url_and_field(url, "isOnline") #标记为处理过， 接口取新闻会判断图片是否为空
         return False
 
     status = fetch_and_save_content(url, url_use_to_fetch_content_img)
@@ -818,7 +831,7 @@ def getNe(content_after_cut):
 
 def fetch_unrunned_docs():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"isOnlineOk": 0}).sort([("updateTime", -1)])
+    un_runned_docs = conn["news_ver2"]["Task"].find({"isOnline": 0}).sort([("updateTime", -1)])
 
     return un_runned_docs
 
@@ -855,5 +868,7 @@ if __name__ == '__main__':
     #     print "width_height_ratio_meet_condition test ok"
 
     while True:
-        # time.sleep(40)
-        total_task()
+
+        doc_num = total_task()
+        if doc_num == "no_doc":
+            time.sleep(60)
