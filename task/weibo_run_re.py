@@ -457,7 +457,7 @@ def do_content_img_task(params):
     else:
         print "left url is None, set it's img is None"
         set_googlenews_by_url_with_field_and_value(url, "imgUrls", "")
-        set_task_ok_by_url_and_field(url, "isOnline") #标记为处理过， 接口取新闻会判断图片是否为空
+        set_task_ok_by_url_and_field(url, "isOnlineOk") #标记为处理过， 接口取新闻会判断图片是否为空
         return False
 
     status = fetch_and_save_content(url, url_use_to_fetch_content_img)
