@@ -51,7 +51,8 @@ def total_task():
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
         try:
 
-            print "==================task start, the url is %s, sourceSiteName: %s ============================================" % (url, sourceSiteName)
+            print "*****************************task start, the url is %s, sourceSiteName: %s " \
+                  "*****************************" % (url, sourceSiteName)
             do_weibo_task(params)
             do_ner_task(params)
             do_zhihu_task(params)
@@ -60,7 +61,11 @@ def total_task():
 
             if sourceSiteName != "网易新闻图片":
                 is_content_ok = do_content_img_task(params)
-                do_relateimg_task(params)
+                if is_content_ok:
+                    do_relateimg_task(params)
+                else:
+                    logging.warn("content or img not ok, continue to copy next doc")
+                    continue
             else:
                 is_content_ok = True
 
@@ -93,6 +98,10 @@ def do_isOnline_task(params):
         set_googlenews_by_url_with_field_and_value(url, "updateTime", str_now)
 
         set_task_ok_by_url_and_field(url, "isOnlineOk")
+        print "isOnline ok"
+
+    else:
+        print "isOnline fail"
 
 
 
@@ -448,8 +457,8 @@ def do_content_img_task(params):
     else:
         print "left url is None, set it's img is None"
         set_googlenews_by_url_with_field_and_value(url, "imgUrls", "")
-        set_task_ok_by_url_and_field(url, "contentOk")
-        return True    #标记为处理过， 接口取新闻会判断图片是否为空
+        set_task_ok_by_url_and_field(url, "isOnline") #标记为处理过， 接口取新闻会判断图片是否为空
+        return False
 
     status = fetch_and_save_content(url, url_use_to_fetch_content_img)
 
@@ -823,14 +832,15 @@ def fetch_url_title_lefturl_pairs(docs):
         title = doc["title"]
         lefturl = ''
         sourceSiteName = ''
-        if "relate" in doc.keys():
-            left = doc["relate"]["left"]
-            if len(left) > 0:
-                lefturl = left[0]["url"]
 
         if "sourceSiteName" in doc.keys():
             sourceSiteName = doc["sourceSiteName"]
 
+
+        if "relate" in doc.keys():
+            left = doc["relate"]["left"]
+            if left and len(left) > 0:
+                lefturl = left[0]["url"]
 
         url_title_lefturl_sourceSite_pairs.append([url, title, lefturl, sourceSiteName])
 
@@ -845,5 +855,5 @@ if __name__ == '__main__':
     #     print "width_height_ratio_meet_condition test ok"
 
     while True:
-        time.sleep(40)
+        # time.sleep(40)
         total_task()
