@@ -842,6 +842,12 @@ def fetch_url_title_lefturl_pairs(docs):
 
     for doc in docs:
         url = doc["url"]
+
+        relate_doc = get_googlenews_by_url(url)
+
+        if not relate_doc:
+            continue
+
         title = doc["title"]
         lefturl = ''
         sourceSiteName = ''
@@ -849,16 +855,21 @@ def fetch_url_title_lefturl_pairs(docs):
         if "sourceSiteName" in doc.keys():
             sourceSiteName = doc["sourceSiteName"]
 
-
-        if "relate" in doc.keys():
-            left = doc["relate"]["left"]
-            if left and len(left) > 0:
-                lefturl = left[0]["url"]
+        if "relate" in relate_doc.keys():
+            relate = relate_doc['relate']
+            if relate:
+                left = relate_doc["relate"]["left"]
+                if left and len(left) > 0:
+                    lefturl = left[0]["url"]
 
         url_title_lefturl_sourceSite_pairs.append([url, title, lefturl, sourceSiteName])
 
     return url_title_lefturl_sourceSite_pairs
 
+def get_googlenews_by_url(url):
+
+
+    return conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
 
 if __name__ == '__main__':
 
