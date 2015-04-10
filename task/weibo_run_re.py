@@ -818,7 +818,7 @@ def getNe(content_after_cut):
 
 def fetch_unrunned_docs():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"isOnline": 0}).sort([("updateTime", -1)])
+    un_runned_docs = conn["news_ver2"]["Task"].find({"isOnlineOk": 0}).sort([("updateTime", -1)])
 
     return un_runned_docs
 
