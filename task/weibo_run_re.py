@@ -446,7 +446,10 @@ def do_content_img_task(params):
     if lefturl:
         url_use_to_fetch_content_img = lefturl
     else:
-        url_use_to_fetch_content_img = url
+        print "left url is None, set it's img is None"
+        set_googlenews_by_url_with_field_and_value(url, "imgUrls", "")
+        set_task_ok_by_url_and_field(url, "contentOk")
+        return True    #标记为处理过， 接口取新闻会判断图片是否为空
 
     status = fetch_and_save_content(url, url_use_to_fetch_content_img)
 
@@ -461,11 +464,14 @@ def do_content_img_task(params):
 
 def fetch_and_save_content(url, url_use_to_fetch_content_img):
 
-    apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + url_use_to_fetch_content_img
+    apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + url
     r_text = requests.get(apiUrl_text)
     text = (r_text.json())["text"]
 
-    img = GetImgByUrl(url)['img']
+    if url_use_to_fetch_content_img:
+        img = GetImgByUrl(url_use_to_fetch_content_img)['img']
+    else:
+        img = ''
 
     if not img:
         print "url:%s" % url, " : img is None"
@@ -581,11 +587,20 @@ def ImgNotMeetCondition(url, size):
             return True
         width, height = im.size
         print(width, height)
-        if width * height <= size:
+        if width * height <= size or not width_height_ratio_meet_condition(width, height, 4):
             return True
         print width, "+", height, " url=======>", img_url
         return False
 
+def width_height_ratio_meet_condition(width, height, ratio):
+
+    if width == 0 or height == 0:
+        return False
+
+    if width/height <= ratio and height/width <= ratio:
+        return True
+
+    return False
 
 def do_ner_task(params):
 
@@ -823,6 +838,12 @@ def fetch_url_title_lefturl_pairs(docs):
 
 
 if __name__ == '__main__':
+
+    # if False != width_height_ratio_meet_condition(100, 900, 4):
+    #     print "width_height_ratio_meet_condition test fail"
+    # else:
+    #     print "width_height_ratio_meet_condition test ok"
+
     while True:
-        # time.sleep(40)
+        time.sleep(40)
         total_task()
