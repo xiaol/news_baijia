@@ -18,6 +18,7 @@ import os
 from PIL import Image
 import datetime
 from requests.exceptions import Timeout
+import zbar
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -343,13 +344,6 @@ def do_zhihu_task(params):
     set_googlenews_by_url_with_field_and_value(url, "zhihu", zhihu)
 
 
-
-
-
-
-
-
-
 def GetZhihu(keyword):
 
     apiUrl = "http://www.zhihu.com/search?q={0}&type=question".format(keyword)
@@ -574,10 +568,38 @@ def find_first_img_meet_condition(img_result):
 
     for i in img_result:
         time.sleep(3)
-        if not i.endswith('.gif') and (not 'weima' in i) and (not ImgNotMeetCondition(i, 40000)):
+        if not i.endswith('.gif') and (not 'weima' in i) and (not ImgNotMeetCondition(i, 80000)) and not is_erwei_ma(i):
             return i
 
     return ''
+
+def is_erwei_ma(img_url):
+
+    file = cStringIO.StringIO(urllib.urlopen(img_url).read())
+    pil = Image.open(file).convert('L')
+    width, height = pil.size
+    print width, height
+
+    scanner = zbar.ImageScanner()
+    scanner.parse_config('enable')
+
+
+
+
+    raw = pil.tostring()
+    # wrap image data
+    image = zbar.Image(width, height, 'Y800', raw)
+    # scan the image for barcodes
+    scanner.scan(image)
+    # extract results
+    for symbol in image:
+        # do something useful with results
+        print 'decoded', symbol.type, 'symbol', '"%s"' % symbol.data
+
+        if not symbol.type and not symbol.data:
+            return False
+        else:
+            return True
 
 
 def copyNormalImg(img_result):
@@ -595,7 +617,6 @@ def copyNormalImg(img_result):
         return result[0]
     else:
         return None
-
 
 def ImgNotMeetCondition(url, size):
 
@@ -640,7 +661,6 @@ def do_ner_task(params):
     set_task_ok_by_url_and_field(url, "nerOk")
 
     return True
-
 
 def do_weibo_task(params):
 
@@ -878,8 +898,9 @@ if __name__ == '__main__':
     # else:
     #     print "width_height_ratio_meet_condition test ok"
 
-    while True:
+    # find_first_img_meet_condition(["http://i3.sinaimg.cn/dy/main/other/qrcode_news.jpg"])
 
+    while True:
         doc_num = total_task()
         if doc_num == "no_doc":
             time.sleep(60)
