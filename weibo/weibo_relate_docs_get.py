@@ -48,9 +48,9 @@ def baidusearch_relate_docs(topic,page):
     source_name_pat=re.compile(r'<span class=.*?>(.*?)</span>')
     updateTime_pat=re.compile(r'<span class=\'wa\-weibo\-t\' data-time=\'(.*?)\'>')
 
-    print topic
+    # print topic
     url='http://opendata.baidu.com/weibo/?ie=utf-8&oe=utf-8&format=json&wd=%s&rn=20&pn=0&first=1428396699&last=1428326859'%topic
-    print url
+    # print url
     response = requests.get(url)
     content = response.content
     content=content.decode('utf-8')
@@ -58,27 +58,27 @@ def baidusearch_relate_docs(topic,page):
 
     result=[]
     for json in json_list:
-        print "json,%s"%json
+        # print "json,%s"%json
         elem_dict={}
         img_url=re.search(img_url_pat,json)
         if img_url:
             img_url=img_url.group(1)
-        print "img_url,%s"%img_url
+        # print "img_url,%s"%img_url
 
         content=re.search(content_pat,json)
         if content:
             content=content.group(1)
-        print "content,%s"%content
+        # print "content,%s"%content
 
         source_name=re.search(source_name_pat,json)
         if source_name:
             source_name=source_name.group(1)
-        print "source_name,%s"%source_name
+        # print "source_name,%s"%source_name
 
         url=re.search(url_pat,json)
         if url:
             url=url.group(1)
-        print "url,%s"%url
+        # print "url,%s"%url
 
         updateTime=re.search(updateTime_pat,json)
         if updateTime:
@@ -89,7 +89,7 @@ def baidusearch_relate_docs(topic,page):
         else:
             updateTime=getDefaultTimeStr()
 
-        print "updateTime,%s"%updateTime
+        # print "updateTime,%s"%updateTime
 
 
         elem_dict['img_url']=img_url

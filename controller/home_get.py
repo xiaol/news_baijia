@@ -18,7 +18,8 @@ def homeContentFetch(options):
 
     :rtype :
     """
-    updateTime = ''
+    # updateTime = ''
+    page = 1
     limit = 10
     # if "updateTime" in options.keys():
     #     updateTime = options["updateTime"]
@@ -38,7 +39,10 @@ def homeContentFetch(options):
     for doc in docs:
 
         sublist = []
+        url = doc['sourceUrl']
         title = doc["title"]
+
+        baidu_news_num = count_relate_baidu_news(url)
 
         relate = []
 
@@ -116,11 +120,10 @@ def homeContentFetch(options):
             distinct_response_urls = []
             otherNum = 0
 
-
         sublist.extend(distinctList)
 
         doc["sublist"] = sublist
-        doc["otherNum"] = otherNum
+        doc["otherNum"] = otherNum + baidu_news_num
         doc["urls_response"] = distinct_response_urls  #返回的urls，用于获取其他相关新闻时过滤掉 这几条已经有的新闻
 
         docs_return.append(doc)
@@ -129,6 +132,12 @@ def homeContentFetch(options):
     print docs_return
     return docs_return
 
+def count_relate_baidu_news(url):
+
+    conn = DBStore._connect_news
+    num = conn["news"]["AreaItems"].find({"relateUrl":url}).count()
+
+    return num
 
 # 相关新闻的获取
 def GetRelateNews(relate):

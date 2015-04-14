@@ -696,9 +696,9 @@ def set_task_ok_by_url_and_field(url, field):
 
 def GetWeibo(title):
 
-    weibos = weibo_relate_docs_get.search_relate_docs(title, 1)
-
-    weibos = json.loads(weibos)
+    # weibos = weibo_relate_docs_get.search_relate_docs(title, 1)
+    weibos = weibo_relate_docs_get.baidusearch_relate_docs(title,1)
+    # weibos = json.loads(weibos)
 
     if isinstance(weibos, list) and len(weibos) <= 0:
         return
@@ -708,17 +708,23 @@ def GetWeibo(title):
 
 
     weibos_of_return = []
+    weibo_temp = {}
     for weibo in weibos:
-        weibo_id = weibo["weibo_id"]
-        del weibo["weibo_id"]
-        # user = user_info_get.get_weibo_user(weibo_id)
-        # weibo["user"] = user["screenName"]
-        # weibo["profileImageUrl"] = user["profileImageUrl"]
-        weibo["user"] = ""
-        weibo["profileImageUrl"] = ""
-        weibo["sourceSitename"] = "weibo"
-        weibo["title"] = weibo["content"]
-        del weibo["content"]
+        # weibo_id = weibo["weibo_id"]
+        # del weibo["weibo_id"]
+        # # user = user_info_get.get_weibo_user(weibo_id)
+        # # weibo["user"] = user["screenName"]
+        # # weibo["profileImageUrl"] = user["profileImageUrl"]
+        # weibo["user"] = ""
+        # weibo["profileImageUrl"] = ""
+        # weibo["sourceSitename"] = "weibo"
+        # weibo["title"] = weibo["content"]
+        # del weibo["content"]
+        weibo_temp["user"] = weibo["source_name"]
+        weibo_temp["title"] = weibo["content"]
+        weibo_temp["url"] = weibo["url"]
+        weibo_temp["profileImageUrl"] = ''
+        weibo_temp["sourceSitename"] = "weibo"
         weibos_of_return.append(weibo)
 
     # weibo = weibos[0]
@@ -726,6 +732,10 @@ def GetWeibo(title):
     # user = user_info_get.get_weibo_user(weibo_id)
     # weibo["user"] = user["name"]
 
+    if len(weibos_of_return) == 0:
+        return None
+    if len(weibos_of_return) > 8:
+        return weibos_of_return[0:8]
     return weibos_of_return
 
 
@@ -904,3 +914,5 @@ if __name__ == '__main__':
         doc_num = total_task()
         if doc_num == "no_doc":
             time.sleep(60)
+
+    # GetWeibo("孙楠 歌手")
