@@ -7,6 +7,7 @@ import sys
 import re
 import time
 import datetime
+import urllib2
 reload(sys)
 sys.setdefaultencoding("utf-8")
 def search_relate_docs(topic, page):
@@ -36,6 +37,15 @@ def getDefaultTimeStr(cls):
     defaultTime=(datetime.datetime.now()-timeDelta)
     defaultTimeStr=defaultTime.strftime(format)
     return defaultTimeStr
+
+def convertbaidutosina(url):
+    src_pat=re.compile(r'src=(.*?)&ssid')
+    url_search=re.search(src_pat,url)
+    if url_search:
+        url=url_search.group(1)
+        url=urllib2.unquote(url.encode("utf8"))
+        return url
+    return None
 
 
 def baidusearch_relate_docs(topic,page):
@@ -78,6 +88,9 @@ def baidusearch_relate_docs(topic,page):
         url=re.search(url_pat,json)
         if url:
             url=url.group(1)
+            url=convertbaidutosina(url)
+
+
         print "url,%s"%url
 
         updateTime=re.search(updateTime_pat,json)
@@ -85,7 +98,7 @@ def baidusearch_relate_docs(topic,page):
             updateTime=updateTime.group(1)
             updateTime=float(updateTime)
             # updateTime=time.ctime(updateTime)
-            updateTime=convertsecondtoTimestr(updateTime)  
+            updateTime=convertsecondtoTimestr(updateTime)
         else:
             updateTime=getDefaultTimeStr()
 
