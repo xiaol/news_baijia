@@ -708,8 +708,10 @@ def GetWeibo(title):
 
 
     weibos_of_return = []
-    weibo_temp = {}
+
     for weibo in weibos:
+
+        weibo_temp = {}
         # weibo_id = weibo["weibo_id"]
         # del weibo["weibo_id"]
         # # user = user_info_get.get_weibo_user(weibo_id)
@@ -910,9 +912,9 @@ if __name__ == '__main__':
 
     # find_first_img_meet_condition(["http://i3.sinaimg.cn/dy/main/other/qrcode_news.jpg"])
 
-    while True:
-        doc_num = total_task()
-        if doc_num == "no_doc":
-            time.sleep(60)
+    # while True:
+    #     doc_num = total_task()
+    #     if doc_num == "no_doc":
+    #         time.sleep(60)
 
-    # GetWeibo("孙楠 歌手")
+    GetWeibo("孙楠 歌手")
