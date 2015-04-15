@@ -41,6 +41,7 @@ conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replic
                                                              read_preference=ReadPreference.SECONDARY)
 HOST_NER="60.28.29.47"
 
+not_need_copy_content_news = ["网易新闻图片", "观察者网"]
 
 def total_task():
 
@@ -65,7 +66,7 @@ def total_task():
             do_baike_task(params)
             do_douban_task(params)
 
-            if sourceSiteName != "网易新闻图片":
+            if sourceSiteName not in not_need_copy_content_news:
                 is_content_ok = do_content_img_task(params)
                 if is_content_ok:
                     do_relateimg_task(params)

@@ -140,12 +140,13 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
             imgUrls = one["imgUrl"]
             if isinstance(imgUrls, list) and len(imgUrls) > 0:
                 imgUrl = imgUrls[-1]
+            elif isinstance(imgUrls, dict):
+                imgUrl = imgUrls['img']
             elif isinstance(imgUrls, str):
                 imgUrl = imgUrls
-            else:
-                continue
-        if not imgUrl:
-            continue
+
+        # if not imgUrl:
+        #     continue
 
         ls["title"] = title_here
         ls["url"] = url_here
