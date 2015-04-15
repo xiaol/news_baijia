@@ -51,6 +51,11 @@ def homeContentFetch(options):
                 relate = doc["relate"]
             del doc["relate"]
 
+        if "sourceSiteName" in doc.keys():
+            sourceSitename  = doc["sourceSiteName"]
+            doc["category"] = sourceSitename[2:4]
+        else:
+            continue
         #不取没有相关的
         # if not relate:
         #     continue
@@ -128,7 +133,6 @@ def homeContentFetch(options):
 
         docs_return.append(doc)
 
-
     print docs_return
     return docs_return
 
@@ -156,62 +160,76 @@ def GetRelateNews(relate):
     distinct_response_urls = []
     sumList = []
 
-    for e in mid_relate:
-        if not e["title"]:
-            continue
-        if e["sourceSitename"] not in sourceNameSet:
-            e["user"]=""
-            distinctList.append(e)
-            distinct_response_urls.append(e["url"])
-            sourceNameSet.add(e["sourceSitename"])
+    total_relate = [left_relate, mid_relate, bottom_relate, opinion, deep_relate]
 
-        sumList.append(e)
+    for relate in total_relate:
+        for e in relate:
+            if not e["title"]:
+                continue
+            if e["sourceSitename"] not in sourceNameSet:
+                e["user"]=""
+                distinctList.append(e)
+                distinct_response_urls.append(e["url"])
+                sourceNameSet.add(e["sourceSitename"])
 
-    for e in left_relate:
-        if not e["title"]:
-            continue
-        if e["sourceSitename"] not in sourceNameSet:
-            e["user"]=""
-            distinctList.append(e)
-            distinct_response_urls.append(e["url"])
-            sourceNameSet.add(e["sourceSitename"])
+            sumList.append(e)
 
-        sumList.append(e)
-
-
-    for e in bottom_relate:
-
-        if not e["title"]:
-            continue
-        if e["sourceSitename"] not in sourceNameSet:
-            e["user"]=""
-            distinctList.append(e)
-            distinct_response_urls.append(e["url"])
-            sourceNameSet.add(e["sourceSitename"])
-
-        sumList.append(e)
-
-    for e in opinion:
-        if not e["title"]:
-            continue
-        if e["sourceSitename"] not in sourceNameSet:
-            e["user"]=""
-            distinctList.append(e)
-            distinct_response_urls.append(e["url"])
-            sourceNameSet.add(e["sourceSitename"])
-
-        sumList.append(e)
-
-    for e in deep_relate:
-        if not e["title"]:
-            continue
-        if e["sourceSitename"] not in sourceNameSet:
-            e["user"]=""
-            distinctList.append(e)
-            distinct_response_urls.append(e["url"])
-            sourceNameSet.add(e["sourceSitename"])
-
-        sumList.append(e)
+    # for e in mid_relate:
+    #     if not e["title"]:
+    #         continue
+    #     if e["sourceSitename"] not in sourceNameSet:
+    #         e["user"]=""
+    #         distinctList.append(e)
+    #         distinct_response_urls.append(e["url"])
+    #         sourceNameSet.add(e["sourceSitename"])
+    #
+    #     sumList.append(e)
+    #
+    # for e in left_relate:
+    #     if not e["title"]:
+    #         continue
+    #     if e["sourceSitename"] not in sourceNameSet:
+    #         e["user"]=""
+    #         distinctList.append(e)
+    #         distinct_response_urls.append(e["url"])
+    #         sourceNameSet.add(e["sourceSitename"])
+    #
+    #     sumList.append(e)
+    #
+    #
+    # for e in bottom_relate:
+    #
+    #     if not e["title"]:
+    #         continue
+    #     if e["sourceSitename"] not in sourceNameSet:
+    #         e["user"]=""
+    #         distinctList.append(e)
+    #         distinct_response_urls.append(e["url"])
+    #         sourceNameSet.add(e["sourceSitename"])
+    #
+    #     sumList.append(e)
+    #
+    # for e in opinion:
+    #     if not e["title"]:
+    #         continue
+    #     if e["sourceSitename"] not in sourceNameSet:
+    #         e["user"]=""
+    #         distinctList.append(e)
+    #         distinct_response_urls.append(e["url"])
+    #         sourceNameSet.add(e["sourceSitename"])
+    #
+    #     sumList.append(e)
+    #
+    # for e in deep_relate:
+    #     if not e["title"]:
+    #         continue
+    #     if e["sourceSitename"] not in sourceNameSet:
+    #         e["user"]=""
+    #         distinctList.append(e)
+    #         distinct_response_urls.append(e["url"])
+    #         sourceNameSet.add(e["sourceSitename"])
+    #
+    #     sumList.append(e)
 
     otherNum = len(sumList) - len(distinctList)
     return distinctList, len(distinctList), distinct_response_urls, otherNum

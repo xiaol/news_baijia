@@ -79,6 +79,10 @@ def fetchContent(url, filterurls, updateTime=None):
     if "root_class" in doc.keys():
         result["root_class"] = doc["root_class"]
 
+    if "sourceSitename" in doc.keys():
+        category = doc["sourceSitename"]
+        result["category"] = category[2:4]
+
     result["updateTime"] = doc["updateTime"]
     result["title"] = doc["title"]
 
@@ -136,6 +140,8 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
             imgUrls = one["imgUrl"]
             if isinstance(imgUrls, list) and len(imgUrls) > 0:
                 imgUrl = imgUrls[-1]
+            elif isinstance(imgUrls, str):
+                imgUrl = imgUrls
             else:
                 continue
         if not imgUrl:
