@@ -3,7 +3,8 @@
 from config import dbConn
 from weibo import weibo_relate_docs_get, user_info_get
 import json
-from jieba.analyse import extract_tags
+import datetime
+import operator
 
 mapOfSourceName = {"weibo":"微博",
                    "wangyi":"wangyi",
@@ -11,6 +12,8 @@ mapOfSourceName = {"weibo":"微博",
                    "zhihu":"zhihu"}
 
 DBStore = dbConn.GetDateStore()
+
+special_source = ["观察", "网易"]
 
 def homeContentFetch(options):
 
@@ -27,12 +30,25 @@ def homeContentFetch(options):
         page = options["page"]
     if 'limit' in options.keys():
         limit = options["limit"]
+    if 'timing' in options.keys():
+        timing = options['timing']
+    else:
+        timing = None
+
+
 
     conn = DBStore._connect_news
 
-    docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1}).sort([("updateTime",-1)]).skip((page-1)*limit).limit(limit)
+    if not timing:
 
-    index = 0
+        docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1}).sort([("updateTime",-1)]).skip((page-1)*limit).limit(limit)
+
+    else:
+        start_time, end_time = get_start_end_time()
+        start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+        end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+        docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1, "updateTime": {"$gte": start_time,
+                                                                                       "$lt": end_time}}).sort([("updateTime", -1)])
 
     docs_return = []
 
@@ -41,10 +57,17 @@ def homeContentFetch(options):
         sublist = []
         url = doc['sourceUrl']
         title = doc["title"]
+        sourceSiteName = doc["sourceSiteName"]
 
         baidu_news_num = count_relate_baidu_news(url)
 
         relate = []
+
+        # 标记放到前边的新闻
+        if sourceSiteName[:2] in special_source:
+            doc["special"] = 1
+        else:
+            doc["special"] = 400
 
         if "relate" in doc.keys():
             if doc["relate"]:
@@ -133,7 +156,10 @@ def homeContentFetch(options):
 
         docs_return.append(doc)
 
-    print docs_return
+    if timing:
+        docs_return = sorted(docs_return, key=operator.itemgetter("special"))
+
+    # print docs_return
     return docs_return
 
 def count_relate_baidu_news(url):
@@ -174,63 +200,6 @@ def GetRelateNews(relate):
 
             sumList.append(e)
 
-    # for e in mid_relate:
-    #     if not e["title"]:
-    #         continue
-    #     if e["sourceSitename"] not in sourceNameSet:
-    #         e["user"]=""
-    #         distinctList.append(e)
-    #         distinct_response_urls.append(e["url"])
-    #         sourceNameSet.add(e["sourceSitename"])
-    #
-    #     sumList.append(e)
-    #
-    # for e in left_relate:
-    #     if not e["title"]:
-    #         continue
-    #     if e["sourceSitename"] not in sourceNameSet:
-    #         e["user"]=""
-    #         distinctList.append(e)
-    #         distinct_response_urls.append(e["url"])
-    #         sourceNameSet.add(e["sourceSitename"])
-    #
-    #     sumList.append(e)
-    #
-    #
-    # for e in bottom_relate:
-    #
-    #     if not e["title"]:
-    #         continue
-    #     if e["sourceSitename"] not in sourceNameSet:
-    #         e["user"]=""
-    #         distinctList.append(e)
-    #         distinct_response_urls.append(e["url"])
-    #         sourceNameSet.add(e["sourceSitename"])
-    #
-    #     sumList.append(e)
-    #
-    # for e in opinion:
-    #     if not e["title"]:
-    #         continue
-    #     if e["sourceSitename"] not in sourceNameSet:
-    #         e["user"]=""
-    #         distinctList.append(e)
-    #         distinct_response_urls.append(e["url"])
-    #         sourceNameSet.add(e["sourceSitename"])
-    #
-    #     sumList.append(e)
-    #
-    # for e in deep_relate:
-    #     if not e["title"]:
-    #         continue
-    #     if e["sourceSitename"] not in sourceNameSet:
-    #         e["user"]=""
-    #         distinctList.append(e)
-    #         distinct_response_urls.append(e["url"])
-    #         sourceNameSet.add(e["sourceSitename"])
-    #
-    #     sumList.append(e)
-
     otherNum = len(sumList) - len(distinctList)
     return distinctList, len(distinctList), distinct_response_urls, otherNum
 
@@ -255,6 +224,37 @@ def GetWeibos(title, num):
         user = user_info_get.get_weibo_user(weibo_id)
         weibos[index]["user"] = user["name"]
 
+def get_start_end_time():
+    now = datetime.datetime.now()
+    yesterday = now + datetime.timedelta(days=-1)
+    yesterday_year = yesterday.year
+    yesterday_month = yesterday.month
+    yesterday_day = yesterday.day
+
+    today_year = now.year
+    today_month = now.month
+    today_day = now.day
+
+    hour = now.hour
+    start_time = ''
+    end_time = ''
+    if hour in range(0, 8):  # 取昨天14点~~~20点
+        start_time = datetime.datetime(yesterday_year, yesterday_month, yesterday_day, 14, 0)
+        end_time = datetime.datetime(yesterday_year, yesterday_month, yesterday_day, 20, 0)
+
+    elif hour in range(8, 14): #取昨天20天~~~今天8点
+        start_time = datetime.datetime(yesterday_year, yesterday_month, yesterday_day, 20, 0)
+        end_time = datetime.datetime(today_year, today_month, today_day, 8, 0)
+
+    elif hour in range(14, 20): #取今天8点~~~14点
+        start_time = datetime.datetime(today_year, today_month, today_day, 8, 0)
+        end_time = datetime.datetime(today_year, today_month, today_day, 14, 0)
+
+    elif hour in range(20, 24): #取今天14点~~~20点
+        start_time = datetime.datetime(today_year, today_month, today_day, 14, 0)
+        end_time = datetime.datetime(today_year, today_month, today_day, 20, 0)
+
+    return start_time, end_time
 
 def GetOneWeibo(title):
     weibos = weibo_relate_docs_get.search_relate_docs(title,1)

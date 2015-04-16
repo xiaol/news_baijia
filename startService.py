@@ -30,9 +30,12 @@ class FetchHomeHandler(tornado.web.RequestHandler):
 
         # updateTime = self.get_argument("updateTime", None)
         page = self.get_argument("page", 1)
+        timing = self.get_argument("timenews", None)
         options = {}
 
         options["page"] = int(page)
+        if timing:
+            options["timing"] = timing
         # if updateTime:
             # options["updateTime"] = updateTime
         result = home_get.homeContentFetch(options)
