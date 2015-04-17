@@ -154,8 +154,8 @@ def homeContentFetch(options):
 
         docs_return.append(doc)
 
-    if timing:
-        docs_return = sorted(docs_return, key=operator.itemgetter("special"))
+    # if timing:
+    docs_return = sorted(docs_return, key=operator.itemgetter("special"))
 
     # print docs_return
     return docs_return
