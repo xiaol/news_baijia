@@ -35,8 +35,6 @@ def homeContentFetch(options):
     else:
         timing = None
 
-
-
     conn = DBStore._connect_news
 
     if not timing:
@@ -47,8 +45,8 @@ def homeContentFetch(options):
         start_time, end_time = get_start_end_time()
         start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
         end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
-        docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1, "updateTime": {"$gte": start_time,
-                                                                                       "$lt": end_time}}).sort([("updateTime", -1)])
+        docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1, "createTime": {"$gte": start_time,
+                                                                                       "$lt": end_time}}).sort([("createTime", -1)])
 
     docs_return = []
 

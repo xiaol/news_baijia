@@ -816,7 +816,7 @@ def isTime(string):
 
 def Getner(title):
 
-    apiUrl = "http://121.41.75.213:8080/ner_mvc/api/ner?sentence=" + title
+    apiUrl = "http://%s:8080/ner_mvc/api/ner?sentence=" %(HOST_NER) + title
 
     r = requests.get(apiUrl)
     try:
