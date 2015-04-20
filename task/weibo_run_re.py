@@ -728,6 +728,7 @@ def GetWeibo(title):
         weibo_temp["url"] = weibo["url"]
         weibo_temp["profileImageUrl"] = ''
         weibo_temp["sourceSitename"] = "weibo"
+        weibo_temp["img"] = weibo["img_url"]
         weibos_of_return.append(weibo_temp)
 
     # weibo = weibos[0]

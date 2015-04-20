@@ -278,7 +278,6 @@ def GetOneWeibo(title):
     user = user_info_get.get_weibo_user(weibo_id)
     weibo["user"] = user["name"]
 
-
     return weibo
 
 
