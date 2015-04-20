@@ -45,8 +45,15 @@ def homeContentFetch(options):
         start_time, end_time = get_start_end_time()
         start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
         end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+
+
+
         docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1, "createTime": {"$gte": start_time,
                                                                                        "$lt": end_time}}).sort([("createTime", -1)])
+
+
+    special_list=[]
+    nospecial_list=[]
 
     docs_return = []
 
@@ -60,12 +67,14 @@ def homeContentFetch(options):
         baidu_news_num = count_relate_baidu_news(url)
 
         relate = []
-
+        special_flag=True
         # 标记放到前边的新闻
         if sourceSiteName[:2] in special_source:
             doc["special"] = 1
+
         else:
             doc["special"] = 400
+            special_flag=False
 
         if "relate" in doc.keys():
             if doc["relate"]:
@@ -152,10 +161,16 @@ def homeContentFetch(options):
         doc["otherNum"] = otherNum + baidu_news_num
         doc["urls_response"] = distinct_response_urls  #返回的urls，用于获取其他相关新闻时过滤掉 这几条已经有的新闻
 
-        docs_return.append(doc)
+        # docs_return.append(doc)
+        if special_flag:
+            special_list.append(doc)
+        else:
+            nospecial_list.append(doc)
 
+    special_list= sorted(special_list,key=operator.itemgetter("createTime"))
+    docs_return=special_list+nospecial_list
     # if timing:
-    docs_return = sorted(docs_return, key=operator.itemgetter("special"))
+    # docs_return = sorted(docs_return, key=operator.itemgetter("special"))
 
     # print docs_return
     return docs_return
