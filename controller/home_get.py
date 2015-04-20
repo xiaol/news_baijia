@@ -42,7 +42,8 @@ def homeContentFetch(options):
         docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1}).sort([("updateTime",-1)]).skip((page-1)*limit).limit(limit)
 
     else:
-        start_time, end_time = get_start_end_time()
+        # start_time, end_time = get_start_end_time()
+        start_time, end_time = get_start_end_time(oneday=True)
         start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
         end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -237,7 +238,8 @@ def GetWeibos(title, num):
         user = user_info_get.get_weibo_user(weibo_id)
         weibos[index]["user"] = user["name"]
 
-def get_start_end_time():
+def get_start_end_time(oneday=False):
+
     now = datetime.datetime.now()
     yesterday = now + datetime.timedelta(days=-1)
     yesterday_year = yesterday.year
@@ -247,6 +249,13 @@ def get_start_end_time():
     today_year = now.year
     today_month = now.month
     today_day = now.day
+
+
+    if oneday:
+        start_time = datetime.datetime(yesterday_year, yesterday_month, yesterday_day, 0, 0)
+        end_time = now
+
+        return start_time, end_time
 
     hour = now.hour
     start_time = ''
@@ -283,7 +292,6 @@ def GetOneWeibo(title):
     weibo_id = weibo["weibo_id"]
     user = user_info_get.get_weibo_user(weibo_id)
     weibo["user"] = user["name"]
-
 
     return weibo
 
