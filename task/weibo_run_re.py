@@ -569,10 +569,18 @@ def find_first_img_meet_condition(img_result):
 
     for i in img_result:
         time.sleep(3)
-        if not i.endswith('.gif') and (not 'weima' in i) and (not ImgNotMeetCondition(i, 80000)) and not is_erwei_ma(i):
+        if not i.endswith('.gif') and (not 'weima' in i) and (not ImgNotMeetCondition(i, 80000)) and  not is_exist_mongodb(i) and not is_erwei_ma(i):
             return i
 
     return ''
+
+def is_exist_mongodb(img_url):
+
+    doc=conn["news_ver2"]["googleNewsItem"].find_one({'imgUrls':img_url})
+    if doc:
+        return True
+    else:
+        return False
 
 def is_erwei_ma(img_url):
 
