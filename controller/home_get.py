@@ -3,7 +3,7 @@
 from config import dbConn
 from weibo import weibo_relate_docs_get, user_info_get
 import json
-import datetime
+import datetime,time
 import operator
 
 mapOfSourceName = {"weibo":"微博",
@@ -35,15 +35,23 @@ def homeContentFetch(options):
     else:
         timing = None
 
+    if 'timefeedback' in options.keys():
+        timefeedback=options['timefeedback']
+    else:
+        timefeedback = None
+
     conn = DBStore._connect_news
 
-    if not timing:
+    if not timing and not timefeedback:
 
         docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1}).sort([("updateTime",-1)]).skip((page-1)*limit).limit(limit)
 
+    # elif not timing:
+
+        # request_time, next_update_time, next_update_type, history_date, upate_frequency = get_time_type_date_freq()
     else:
         # start_time, end_time = get_start_end_time()
-        start_time, end_time = get_start_end_time(halfday=True)
+        start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
         start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
         end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -51,6 +59,17 @@ def homeContentFetch(options):
 
         docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1, "createTime": {"$gte": start_time,
                                                                                        "$lt": end_time}}).sort([("createTime", -1)])
+
+    if timefeedback:
+        request_time, next_update_time, next_update_type\
+            , history_date, next_update_freq = get_time_type_date_freq(update_time, update_type, upate_frequency)
+
+        timefeedback_dict = {}
+        timefeedback_dict['request_time'] = request_time
+        timefeedback_dict['next_upate_time'] = next_update_time
+        timefeedback_dict['next_update_type'] = next_update_type
+        timefeedback_dict['history_date'] = history_date
+        timefeedback_dict['next_update_freq'] = next_update_freq
 
 
     special_list=[]
@@ -162,6 +181,9 @@ def homeContentFetch(options):
         doc["otherNum"] = otherNum + baidu_news_num
         doc["urls_response"] = distinct_response_urls  #返回的urls，用于获取其他相关新闻时过滤掉 这几条已经有的新闻
 
+        if timefeedback:
+            doc["timefeedback"]=timefeedback_dict
+
         # docs_return.append(doc)
         if special_flag:
             special_list.append(doc)
@@ -250,6 +272,11 @@ def get_start_end_time(oneday=False,halfday=False):
     today_month = now.month
     today_day = now.day
 
+    tomorrow = now + datetime.timedelta(days=1)
+    tomorrow_year = tomorrow.year
+    tomorrow_month = tomorrow.month
+    tomorrow_day = tomorrow.day
+
     hour = now.hour
     start_time = ''
     end_time = ''
@@ -263,18 +290,30 @@ def get_start_end_time(oneday=False,halfday=False):
     if halfday:
 
 
-        if hour in range(0,6):    #取昨晚6点-昨天18点
+        if hour in range(0,6):    #取昨天6点-昨天18点 更新时间为今天早上6点
             start_time = datetime.datetime(yesterday_year, yesterday_month, yesterday_day, 6, 0)
             end_time = datetime.datetime(yesterday_year, yesterday_month, yesterday_day, 18, 0)
+            update_time = datetime.datetime(today_year, today_month, today_day, 6, 0)
+            update_type = 0  #0代表白天
+            upate_frequency = int((update_time - start_time).total_seconds()/3600)
 
-        elif hour in range(6,18): #取昨天18点~今天6点
+
+        elif hour in range(6,18): #取昨天18点~今天6点 更新时间为今天18点
             start_time = datetime.datetime(yesterday_year, yesterday_month, yesterday_day, 18, 0)
             end_time = datetime.datetime(today_year, today_month, today_day, 6, 0)
+            update_time = datetime.datetime(today_year, today_month, today_day, 18, 0)
+            update_type = 1 #1代表黑夜
+            upate_frequency = int((update_time - start_time).total_seconds()/3600)
 
-        elif hour in range(18,24): #取今天6-今天18点
+        elif hour in range(18,24): #取今天6-今天18点 更新时间为明天6点
             start_time = datetime.datetime(today_year, today_month, today_day, 6, 0)
             end_time = datetime.datetime(today_year, today_month, today_day, 18, 0)
-        return start_time, end_time
+            update_time = datetime.datetime(tomorrow_year, tomorrow_month, tomorrow_day, 6, 0)
+            update_type = 0
+            upate_frequency = int((update_time - start_time).total_seconds()/3600)
+
+
+        return start_time, end_time, update_time, update_type, upate_frequency
 
     if hour in range(0, 8):  # 取昨天14点~~~20点
         start_time = datetime.datetime(yesterday_year, yesterday_month, yesterday_day, 14, 0)
@@ -310,6 +349,41 @@ def GetOneWeibo(title):
     weibo["user"] = user["name"]
 
     return weibo
+
+
+def get_time_type_date_freq(update_time,update_type,upate_frequency):
+    now = datetime.datetime.now()
+    request_time = convertTimestrtosecond(now)
+    next_update_time = convertTimestrtosecond(update_time) - request_time
+    next_update_type = update_type
+    next_update_freq = upate_frequency
+    history_date = get_history_date(now)
+
+    return request_time, next_update_time, next_update_type, history_date, next_update_freq
+
+
+
+
+def convertTimestrtosecond(date):
+    return timestamp(date)
+
+def timestamp(date):
+    return time.mktime(date.timetuple())
+
+def get_history_date(now):
+    format='%Y-%m-%d'
+    history_date=[]
+    for i  in list(reversed(range(4))):
+        yesterday = now + datetime.timedelta(days=-i)
+        defaultTimestr=yesterday.strftime(format)
+        history_date.append(defaultTimestr)
+
+    return history_date
+
+
+
+
+
 
 
 

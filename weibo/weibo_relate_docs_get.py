@@ -121,8 +121,9 @@ def baidusearch_relate_docs(topic,page):
 
 if __name__ == '__main__':
     # print search_relate_docs("柴静","1")
-    baidusearch_relate_docs("孙楠","1")
+    # baidusearch_relate_docs("孙楠","1")
     # source_name=re.compile('<span class=\'wa-weibo-author\'>(.*?)</span>')
+    convertsecondtoTimestr(1429845960.0)
 
     # str='<a target='_blank' class='wa-weibo-table-row' href='http://m.baidu.com/tc?sec=2742&di=69db99f4e9d34ae0&&src=http%3A%2F%2Fm.weibo.cn%2F1528121221%2FCdcALtOVO%3Fwm%3D5091_0010%26from%3Dba_s0010&ssid=&uid=&from=&pu=sz%401320_220&bd_page_type=1&l=1'><div class='wa-weibo-table-cell wa-weibo-table-clickable-cell wa-weibo-item-1'><span class='wa-weibo-author'>真人网</span><span class='wa-weibo-time'><span class='wa-weibo-t' data-time='1428976312'>今天09:51</span>/新浪微博</span><div class='wa-weibo-clear'>&#160;</div><p class='wa-weibo-content'>传网友叫停 孙楠 上爸爸3  孙楠 带子女将上爸爸去哪儿第三季?网友集体叫停 | #传网友叫停 孙楠 上爸爸3#《爸爸去哪儿》人选悬而未决,最近账号 发微博称:“《爸爸去哪儿》第三季将设计全新游戏环节,告别做饭和旅游模式。”并配上一张 孙楠 ...   </p><img class='wa-weibo-img' src='http://ww1.sinaimg.cn/large/5b154785jw1er4uzhgrzyj20c806o0t1.jpg' data-src='http://m.baidu.com/tc?sec=2742&di=3d40248eab580678&&src=http%3A%2F%2Fww1.sinaimg.cn%2Flarge%2F5b154785jw1er4uzhgrzyj20c806o0t1.jpg&ssid=&uid=&from=&pu=sz%401320_220&bd_page_type=1&l=1'/><div class='wa-weibo-clear'>&#160;</div></div></a>'
 
