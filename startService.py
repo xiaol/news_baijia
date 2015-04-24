@@ -12,7 +12,7 @@ import tornado.httpclient
 
 import tornado.netutil
 import json
-from controller import home_get, content_get
+from controller import home_get, content_get, time_get
 
 import abstract
 
@@ -55,6 +55,24 @@ class FetchHomeHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+class FetchTimeHandler(tornado.web.RequestHandler):
+
+    def get(self):
+        timefeedback=self.get_argument("timefeedback",None)
+        options = {}
+        if timefeedback:
+            options["timefeedback"]=timefeedback
+        result = time_get.timeContentFetch(options)
+
+        print result
+
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
+
+
+
 class FetchContentHandler(tornado.web.RequestHandler):
 
     def get(self):
@@ -81,7 +99,7 @@ class Application(tornado.web.Application):
     def __init__(self):
 
         handlers = [
-
+            (r"/news/baijia/fetchTime", FetchTimeHandler),
             (r"/news/baijia/fetchHome", FetchHomeHandler),
             (r"/news/baijia/fetchContent", FetchContentHandler)
 
