@@ -12,7 +12,7 @@ import tornado.httpclient
 
 import tornado.netutil
 import json
-from controller import home_get, content_get
+from controller import home_get, content_get, time_get
 
 import abstract
 
@@ -29,10 +29,22 @@ class FetchHomeHandler(tornado.web.RequestHandler):
     def get(self):
 
         # updateTime = self.get_argument("updateTime", None)
+        limit = self.get_argument("limit", 10)
         page = self.get_argument("page", 1)
+        timing = self.get_argument("timenews", None)
+        timefeedback=self.get_argument("timefeedback",None)
+
+
         options = {}
 
         options["page"] = int(page)
+        options["limit"] = int(limit)
+        if timing:
+            options["timing"] = timing
+        if timefeedback:
+            options["timefeedback"]=timefeedback
+
+
         # if updateTime:
             # options["updateTime"] = updateTime
         result = home_get.homeContentFetch(options)
@@ -41,6 +53,24 @@ class FetchHomeHandler(tornado.web.RequestHandler):
 
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
+
+
+class FetchTimeHandler(tornado.web.RequestHandler):
+
+    def get(self):
+        timefeedback=self.get_argument("timefeedback",None)
+        options = {}
+        if timefeedback:
+            options["timefeedback"]=timefeedback
+        result = time_get.timeContentFetch(options)
+
+        print result
+
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
+
 
 
 class FetchContentHandler(tornado.web.RequestHandler):
@@ -69,7 +99,7 @@ class Application(tornado.web.Application):
     def __init__(self):
 
         handlers = [
-
+            (r"/news/baijia/fetchTime", FetchTimeHandler),
             (r"/news/baijia/fetchHome", FetchHomeHandler),
             (r"/news/baijia/fetchContent", FetchContentHandler)
 
@@ -88,7 +118,7 @@ if __name__ == "__main__":
 
     # sched = SchedulerAll()
     # sched.start()
-
+  
     tornado.options.parse_command_line()
     # sockets = tornado.netutil.bind_sockets(options.port)
     # tornado.process.fork_processes(0)

@@ -18,6 +18,7 @@ import os
 from PIL import Image
 import datetime
 from requests.exceptions import Timeout
+import zbar
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -40,27 +41,38 @@ conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replic
                                                              read_preference=ReadPreference.SECONDARY)
 HOST_NER="60.28.29.47"
 
+not_need_copy_content_news = ["网易新闻图片", "观察者网"]
 
 def total_task():
+
+    logging.warning("##################### task start ********************")
+
+    doc_num = 0
 
     docs = fetch_unrunned_docs()
 
     url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
+        doc_num += 1
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
         try:
 
-            print "==================task start, the url is %s, sourceSiteName: %s ============================================" % (url, sourceSiteName)
+            print "*****************************task start, the url is %s, sourceSiteName: %s " \
+                  "*****************************" % (url, sourceSiteName)
             do_weibo_task(params)
             do_ner_task(params)
             do_zhihu_task(params)
             do_baike_task(params)
             do_douban_task(params)
 
-            if sourceSiteName != "网易新闻图片":
+            if sourceSiteName not in not_need_copy_content_news:
                 is_content_ok = do_content_img_task(params)
-                do_relateimg_task(params)
+                if is_content_ok:
+                    do_relateimg_task(params)
+                else:
+                    logging.warn("content or img not ok, continue to copy next doc")
+                    continue
             else:
                 is_content_ok = True
 
@@ -75,6 +87,14 @@ def total_task():
             print "timeout of url==>", url
             continue
 
+    logging.warning("##################### task complete ********************")
+    if doc_num == 0:
+        return "no_doc"
+    else:
+        return "have_doc"
+
+
+
 def do_isOnline_task(params):
 
     print "==================isOnline task start================"
@@ -85,10 +105,18 @@ def do_isOnline_task(params):
 
     isOk = is_condition_meet(url, must_meet_field_list)
 
+    now = datetime.datetime.now()
+    str_now = now.strftime("%Y-%m-%d %H:%M:%S")
+
     if isOk:
         set_googlenews_by_url_with_field_and_value(url, "isOnline", 1)
+        set_googlenews_by_url_with_field_and_value(url, "updateTime", str_now)
 
-        set_task_ok_by_url_and_field(url, "isOnlineOk")
+        set_task_ok_by_url_and_field(url, "isOnline")
+        print "isOnline ok"
+
+    else:
+        print "isOnline fail"
 
 
 
@@ -317,13 +345,6 @@ def do_zhihu_task(params):
     set_googlenews_by_url_with_field_and_value(url, "zhihu", zhihu)
 
 
-
-
-
-
-
-
-
 def GetZhihu(keyword):
 
     apiUrl = "http://www.zhihu.com/search?q={0}&type=question".format(keyword)
@@ -442,7 +463,10 @@ def do_content_img_task(params):
     if lefturl:
         url_use_to_fetch_content_img = lefturl
     else:
-        url_use_to_fetch_content_img = url
+        print "left url is None, set it's img is None"
+        set_googlenews_by_url_with_field_and_value(url, "imgUrls", "")
+        set_task_ok_by_url_and_field(url, "isOnline") #标记为处理过， 接口取新闻会判断图片是否为空
+        return False
 
     status = fetch_and_save_content(url, url_use_to_fetch_content_img)
 
@@ -457,11 +481,14 @@ def do_content_img_task(params):
 
 def fetch_and_save_content(url, url_use_to_fetch_content_img):
 
-    apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + url_use_to_fetch_content_img
+    apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + url
     r_text = requests.get(apiUrl_text)
     text = (r_text.json())["text"]
 
-    img = GetImgByUrl(url)['img']
+    if url_use_to_fetch_content_img:
+        img = GetImgByUrl(url_use_to_fetch_content_img)['img']
+    else:
+        img = ''
 
     if not img:
         print "url:%s" % url, " : img is None"
@@ -541,10 +568,47 @@ def find_first_img_meet_condition(img_result):
 
 
     for i in img_result:
-        if not i.endswith('.gif') and (not 'weima' in i) and (not ImgNotMeetCondition(i, 40000)):
+        time.sleep(3)
+        if not i.endswith('.gif') and (not 'weima' in i) and (not ImgNotMeetCondition(i, 80000)) and  not is_exist_mongodb(i) and not is_erwei_ma(i):
             return i
 
     return ''
+
+def is_exist_mongodb(img_url):
+
+    doc=conn["news_ver2"]["googleNewsItem"].find_one({'imgUrls':img_url})
+    if doc:
+        return True
+    else:
+        return False
+
+def is_erwei_ma(img_url):
+
+    file = cStringIO.StringIO(urllib.urlopen(img_url).read())
+    pil = Image.open(file).convert('L')
+    width, height = pil.size
+    print width, height
+
+    scanner = zbar.ImageScanner()
+    scanner.parse_config('enable')
+
+
+
+
+    raw = pil.tostring()
+    # wrap image data
+    image = zbar.Image(width, height, 'Y800', raw)
+    # scan the image for barcodes
+    scanner.scan(image)
+    # extract results
+    for symbol in image:
+        # do something useful with results
+        print 'decoded', symbol.type, 'symbol', '"%s"' % symbol.data
+
+        if not symbol.type and not symbol.data:
+            return False
+        else:
+            return True
 
 
 def copyNormalImg(img_result):
@@ -563,7 +627,6 @@ def copyNormalImg(img_result):
     else:
         return None
 
-
 def ImgNotMeetCondition(url, size):
 
         img_url = url
@@ -576,11 +639,20 @@ def ImgNotMeetCondition(url, size):
             return True
         width, height = im.size
         print(width, height)
-        if width * height <= size:
+        if width * height <= size or not width_height_ratio_meet_condition(width, height, 4):
             return True
         print width, "+", height, " url=======>", img_url
         return False
 
+def width_height_ratio_meet_condition(width, height, ratio):
+
+    if width == 0 or height == 0:
+        return False
+
+    if width/height <= ratio and height/width <= ratio:
+        return True
+
+    return False
 
 def do_ner_task(params):
 
@@ -598,7 +670,6 @@ def do_ner_task(params):
     set_task_ok_by_url_and_field(url, "nerOk")
 
     return True
-
 
 def do_weibo_task(params):
 
@@ -634,9 +705,9 @@ def set_task_ok_by_url_and_field(url, field):
 
 def GetWeibo(title):
 
-    weibos = weibo_relate_docs_get.search_relate_docs(title, 1)
-
-    weibos = json.loads(weibos)
+    # weibos = weibo_relate_docs_get.search_relate_docs(title, 1)
+    weibos = weibo_relate_docs_get.baidusearch_relate_docs(title,1)
+    # weibos = json.loads(weibos)
 
     if isinstance(weibos, list) and len(weibos) <= 0:
         return
@@ -646,24 +717,37 @@ def GetWeibo(title):
 
 
     weibos_of_return = []
+
     for weibo in weibos:
-        weibo_id = weibo["weibo_id"]
-        del weibo["weibo_id"]
-        # user = user_info_get.get_weibo_user(weibo_id)
-        # weibo["user"] = user["screenName"]
-        # weibo["profileImageUrl"] = user["profileImageUrl"]
-        weibo["user"] = ""
-        weibo["profileImageUrl"] = ""
-        weibo["sourceSitename"] = "weibo"
-        weibo["title"] = weibo["content"]
-        del weibo["content"]
-        weibos_of_return.append(weibo)
+
+        weibo_temp = {}
+        # weibo_id = weibo["weibo_id"]
+        # del weibo["weibo_id"]
+        # # user = user_info_get.get_weibo_user(weibo_id)
+        # # weibo["user"] = user["screenName"]
+        # # weibo["profileImageUrl"] = user["profileImageUrl"]
+        # weibo["user"] = ""
+        # weibo["profileImageUrl"] = ""
+        # weibo["sourceSitename"] = "weibo"
+        # weibo["title"] = weibo["content"]
+        # del weibo["content"]
+        weibo_temp["user"] = weibo["source_name"]
+        weibo_temp["title"] = weibo["content"]
+        weibo_temp["url"] = weibo["url"]
+        weibo_temp["profileImageUrl"] = ''
+        weibo_temp["sourceSitename"] = "weibo"
+        weibo_temp["img"] = weibo["img_url"]
+        weibos_of_return.append(weibo_temp)
 
     # weibo = weibos[0]
     # weibo_id = weibo["weibo_id"]
     # user = user_info_get.get_weibo_user(weibo_id)
     # weibo["user"] = user["name"]
 
+    if len(weibos_of_return) == 0:
+        return None
+    if len(weibos_of_return) > 8:
+        return weibos_of_return[0:8]
     return weibos_of_return
 
 
@@ -741,7 +825,7 @@ def isTime(string):
 
 def Getner(title):
 
-    apiUrl = "http://121.41.75.213:8080/ner_mvc/api/ner?sentence=" + title
+    apiUrl = "http://%s:8080/ner_mvc/api/ner?sentence=" %(HOST_NER) + title
 
     r = requests.get(apiUrl)
     try:
@@ -789,7 +873,7 @@ def getNe(content_after_cut):
 
 def fetch_unrunned_docs():
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"weiboOk": 0}).sort([("updateTime", -1)])
+    un_runned_docs = conn["news_ver2"]["Task"].find({"isOnline": 0}).sort([("updateTime", -1)])
 
     return un_runned_docs
 
@@ -800,24 +884,47 @@ def fetch_url_title_lefturl_pairs(docs):
 
     for doc in docs:
         url = doc["url"]
+
+        relate_doc = get_googlenews_by_url(url)
+
+        if not relate_doc:
+            continue
+
         title = doc["title"]
         lefturl = ''
         sourceSiteName = ''
-        if "relate" in doc.keys():
-            left = doc["relate"]["left"]
-            if len(left) > 0:
-                lefturl = left[0]["url"]
 
         if "sourceSiteName" in doc.keys():
             sourceSiteName = doc["sourceSiteName"]
 
+        if "relate" in relate_doc.keys():
+            relate = relate_doc['relate']
+            if relate:
+                left = relate_doc["relate"]["left"]
+                if left and len(left) > 0:
+                    lefturl = left[0]["url"]
 
         url_title_lefturl_sourceSite_pairs.append([url, title, lefturl, sourceSiteName])
 
     return url_title_lefturl_sourceSite_pairs
 
+def get_googlenews_by_url(url):
+
+
+    return conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
 
 if __name__ == '__main__':
+
+    # if False != width_height_ratio_meet_condition(100, 900, 4):
+    #     print "width_height_ratio_meet_condition test fail"
+    # else:
+    #     print "width_height_ratio_meet_condition test ok"
+
+    # find_first_img_meet_condition(["http://i3.sinaimg.cn/dy/main/other/qrcode_news.jpg"])
+
     while True:
-        # time.sleep(40)
-        total_task()
+        doc_num = total_task()
+        if doc_num == "no_doc":
+            time.sleep(60)
+
+    # GetWeibo("孙楠 歌手")

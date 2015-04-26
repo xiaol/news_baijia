@@ -807,13 +807,11 @@ def isDoubanTag(tag):
         return False
     return False
 
-
-
 def baiduNewsTaskRun():
 
     un_runned_docs = conn["news_ver2"]["Task"].find({"$or":[{"baiduSearchOk": 0}, {"baiduSearchOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
 
-    # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)])
+    # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)]).limit(100)
 
     url_title_pairs = []
     for doc in un_runned_docs:
@@ -848,7 +846,6 @@ def baiduNewsTaskRun():
         print cmd
 
         child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
-
         print "complete url===>", url_here,
 
         conn["news_ver2"]["Task"].update({"url": url_here}, {"$set": {"baiduSearchOk": 1}})
