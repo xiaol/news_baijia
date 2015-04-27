@@ -33,16 +33,25 @@ class FetchHomeHandler(tornado.web.RequestHandler):
         page = self.get_argument("page", 1)
         timing = self.get_argument("timenews", None)
         timefeedback=self.get_argument("timefeedback",None)
+        date = self.get_argument("date",None)
+        type = self.get_argument("type",None)
 
 
         options = {}
 
         options["page"] = int(page)
         options["limit"] = int(limit)
+
+
         if timing:
             options["timing"] = timing
         if timefeedback:
             options["timefeedback"]=timefeedback
+
+        if date:
+            options["date"] = date
+        if type:
+            options["type"] = type
 
 
         # if updateTime:
