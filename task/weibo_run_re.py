@@ -17,8 +17,11 @@ import logging
 import os
 from PIL import Image
 import datetime
-from requests.exceptions import Timeout,ConnectionError
-import zbar
+from requests.exceptions import Timeout, ConnectionError
+try:
+    import zbar
+except ImportError:
+    print('Can\'t import zbar')
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -40,9 +43,10 @@ from abstract import KeywordExtraction
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                                              read_preference=ReadPreference.SECONDARY)
-HOST_NER="60.28.29.47"
+HOST_NER = "60.28.29.47"
 
 not_need_copy_content_news = ["网易新闻图片", "观察者网"]
+
 
 def total_task():
 
@@ -64,6 +68,7 @@ def total_task():
                   "*****************************" % (url, sourceSiteName)
             do_weibo_task(params)
             do_ner_task(params)
+            do_event_task(params)
             do_zhihu_task(params)
             do_baike_task(params)
             do_douban_task(params)
@@ -198,7 +203,6 @@ def get_relate_news_by_url(url):
     return relate
 
 
-
 def do_douban_task(params):
 
     print "==================douban task start================"
@@ -224,7 +228,6 @@ def do_douban_task(params):
         return
 
     set_task_ok_by_url_and_field(url, "doubanOk")
-
 
 
 def isDoubanTag(tag):
@@ -353,7 +356,7 @@ def GetZhihu(keyword):
 
     r = requests.get(apiUrl)
 
-    dom =etree.HTML(r.text)
+    dom = etree.HTML(r.text)
 
     pat = re.compile('<[^<>]+?>')
     pat_user = re.compile('<[^<>]+?>|[\,，]')
@@ -392,7 +395,6 @@ def GetZhihu(keyword):
     return zhihus
 
 
-
 def do_abs_task(params):
     url = params["url"]
     title = params["title"]
@@ -415,8 +417,6 @@ def do_abs_task(params):
     return True
 
 
-
-
 def fetch_ne_by_url(url):
     doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
 
@@ -427,6 +427,7 @@ def fetch_ne_by_url(url):
             ne = get_first_one_of_ne(temp)
 
     return ne
+
 
 def get_first_one_of_ne(ne):
 
@@ -441,6 +442,7 @@ def get_first_one_of_ne(ne):
         keyword = ne['org'][0]
 
     return keyword
+
 
 def fetch_content_by_url(url):
 
@@ -658,12 +660,15 @@ def width_height_ratio_meet_condition(width, height, ratio):
 
     return False
 
+
 def do_ner_task(params):
 
     print "==================ner task start================"
     url = params["url"]
     title = params["title"]
     title_after_cut = jieba.cut(title)
+    title_after_cut = [x.strip(':') and x.strip('：') and x.strip('-') for x in title_after_cut]
+    title_after_cut = filter(None, title_after_cut)
     title_after_cut = " ".join(title_after_cut)
 
     ne = getNe(title_after_cut)
@@ -674,6 +679,47 @@ def do_ner_task(params):
     set_task_ok_by_url_and_field(url, "nerOk")
 
     return True
+
+
+def is_ne_empty(ne):
+    if ne.get('gpe', None):
+        return False
+    if ne.get('loc', None):
+        return False
+    if ne.get('org', None):
+        return False
+    if ne.get('person', None):
+        return False
+    if ne.get('time', None):
+        return False
+    return True
+
+# need behind ner task
+
+def do_event_task(params):
+    print "==================event task start================"
+    url = params["url"]
+    #title = params["title"]
+    doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
+
+    if doc:
+        if "ne" in doc.keys() and not is_ne_empty(doc['ne']):
+            start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+            start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+            end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+
+            #events = conn["news_ver2"]["googleNewsItem"].find({"ne": doc['ne'], "createTime": {"$gte": end_time}}).sort([("createTime", pymongo.DESCENDING)])
+            events = conn["news_ver2"]["googleNewsItem"].find({'$or':[{"ne.gpe": {'$in': doc['ne']['gpe']}},
+                                                {"ne.person": {'$in': doc['ne']['person']}}], "createTime": {"$gte": end_time}}).sort([("createTime", pymongo.DESCENDING)])
+            eventCount = 0
+            for story in events:
+                    #if story.get("eventId", None):
+                if eventCount is 0:
+                    set_googlenews_by_url_with_field_and_value(url, "eventId", story["_id"])
+                set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", story["_id"])
+                eventCount += 1
+
+
 
 def do_weibo_task(params):
 
@@ -881,14 +927,16 @@ def fetch_unrunned_docs():
 
     return un_runned_docs
 
+
 def fetch_unrunned_docs_by_date():
     start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
 
-    docs = conn["news_ver2"]["Task"].find({"isOnline": 0, "updateTime": {"$gte": start_time,
-                                                                                       "$lt": end_time}}).sort([("updateTime", 1)])
+    docs = conn["news_ver2"]["Task"].find({"isOnline": 0, "updateTime": {"$gte": end_time}}).sort([("updateTime", 1)])
+    #docs = conn["news_ver2"]["Task"].find({"isOnline": 0, "updateTime": {"$gte": start_time, '$lte': end_time}}).sort([("updateTime", 1)])
     return docs
+
 
 def fetch_url_title_lefturl_pairs(docs):
 
@@ -920,10 +968,24 @@ def fetch_url_title_lefturl_pairs(docs):
 
     return url_title_lefturl_sourceSite_pairs
 
+
 def get_googlenews_by_url(url):
 
-
     return conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
+
+
+def test_event_task():
+    docs = fetch_unrunned_docs_by_date()
+    #docs = fetch_unrunned_docs()
+
+    url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
+
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
+        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        print "*****************************task start, the url is %s, sourceSiteName: %s " \
+                  "*****************************" % (url, sourceSiteName)
+        do_ner_task(params)
+        do_event_task(params)
 
 if __name__ == '__main__':
 
@@ -933,6 +995,7 @@ if __name__ == '__main__':
     #     print "width_height_ratio_meet_condition test ok"
 
     # find_first_img_meet_condition(["http://i3.sinaimg.cn/dy/main/other/qrcode_news.jpg"])
+    #test_event_task()
 
     while True:
         doc_num = total_task()
@@ -940,3 +1003,7 @@ if __name__ == '__main__':
             time.sleep(60)
 
     # GetWeibo("孙楠 歌手")
+
+
+
+
