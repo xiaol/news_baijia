@@ -17,7 +17,7 @@ import logging
 import os
 from PIL import Image
 import datetime
-from requests.exceptions import Timeout
+from requests.exceptions import Timeout,ConnectionError
 import zbar
 
 reload(sys)
@@ -31,6 +31,7 @@ sys.path.append(path_add+"/weibo/")
 sys.path.append(path_add)
 try:
     from weibo import weibo_relate_docs_get, user_info_get
+    from controller.home_get import get_start_end_time
 except ImportError:
     import weibo_relate_docs_get
     import user_info_get
@@ -49,7 +50,8 @@ def total_task():
 
     doc_num = 0
 
-    docs = fetch_unrunned_docs()
+    docs = fetch_unrunned_docs_by_date()
+    #docs = fetch_unrunned_docs()
 
     url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
 
@@ -83,8 +85,8 @@ def total_task():
 
             do_isOnline_task(params)
 
-        except Timeout:
-            print "timeout of url==>", url
+        except (Timeout, ConnectionError) as e:
+            print "timeout of url==>", url, "  exception==>", e
             continue
 
     logging.warning("##################### task complete ********************")
@@ -400,10 +402,10 @@ def do_abs_task(params):
     if not content:
         return False
 
-    abstract_here = KeywordExtraction.abstract(content)
-    print ">>>>>>>>abstract:", abstract_here
-
     try:
+        abstract_here = KeywordExtraction.abstract(content)
+        print ">>>>>>>>abstract:", abstract_here
+
         set_googlenews_by_url_with_field_and_value(url, "abstract", abstract_here)
     except:
         return False
@@ -504,13 +506,12 @@ def fetch_and_save_content(url, url_use_to_fetch_content_img):
 
 def GetImgByUrl(url):
 
+    result = {}
     apiUrl_img = "http://121.41.75.213:8080/extractors_mvc_war/api/getImg?url="+url
-
     r_img = requests.get(apiUrl_img)
 
     imgs = (r_img.json())["imgs"]
 
-    result = {}
 
     if isinstance(imgs, list) and len(imgs) > 0:
 
@@ -583,9 +584,12 @@ def is_exist_mongodb(img_url):
         return False
 
 def is_erwei_ma(img_url):
-
-    file = cStringIO.StringIO(urllib.urlopen(img_url).read())
-    pil = Image.open(file).convert('L')
+    try:
+        file = cStringIO.StringIO(urllib.urlopen(img_url).read())
+        pil = Image.open(file).convert('L')
+    except IOError:
+        print "IOError, imgurl===>", img_url
+        return True
     width, height = pil.size
     print width, height
 
@@ -877,6 +881,14 @@ def fetch_unrunned_docs():
 
     return un_runned_docs
 
+def fetch_unrunned_docs_by_date():
+    start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
+    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    docs = conn["news_ver2"]["Task"].find({"isOnline": 0, "updateTime": {"$gte": start_time,
+                                                                                       "$lt": end_time}}).sort([("updateTime", 1)])
+    return docs
 
 def fetch_url_title_lefturl_pairs(docs):
 
