@@ -34,7 +34,7 @@ def timeContentFetch(options):
 
         timefeedback_dict = {}
         timefeedback_dict['request_time'] = request_time
-        timefeedback_dict['next_upate_time'] = next_update_time
+        timefeedback_dict['next_update_time'] = next_update_time
         timefeedback_dict['next_update_type'] = next_update_type
         timefeedback_dict['history_date'] = history_date
         timefeedback_dict['next_update_freq'] = next_update_freq
