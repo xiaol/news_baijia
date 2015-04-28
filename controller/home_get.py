@@ -264,7 +264,7 @@ def constructEvent(eventList):
 
         else:
             subElement={}
-            subElement={'sourceSitename': eventElement['sourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls']}
+            subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls']}
             sublist.append(subElement)
             result_doc["special"] = 9
             imgUrl_ex.append(eventElement['imgUrls'])
