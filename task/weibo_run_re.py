@@ -720,7 +720,7 @@ def do_event_task(params):
                     topStory = story["_id"]
                 set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", topStory)
                 eventCount += 1
-            print 'found topic events count ===>' + eventCount
+            print 'found topic events count ===>' , eventCount
 
 
 
