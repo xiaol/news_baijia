@@ -254,12 +254,12 @@ def reorganize_news(docs):
 def constructEvent(eventList):
     result_doc = {}
     sublist = []
-    imgUrls=[]
+    imgUrl_ex=[]
     is_notin_flag=True
     for eventElement in eventList:
         if eventElement['eventId'] == eventElement["_id"]:
             result_doc = eventElement
-            imgUrls.append(eventElement['imgUrls'])
+            imgUrl_ex.append(eventElement['imgUrls'])
             is_notin_flag=False
 
         else:
@@ -267,17 +267,15 @@ def constructEvent(eventList):
             subElement={'sourceSitename': eventElement['sourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls']}
             sublist.append(subElement)
             result_doc["special"] = 9
-            imgUrls.append(eventElement['imgUrls'])
+            imgUrl_ex.append(eventElement['imgUrls'])
 
 
     if is_notin_flag:
         return eventList[0]
 
     result_doc["sublist"] = sublist
-    if "imgUrls" in result_doc.keys() and "special" in result_doc.keys():
-        del result_doc["imgUrls"]
-        result_doc["imgUrls"] = imgUrls
-
+    if "special" in result_doc.keys():
+        result_doc["imgUrl_ex"] = imgUrl_ex
 
     return result_doc
 
