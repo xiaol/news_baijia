@@ -48,6 +48,20 @@ HOST_NER = "60.28.29.47"
 not_need_copy_content_news = ["网易新闻图片", "观察者网"]
 
 
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
+def extract_tags_helper(sentence, topK=20, withWeight=False):
+    tags = extract_tags(sentence, topK, withWeight)
+    tags = [x for x in tags if not is_number(x)]
+    return tags
+
+
 def total_task():
 
     logging.warning("##################### task start ********************")
@@ -212,7 +226,7 @@ def do_douban_task(params):
     tagUrl = "http://www.douban.com/tag/%s/?source=topic_search"
     douban_tags = []
 
-    tags = extract_tags(title)
+    tags = extract_tags_helper(title)
 
     for tag in tags:
         if isDoubanTag(tag):
@@ -339,7 +353,7 @@ def do_zhihu_task(params):
         keyword = ner
     else:
         print "when get zhihu, the  ner is None, the url, title==>", url, "|| ", title
-        keywords = extract_tags(title, 2)
+        keywords = extract_tags_helper(title, 2)
         keyword = "".join(keywords)
 
     zhihu = GetZhihu(keyword)
@@ -806,7 +820,7 @@ def GetWeibo(title):
 
 def GetLastKeyWord(title):
 
-    keywords = extract_tags(title, 2)
+    keywords = extract_tags_helper(title, 2)
     keyword = " ".join(keywords)
 
     ner = Getner(title)
@@ -1002,6 +1016,7 @@ if __name__ == '__main__':
 
     # find_first_img_meet_condition(["http://i3.sinaimg.cn/dy/main/other/qrcode_news.jpg"])
     #test_event_task()
+    #extract_tags_helper("沪指放量震荡跌0.32%银行股逆势护盘")
 
     while True:
         doc_num = total_task()
