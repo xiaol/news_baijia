@@ -383,8 +383,8 @@ def GetOneWeibo(title):
 
 def get_time_type_date_freq(update_time,update_type,upate_frequency):
     now = datetime.datetime.now()
-    request_time = convertTimestrtosecond(now)*1000
-    next_update_time = convertTimestrtosecond(update_time)*1000 - request_time
+    request_time = int(convertTimestrtosecond(now)*1000)
+    next_update_time = int(convertTimestrtosecond(update_time)*1000) - request_time
     next_update_type = update_type
     next_update_freq = upate_frequency
     history_date = get_history_date(now)
