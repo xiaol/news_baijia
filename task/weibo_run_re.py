@@ -712,11 +712,13 @@ def do_event_task(params):
             events = conn["news_ver2"]["googleNewsItem"].find({'$or':[{"ne.gpe": {'$in': doc['ne']['gpe']}},
                                                 {"ne.person": {'$in': doc['ne']['person']}}], "createTime": {"$gte": end_time}}).sort([("createTime", pymongo.DESCENDING)])
             eventCount = 0
+            topStory = ''
             for story in events:
                     #if story.get("eventId", None):
                 if eventCount is 0:
                     set_googlenews_by_url_with_field_and_value(url, "eventId", story["_id"])
-                set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", story["_id"])
+                    topStory = story["_id"]
+                set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", topStory["_id"])
                 eventCount += 1
             print 'found topic events count ===>' + eventCount
 
