@@ -569,7 +569,7 @@ def preCopyImg(url, img_urls):
 
 def find_first_img_meet_condition(img_result):
 
-
+    img_result = [x.encode('utf-8') for x in img_result]
     for i in img_result:
         time.sleep(3)
         if not i.endswith('.gif') and (not 'weima' in i) and (not ImgNotMeetCondition(i, 80000)) and  not is_exist_mongodb(i) and not is_erwei_ma(i):
@@ -718,7 +718,7 @@ def do_event_task(params):
                 if eventCount is 0:
                     set_googlenews_by_url_with_field_and_value(url, "eventId", story["_id"])
                     topStory = story["_id"]
-                set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", topStory["_id"])
+                set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", topStory)
                 eventCount += 1
             print 'found topic events count ===>' + eventCount
 
