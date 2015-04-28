@@ -86,30 +86,24 @@ def homeContentFetch(options):
         end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
 
 
-
         docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1, "createTime": {"$gte": start_time,
                                                                                        "$lt": end_time}}).sort([("createTime", -1)])
-
-    # if timefeedback:
-    #     request_time, next_update_time, next_update_type\
-    #         , history_date, next_update_freq = get_time_type_date_freq(update_time, update_type, upate_frequency)
-    #
-    #     timefeedback_dict = {}
-    #     timefeedback_dict['request_time'] = request_time
-    #     timefeedback_dict['next_upate_time'] = next_update_time
-    #     timefeedback_dict['next_update_type'] = next_update_type
-    #     timefeedback_dict['history_date'] = history_date
-    #     timefeedback_dict['next_update_freq'] = next_update_freq
-
 
     special_list=[]
     nospecial_list=[]
 
-    docs_return = []
+    results_docs = reorganize_news(docs)
 
-    for doc in docs:
+    for doc in results_docs:
 
         sublist = []
+        if "sublist" in doc.keys():
+            sublist = doc["sublist"]
+            del doc["sublist"]
+
+        if "sourceUrl" not in doc.keys():
+            print "error"
+            continue
         url = doc['sourceUrl']
         title = doc["title"]
         sourceSiteName = doc["sourceSiteName"]
@@ -121,10 +115,11 @@ def homeContentFetch(options):
         # 标记放到前边的新闻
         if sourceSiteName[:2] in special_source:
             doc["special"] = 1
-
+        elif "special" in doc.keys():
+            special_flag = False
         else:
             doc["special"] = 400
-            special_flag=False
+            special_flag = False
 
         if "relate" in doc.keys():
             if doc["relate"]:
@@ -234,6 +229,57 @@ def count_relate_baidu_news(url):
     num = conn["news"]["AreaItems"].find({"relateUrl":url}).count()
 
     return num
+
+def reorganize_news(docs):
+    results_docs = []
+    eventId_dict = {}
+
+    for doc in docs:
+        if 'eventId' in doc.keys():
+            if doc['eventId'] in eventId_dict.keys():
+                eventId_dict[doc['eventId']].append(doc)
+            else:
+                eventId_dict[doc['eventId']] = [doc]
+        else:
+            results_docs.append(doc)
+
+    for (eventId, eventList) in eventId_dict.items():
+        results_docs.append(constructEvent(eventList))
+
+    print "hello"
+    results_docs= sorted(results_docs,key=operator.itemgetter("createTime"))
+    return results_docs
+
+
+def constructEvent(eventList):
+    result_doc = {}
+    sublist = []
+    imgUrl_ex=[]
+    is_notin_flag=True
+    for eventElement in eventList:
+        if eventElement['eventId'] == eventElement["_id"]:
+            result_doc = eventElement
+            imgUrl_ex.append(eventElement['imgUrls'])
+            is_notin_flag=False
+
+        else:
+            subElement={}
+            subElement={'sourceSitename': eventElement['sourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls']}
+            sublist.append(subElement)
+            result_doc["special"] = 9
+            imgUrl_ex.append(eventElement['imgUrls'])
+
+
+    if is_notin_flag:
+        return eventList[0]
+
+    result_doc["sublist"] = sublist
+    if "special" in result_doc.keys():
+        result_doc["imgUrl_ex"] = imgUrl_ex
+
+    return result_doc
+
+
 
 # 相关新闻的获取
 def GetRelateNews(relate):
