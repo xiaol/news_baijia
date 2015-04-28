@@ -720,7 +720,7 @@ def do_event_task(params):
                     topStory = story["_id"]
                 set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", topStory)
                 eventCount += 1
-            print 'found topic events count ===>' + eventCount
+            print 'found topic events count ===>' , eventCount
 
 
 
@@ -819,6 +819,7 @@ def GetLastKeyWord(title):
 def parseNerResult(json_r):
 
     time_filter = ["今天","明天","后天"]
+    gpes_filter = ["中国"]
     times = []
     locs = []
     persons = []
@@ -845,6 +846,8 @@ def parseNerResult(json_r):
     for gpe in json_r["gpe"]:
 
         gpe = re.sub(pat, '', gpe)
+        if gpe in gpes_filter or len(gpe) <= 2:
+            continue
         gpes.append(gpe)
 
     for org in json_r["org"]:
