@@ -59,6 +59,7 @@ def is_number(s):
 def extract_tags_helper(sentence, topK=20, withWeight=False):
     tags = extract_tags(sentence, topK, withWeight)
     tags = [x for x in tags if not is_number(x)]
+    tags = [x for x in tags if not x in g_gpes_filter and not x in g_time_filter]
     return tags
 
 
@@ -76,13 +77,18 @@ def total_task():
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
         doc_num += 1
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+        start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+        end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+        now = datetime.datetime.now()
+        now_time = now.strftime('%Y-%m-%d %H:%M:%S')
         try:
 
             print "*****************************task start, the url is %s, sourceSiteName: %s " \
                   "*****************************" % (url, sourceSiteName)
             do_weibo_task(params)
             do_ner_task(params)
-            do_event_task(params)
+            do_event_task(params, end_time, now_time)
             do_zhihu_task(params)
             do_baike_task(params)
             do_douban_task(params)
@@ -708,34 +714,38 @@ def is_ne_empty(ne):
         return False
     return True
 
-# need behind ner task
 
-def do_event_task(params):
+# need behind ner task
+def do_event_task(params, start_time, end_time):
     print "==================event task start================"
     url = params["url"]
-    #title = params["title"]
+    title = params["title"]
     doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
 
     if doc:
+
+        eventCount = 0
+        topStory = ''
+
         if "ne" in doc.keys() and not is_ne_empty(doc['ne']):
-            start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
-            start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
-            end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+            events = conn["news_ver2"]["googleNewsItem"].find({'$or': [{"ne.gpe": {'$in': doc['ne']['gpe']}},
+                                                {"ne.person": {'$in': doc['ne']['person']}}], "createTime": {"$gte": start_time, '$lte': end_time}}).sort([("createTime", pymongo.DESCENDING)])
 
-            #events = conn["news_ver2"]["googleNewsItem"].find({"ne": doc['ne'], "createTime": {"$gte": end_time}}).sort([("createTime", pymongo.DESCENDING)])
-            events = conn["news_ver2"]["googleNewsItem"].find({'$or':[{"ne.gpe": {'$in': doc['ne']['gpe']}},
-                                                {"ne.person": {'$in': doc['ne']['person']}}], "createTime": {"$gte": end_time}}).sort([("createTime", pymongo.DESCENDING)])
-            eventCount = 0
-            topStory = ''
-            for story in events:
-                    #if story.get("eventId", None):
-                if eventCount is 0:
-                    set_googlenews_by_url_with_field_and_value(url, "eventId", story["_id"])
-                    topStory = story["_id"]
-                set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", topStory)
-                eventCount += 1
-            print 'found topic events count ===>' , eventCount
+        else:
+            #TODO may cause flipping , as tags contain ner
+            tags = extract_tags_helper(title)
+            re_tags = [re.compile(x) for x in tags]
+            events = conn["news_ver2"]["googleNewsItem"].find({"title": {'$in': re_tags},
+                                "createTime": {"$gte": start_time, '$lte': end_time}, "eventId": {'$exists': False}}).sort([("createTime", pymongo.DESCENDING)])
 
+        for story in events:
+            #if story.get("eventId", None):  //TODO
+            if eventCount is 0:
+                set_googlenews_by_url_with_field_and_value(url, "eventId", story["_id"])
+                topStory = story["_id"]
+            set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", topStory)
+            eventCount += 1
+        print 'found topic events count ===>' , eventCount
 
 
 def do_weibo_task(params):
@@ -830,10 +840,11 @@ def GetLastKeyWord(title):
     return keyword, ner
 
 
-def parseNerResult(json_r):
+g_time_filter = ["今天","明天","后天"]
+g_gpes_filter = ["中国"]
 
-    time_filter = ["今天","明天","后天"]
-    gpes_filter = ["中国"]
+
+def parseNerResult(json_r):
     times = []
     locs = []
     persons = []
@@ -843,7 +854,7 @@ def parseNerResult(json_r):
     for t in json_r["misc"]:
 
         t = re.sub(pat, '', t)
-        if t in time_filter or len(t) <= 2 or not isTime(t):
+        if t in g_time_filter or len(t) <= 2 or not isTime(t):
             continue
         times.append(t)
 
@@ -860,7 +871,7 @@ def parseNerResult(json_r):
     for gpe in json_r["gpe"]:
 
         gpe = re.sub(pat, '', gpe)
-        if gpe in gpes_filter or len(gpe) <= 2:
+        if gpe in g_gpes_filter or len(gpe) <= 2:
             continue
         gpes.append(gpe)
 
@@ -948,13 +959,16 @@ def fetch_unrunned_docs():
     return un_runned_docs
 
 
-def fetch_unrunned_docs_by_date():
+def fetch_unrunned_docs_by_date(lastUpdate=False):
     start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
 
-    docs = conn["news_ver2"]["Task"].find({"isOnline": 0, "updateTime": {"$gte": end_time}}).sort([("updateTime", 1)])
-    #docs = conn["news_ver2"]["Task"].find({"isOnline": 0, "updateTime": {"$gte": start_time, '$lte': end_time}}).sort([("updateTime", 1)])
+
+    if not lastUpdate:
+        docs = conn["news_ver2"]["Task"].find({"isOnline": 0, "updateTime": {"$gte": end_time}}).sort([("updateTime", 1)])
+    else:
+        docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "updateTime": {"$gte": start_time, '$lte': end_time}}).sort([("updateTime", 1)])
     return docs
 
 
@@ -994,18 +1008,22 @@ def get_googlenews_by_url(url):
     return conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
 
 
-def test_event_task():
-    docs = fetch_unrunned_docs_by_date()
-    #docs = fetch_unrunned_docs()
+def recovery_old_event():
+    docs = fetch_unrunned_docs_by_date(True)
 
     url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+        start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+        end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+        now = datetime.datetime.now()
+        now_time = now.strftime('%Y-%m-%d %H:%M:%S')
         print "*****************************task start, the url is %s, sourceSiteName: %s " \
                   "*****************************" % (url, sourceSiteName)
-        do_ner_task(params)
-        do_event_task(params)
+        #do_ner_task(params)
+        do_event_task(params, start_time, end_time)
 
 if __name__ == '__main__':
 
@@ -1015,8 +1033,11 @@ if __name__ == '__main__':
     #     print "width_height_ratio_meet_condition test ok"
 
     # find_first_img_meet_condition(["http://i3.sinaimg.cn/dy/main/other/qrcode_news.jpg"])
-    #test_event_task()
+    #recovery_old_event()
     #extract_tags_helper("沪指放量震荡跌0.32%银行股逆势护盘")
+    #extract_tags_helper("工信部:多措并举挖掘宽带\"提速降费\"潜力")
+    #extract_tags_helper("《何以笙箫默》武汉校园之旅黄晓明险被女粉丝'胸咚'")
+
 
     while True:
         doc_num = total_task()
