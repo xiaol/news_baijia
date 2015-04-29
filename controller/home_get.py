@@ -5,6 +5,11 @@ from weibo import weibo_relate_docs_get, user_info_get
 import json
 import datetime,time
 import operator
+import pymongo
+from pymongo.read_preferences import ReadPreference
+conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
+                                                             read_preference=ReadPreference.SECONDARY)
+
 
 mapOfSourceName = {"weibo":"微博",
                    "wangyi":"wangyi",
@@ -97,8 +102,11 @@ def homeContentFetch(options):
     for doc in results_docs:
 
         sublist = []
+        reorganize_num = 0
         if "sublist" in doc.keys():
             sublist = doc["sublist"]
+            reorganize_num = reorganize_num + len(sublist)
+            set_googlenews_by_url_with_field_and_value(doc['sourceUrl'], "reorganize", sublist)
             del doc["sublist"]
 
         if "sourceUrl" not in doc.keys():
@@ -203,7 +211,7 @@ def homeContentFetch(options):
         sublist.extend(distinctList)
 
         doc["sublist"] = sublist
-        doc["otherNum"] = otherNum + baidu_news_num
+        doc["otherNum"] = otherNum + baidu_news_num + reorganize_num
         doc["urls_response"] = distinct_response_urls  #返回的urls，用于获取其他相关新闻时过滤掉 这几条已经有的新闻
 
         # if timefeedback:
@@ -273,8 +281,8 @@ def constructEvent(eventList):
     if is_notin_flag:
         return eventList[0]
 
-    result_doc["sublist"] = sublist
     if "special" in result_doc.keys():
+        result_doc["sublist"] = sublist
         result_doc["imgUrl_ex"] = imgUrl_ex
 
     return result_doc
@@ -507,6 +515,11 @@ def get_day_night_time(date,type):
         day_night.append([start_time, end_time])
 
     return day_night
+
+
+
+def set_googlenews_by_url_with_field_and_value(url, field, value):
+    conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {field: value}})
 
 
 

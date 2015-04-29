@@ -95,6 +95,9 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
 
     allrelate = []
 
+    if "reorganize" in doc.keys() and doc["reorganize"]:
+        allrelate.extend(doc["reorganize"])
+
     if "relate" in doc.keys() and doc["relate"]:
         relate = doc["relate"]
 
