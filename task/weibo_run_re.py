@@ -70,7 +70,7 @@ def total_task():
     doc_num = 0
 
     docs = fetch_unrunned_docs_by_date()
-    #docs = fetch_unrunned_docs()
+    # docs = fetch_unrunned_docs()
 
     url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
 
@@ -255,7 +255,7 @@ def isDoubanTag(tag):
     url = "http://www.douban.com/tag/%s/?source=topic_search" % tag
     try:
         headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.101 Safari/537.36"}
-        r = requests.get(url, headers=headers)
+        r = requests.get_tag(url, headers=headers)
         print "status code:", r.status_code
 
         url_after = r.url.encode("utf-8")
@@ -263,7 +263,8 @@ def isDoubanTag(tag):
 
         if url_after == url:
             return True
-    except:
+    except Exception as e:
+        print "douban tag request error==>", e
         return False
     return False
 
@@ -360,7 +361,7 @@ def do_zhihu_task(params):
     else:
         print "when get zhihu, the  ner is None, the url, title==>", url, "|| ", title
         keywords = extract_tags_helper(title, 2)
-        keyword = "".join(keywords)
+        keyword = " ".join(keywords)
 
     zhihu = GetZhihu(keyword)
 
