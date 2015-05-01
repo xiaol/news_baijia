@@ -31,13 +31,16 @@ path_add = arg[:-1]
 path_add = '/'.join(path_add)
 
 sys.path.append(path_add+"/weibo/")
+sys.path.append(path_add+"/controller/")
 sys.path.append(path_add)
 try:
     from weibo import weibo_relate_docs_get, user_info_get
     from controller.utils import get_start_end_time
 except ImportError:
-    import weibo_relate_docs_get
     import user_info_get
+    import weibo_relate_docs_get
+    from utils import get_start_end_time
+    print "import error"
 
 from abstract import KeywordExtraction
 
