@@ -34,7 +34,7 @@ sys.path.append(path_add+"/weibo/")
 sys.path.append(path_add)
 try:
     from weibo import weibo_relate_docs_get, user_info_get
-    from controller.home_get import get_start_end_time
+    from controller.utils import get_start_end_time
 except ImportError:
     import weibo_relate_docs_get
     import user_info_get
