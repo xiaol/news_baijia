@@ -101,7 +101,8 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
 
     if "relate" in doc.keys() and doc["relate"]:
         relate = doc["relate"]
-        relate = del_dup_relatedoc(relate, doc["reorganize"])
+        if "reorganize" in doc.keys() and doc["reorganize"]:
+            relate = del_dup_relatedoc(relate, doc["reorganize"])
         left_relate = relate["left"]
         mid_relate = relate["middle"]
         bottom_relate = relate["bottom"]
