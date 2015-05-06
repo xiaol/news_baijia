@@ -61,7 +61,7 @@ def homeContentFetch(options):
 
     if not timing and not date and not type:
 
-        docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1}).sort([("updateTime",-1)]).skip((page-1)*limit).limit(limit)
+        docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1}).sort([("createTime",-1)]).skip((page-1)*limit).limit(limit)
 
     # elif not timing:
 
@@ -133,6 +133,7 @@ def homeContentFetch(options):
         if "relate" in doc.keys():
             if doc["relate"]:
                 relate = doc["relate"]
+                relate = del_dup_relatedoc(relate, sublist)
             del doc["relate"]
 
         if "sourceSiteName" in doc.keys():
@@ -427,14 +428,13 @@ def get_day_night_time(date,type):
 
     elif type=='1':
 
-        night1_start_time = datetime.datetime(yesterday_year, yesterday_month, yesterday_day, 6, 0)
-        night1_end_time = datetime.datetime(yesterday_year, yesterday_month, yesterday_day, 18, 0)
-
+        # night1_start_time = datetime.datetime(yesterday_year, yesterday_month, yesterday_day, 6, 0)
+        # night1_end_time = datetime.datetime(yesterday_year, yesterday_month, yesterday_day, 18, 0)
         #白天 elif hour in range(6,18): #取昨天18点~今天6点 更新时间为今天18点
         #黑夜 elif hour in range(18,24): #取今天6-今天18点 更新时间为明天6点
         night2_start_time = datetime.datetime(today_year, today_month, today_day, 6, 0)
         night2_end_time = datetime.datetime(today_year, today_month, today_day, 18, 0)
-        day_night.append([night1_start_time,night1_end_time])
+        # day_night.append([night1_start_time,night1_end_time])
         day_night.append([night2_start_time,night2_end_time])
 
 
@@ -450,6 +450,43 @@ def get_day_night_time(date,type):
 
 def set_googlenews_by_url_with_field_and_value(url, field, value):
     conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {field: value}})
+
+def del_dup_relatedoc(relate, sublist):
+    left_relate = relate["left"]
+    mid_relate = relate["middle"]
+    bottom_relate = relate["bottom"]
+    opinion = relate["opinion"]
+    deep_relate = relate["deep_report"]
+    distinctdict = {"left":[], "middle":[], "bottom":[], "opinion":[], "deep_report":[]}
+    titleSet = set()
+    urlSet = set()
+    for sublist_elem in sublist:
+        titleSet.add(sublist_elem["title"])
+        urlSet.add(sublist_elem["url"])
+
+
+    total_relate = [left_relate, mid_relate, bottom_relate, opinion, deep_relate]
+    i = 0
+    for relate in total_relate:
+        for e in relate:
+            if not e["title"]:
+                continue
+            if e["title"] in titleSet or e["url"] in urlSet:
+                continue
+            if i == 0:
+                distinctdict["left"].append(e)
+            if i == 1:
+                distinctdict["middle"].append(e)
+            if i == 2:
+                distinctdict["bottom"].append(e)
+            if i == 3:
+                distinctdict["opinion"].append(e)
+            if i == 4:
+                distinctdict["deep_report"].append(e)
+        i = i + 1
+
+    return  distinctdict
+
 
 
 

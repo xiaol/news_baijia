@@ -3,6 +3,7 @@ from PIL import Image
 
 from config import dbConn
 import requests
+from home_get import del_dup_relatedoc
 
 DBStore = dbConn.GetDateStore()
 
@@ -100,7 +101,8 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
 
     if "relate" in doc.keys() and doc["relate"]:
         relate = doc["relate"]
-
+        if "reorganize" in doc.keys() and doc["reorganize"]:
+            relate = del_dup_relatedoc(relate, doc["reorganize"])
         left_relate = relate["left"]
         mid_relate = relate["middle"]
         bottom_relate = relate["bottom"]
