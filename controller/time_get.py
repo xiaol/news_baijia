@@ -39,4 +39,9 @@ def timeContentFetch(options):
         timefeedback_dict['history_date'] = history_date
         timefeedback_dict['next_update_freq'] = next_update_freq
 
+
+    if timefeedback == "test":
+        timefeedback_dict['next_update_freq'] = 15000
+        timefeedback_dict['next_update_time'] = timefeedback_dict['next_update_time']%15000
+
         return timefeedback_dict
