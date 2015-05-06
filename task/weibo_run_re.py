@@ -234,8 +234,13 @@ def do_douban_task(params):
 
     tagUrl = "http://www.douban.com/tag/%s/?source=topic_search"
     douban_tags = []
+    tags = []
+    ner = fetch_ne_by_url(url, all=True)
 
-    tags = extract_tags_helper(title)
+    if ner:
+        tags = ner
+    else:
+        print "when get douan, the  ner is None, the url, title==>", url, "|| ", title
 
     for tag in tags:
         if isDoubanTag(tag):
@@ -260,7 +265,9 @@ def isDoubanTag(tag):
         headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.101 Safari/537.36"}
         r = requests.get_tag(url, headers=headers)
         print "status code:", r.status_code
-
+        if r.status_code != 200:
+            print "error"
+            return False
         url_after = r.url.encode("utf-8")
         url_after = urllib.unquote(url_after)
 
@@ -441,16 +448,21 @@ def do_abs_task(params):
     return True
 
 
-def fetch_ne_by_url(url):
+def fetch_ne_by_url(url,all=False):
     doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
 
-    ne = ''
     if doc:
         if "ne" in doc.keys():
             temp = doc["ne"]
-            ne = get_first_one_of_ne(temp)
-
+            if all:
+                ne = []
+                ne = get_all_one_of_ne(temp)
+            else:
+                ne = ''
+                ne = get_first_one_of_ne(temp)
     return ne
+
+
 
 
 def get_first_one_of_ne(ne):
@@ -466,6 +478,23 @@ def get_first_one_of_ne(ne):
         keyword = ne['org'][0]
 
     return keyword
+
+def get_all_one_of_ne(ne):
+
+    keyword = []
+    if "person" in ne.keys() and len(ne['person']) > 0:
+        keyword.append(ne['person'][0])
+
+    if "loc" in ne.keys() and len(ne['loc']) > 0:
+        keyword.append(ne['loc'][0])
+
+    if "org" in ne.keys() and len(ne['org']) > 0:
+        keyword.append(ne['org'][0])
+
+    return keyword
+
+
+
 
 
 def fetch_content_by_url(url):
@@ -602,8 +631,8 @@ def find_first_img_meet_condition(img_result):
     return ''
 
 def is_exist_mongodb(img_url):
-
-    doc=conn["news_ver2"]["googleNewsItem"].find_one({'imgUrls':img_url})
+    img_url_pattern = img_url.split('/')[-1]
+    doc = conn["news_ver2"]["googleNewsItem"].find_one({'imgUrls': re.compile(img_url_pattern)})
     if doc:
         return True
     else:
@@ -1041,7 +1070,10 @@ if __name__ == '__main__':
     #extract_tags_helper("沪指放量震荡跌0.32%银行股逆势护盘")
     #extract_tags_helper("工信部:多措并举挖掘宽带\"提速降费\"潜力")
     #extract_tags_helper("《何以笙箫默》武汉校园之旅黄晓明险被女粉丝'胸咚'")
-
+    # is_exist_mongodb('http://ent.people.com.cn/NMediaFile/2015/0430/MAIN201504301328396563201369173.jpg')
+    # isDoubanTag('战机')
+    # isDoubanTag('首次')
+    # isDoubanTag('展示')
 
     while True:
         doc_num = total_task()
