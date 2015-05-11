@@ -326,11 +326,11 @@ def parseBaike(keyword):
     dom =etree.HTML(text)
     # dom = soupparser.fromstring(text)
     try:
-        element = dom.xpath('//div[@class="mod-list"]/descendant::a[@target="_blank"]')[0]
+        element = dom.xpath('//dl[@class="search-list"]/descendant::a[@target="_blank"]')[0]
 
-        element_href = dom.xpath('//div[@class="mod-list"]/descendant::a[@target="_blank"]/@href')[0]
+        element_href = dom.xpath('//dl[@class="search-list"]/descendant::a[@target="_blank"]/@href')[0]
 
-        element_abstract = dom.xpath('//div[@class="mod-list"]/descendant::div[@class="abstract"]')[0]
+        element_abstract = dom.xpath('//dl[@class="search-list"]/descendant::p[@class="result-summary"]')[0]
 
 
         raw_content = etree.tostring(element, encoding="utf-8")
@@ -992,14 +992,14 @@ def fetch_unrunned_docs():
     return un_runned_docs
 
 
-def fetch_unrunned_docs_by_date(lastUpdate=False):
+def fetch_unrunned_docs_by_date(lastUpdate=False, update_direction=pymongo.ASCENDING):
     start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
 
 
     if not lastUpdate:
-        docs = conn["news_ver2"]["Task"].find({"isOnline": 0, "updateTime": {"$gte": end_time}}).sort([("updateTime", 1)])
+        docs = conn["news_ver2"]["Task"].find({"isOnline": 0, "updateTime": {"$gte": end_time}}).sort([("updateTime", update_direction)])
     else:
         docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "updateTime": {"$gte": start_time, '$lte': end_time}}).sort([("updateTime", 1)])
     return docs
@@ -1074,6 +1074,7 @@ if __name__ == '__main__':
     # isDoubanTag('战机')
     # isDoubanTag('首次')
     # isDoubanTag('展示')
+    #parseBaike('安培晋三')
 
     while True:
         doc_num = total_task()

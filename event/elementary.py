@@ -52,6 +52,13 @@ if __name__ == '__main__':
     construct_element('element', '３６０')
     construct_element('element', '政法委书记')
     construct_element('element', '习近平')
+    construct_element('element', '苏文茂')
+    construct_element('element', '成龙')
+    construct_element('element', '亚冠')
+    construct_element('element', '小米')
     #construct_element('element', 'MVP')
     #construct_ionic('IS', '先知漫画展')
     construct_ionic('三大评测机构', '杀软')
+    construct_ionic('生日', '谢娜')
+    construct_ionic('烟草消费税', '烟草税')
+
