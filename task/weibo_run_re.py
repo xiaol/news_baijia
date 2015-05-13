@@ -60,7 +60,7 @@ def is_number(s):
 
 
 def extract_tags_helper(sentence, topK=20, withWeight=False):
-    tags = extract_tags(sentence, topK, withWeight)
+    tags = extract_tags(sentence, topK, withWeight, allowPOS=('ns', 'n'))
     tags = [x for x in tags if not is_number(x)]
     tags = [x for x in tags if not x in g_gpes_filter and not x in g_time_filter]
     return tags
@@ -89,8 +89,8 @@ def total_task():
 
             print "*****************************task start, the url is %s, sourceSiteName: %s " \
                   "*****************************" % (url, sourceSiteName)
-            do_weibo_task(params)
             do_ner_task(params)
+            do_weibo_task(params)
             do_event_task(params, end_time, now_time)
             do_zhihu_task(params)
             do_baike_task(params)
@@ -370,7 +370,7 @@ def do_zhihu_task(params):
         keyword = ner
     else:
         print "when get zhihu, the  ner is None, the url, title==>", url, "|| ", title
-        keywords = extract_tags_helper(title, 2)
+        keywords = extract_tags_helper(title)
         keyword = " ".join(keywords)
 
     zhihu = GetZhihu(keyword)
@@ -477,7 +477,11 @@ def get_first_one_of_ne(ne):
     elif "org" in ne.keys() and len(ne['org']) > 0:
         keyword = ne['org'][0]
 
+    elif "gpe" in ne.keys() and len(ne['gpe']) > 0:
+        keyword = ne['gpe'][0]
+
     return keyword
+
 
 def get_all_one_of_ne(ne):
 
@@ -491,9 +495,10 @@ def get_all_one_of_ne(ne):
     if "org" in ne.keys() and len(ne['org']) > 0:
         keyword.append(ne['org'][0])
 
+    if "gpe" in ne.keys() and len(ne['gpe']) > 0:
+        keyword.append(ne['gpe'][0])
+
     return keyword
-
-
 
 
 
@@ -788,7 +793,14 @@ def do_weibo_task(params):
     url = params["url"]
     title = params["title"]
 
-    keyword, ner = GetLastKeyWord(title)
+
+    ner = fetch_ne_by_url(url)
+    if ner:
+        keyword = ner
+    else:
+        print "when get weibo, the  ner is None, the url, title==>", url, "|| ", title
+        keywords = extract_tags_helper(title)
+        keyword = " ".join(keywords)
 
     weibo_ready = GetWeibo(keyword)
 
@@ -1067,7 +1079,7 @@ if __name__ == '__main__':
 
     # find_first_img_meet_condition(["http://i3.sinaimg.cn/dy/main/other/qrcode_news.jpg"])
     #recovery_old_event()
-    #extract_tags_helper("沪指放量震荡跌0.32%银行股逆势护盘")
+    #print " ".join(extract_tags_helper("网易网络受攻击影响巨大损失或超1500万"))
     #extract_tags_helper("工信部:多措并举挖掘宽带\"提速降费\"潜力")
     #extract_tags_helper("《何以笙箫默》武汉校园之旅黄晓明险被女粉丝'胸咚'")
     # is_exist_mongodb('http://ent.people.com.cn/NMediaFile/2015/0430/MAIN201504301328396563201369173.jpg')
