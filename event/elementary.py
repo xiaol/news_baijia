@@ -49,6 +49,7 @@ if __name__ == '__main__':
     #construct_element('element', '韩正')
     construct_element('element', '省委书记')
     construct_element('element', '田源')
+    construct_element('element', '拜仁')
     construct_element('element', '３６０')
     construct_element('element', '政法委书记')
     construct_element('element', '习近平')
