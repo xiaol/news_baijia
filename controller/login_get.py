@@ -22,8 +22,12 @@ def loginContentFetch(options):
         doc = conn['news_ver2']['loginItem'].find_one(Item)
         if doc:
             options_ex = {}
+
             print "user_id,%salread exists in databases"%options['userId']
             options["lastLoginTime"] = get_time()
+            options["expiresIn"] = long(options["expiresIn"])
+            options["expiresTime"] = long(options["expiresTime"])
+
             set_login_by_userId_platformType_with_field_and_value(options, "uuid", options["uuid"])
             set_login_by_userId_platformType_with_field_and_value(options, "token", options["token"])
             set_login_by_userId_platformType_with_field_and_value(options, "userIcon", options["userIcon"])
