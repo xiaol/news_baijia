@@ -12,7 +12,7 @@ import tornado.httpclient
 
 import tornado.netutil
 import json
-from controller import home_get, content_get, time_get
+from controller import home_get, content_get, time_get, login_get
 
 import abstract
 
@@ -33,16 +33,25 @@ class FetchHomeHandler(tornado.web.RequestHandler):
         page = self.get_argument("page", 1)
         timing = self.get_argument("timenews", None)
         timefeedback=self.get_argument("timefeedback",None)
+        date = self.get_argument("date",None)
+        type = self.get_argument("type",None)
 
 
         options = {}
 
         options["page"] = int(page)
         options["limit"] = int(limit)
+
+
         if timing:
             options["timing"] = timing
         if timefeedback:
             options["timefeedback"]=timefeedback
+
+        if date:
+            options["date"] = date
+        if type:
+            options["type"] = type
 
 
         # if updateTime:
@@ -94,6 +103,38 @@ class FetchContentHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+
+
+class FetchLoginHandler(tornado.web.RequestHandler):
+    def get(self):
+        # updateTime = self.get_argument("updateTime", None)
+        uuid = self.get_argument("uuid", None)
+        userId = self.get_argument("userId", None)
+        token = self.get_argument("token", None)
+        userIcon = self.get_argument("userIcon", None)
+        userGender = self.get_argument("userGender", None)
+        userName = self.get_argument("userName", None)
+        expiresIn = self.get_argument("expiresIn", None)
+        expiresTime = self.get_argument("expiresTime", None)
+        platformType = self.get_argument("platformType", None)
+
+        options = {}
+        options["uuid"] = uuid
+        options["userId"] = userId
+        options["token"] = token
+        options["userIcon"] = userIcon
+        options["userGender"] = userGender
+        options["userName"] = userName
+        options["expiresIn"] = expiresIn
+        options["expiresTime"] = expiresTime
+        options["platformType"] = platformType
+
+        result = login_get.loginContentFetch(options)
+        print result
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
 class Application(tornado.web.Application):
 
     def __init__(self):
@@ -101,7 +142,10 @@ class Application(tornado.web.Application):
         handlers = [
             (r"/news/baijia/fetchTime", FetchTimeHandler),
             (r"/news/baijia/fetchHome", FetchHomeHandler),
-            (r"/news/baijia/fetchContent", FetchContentHandler)
+            (r"/news/baijia/fetchContent", FetchContentHandler),
+            (r"/news/baijia/fetchLogin", FetchLoginHandler)
+
+
 
         ]
 

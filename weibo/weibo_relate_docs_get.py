@@ -59,7 +59,7 @@ def baidusearch_relate_docs(topic,page):
     updateTime_pat=re.compile(r'<span class=\'wa\-weibo\-t\' data-time=\'(.*?)\'>')
 
     # print topic
-    url='http://opendata.baidu.com/weibo/?ie=utf-8&oe=utf-8&format=json&wd=%s&rn=20&pn=0&first=1428396699&last=1428326859'%topic
+    url='http://opendata.baidu.com/weibo/?ie=utf-8&oe=utf-8&format=json&wd=%s&rn=20&pn=0'%topic
     # print url
     response = requests.get(url)
     content = response.content

@@ -17,8 +17,11 @@ import logging
 import os
 from PIL import Image
 import datetime
-from requests.exceptions import Timeout
-import zbar
+from requests.exceptions import Timeout, ConnectionError
+try:
+    import zbar
+except ImportError:
+    print('Can\'t import zbar')
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -28,20 +31,35 @@ path_add = arg[:-1]
 path_add = '/'.join(path_add)
 
 sys.path.append(path_add+"/weibo/")
+sys.path.append(path_add+"/controller/")
 sys.path.append(path_add)
 try:
     from weibo import weibo_relate_docs_get, user_info_get
+    from controller.utils import get_start_end_time, is_number
 except ImportError:
-    import weibo_relate_docs_get
     import user_info_get
+    import weibo_relate_docs_get
+    from utils import get_start_end_time, is_number
+    print "import error"
 
 from abstract import KeywordExtraction
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                                              read_preference=ReadPreference.SECONDARY)
-HOST_NER="60.28.29.47"
+HOST_NER = "60.28.29.47"
 
 not_need_copy_content_news = ["网易新闻图片", "观察者网"]
+
+
+g_time_filter = ["今天","明天","后天"]
+g_gpes_filter = ["中国"]
+
+def extract_tags_helper(sentence, topK=20, withWeight=False):
+    tags = extract_tags(sentence, topK, withWeight, allowPOS=('ns', 'n'))
+    tags = [x for x in tags if not is_number(x)]
+    tags = [x for x in tags if not x in g_gpes_filter and not x in g_time_filter]
+    return tags
+
 
 def total_task():
 
@@ -49,19 +67,26 @@ def total_task():
 
     doc_num = 0
 
-    docs = fetch_unrunned_docs()
+    docs = fetch_unrunned_docs_by_date()
+    # docs = fetch_unrunned_docs()
 
     url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
         doc_num += 1
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+        start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+        end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+        now = datetime.datetime.now()
+        now_time = now.strftime('%Y-%m-%d %H:%M:%S')
         try:
 
             print "*****************************task start, the url is %s, sourceSiteName: %s " \
                   "*****************************" % (url, sourceSiteName)
-            do_weibo_task(params)
             do_ner_task(params)
+            do_weibo_task(params)
+            do_event_task(params, end_time, now_time)
             do_zhihu_task(params)
             do_baike_task(params)
             do_douban_task(params)
@@ -83,8 +108,8 @@ def total_task():
 
             do_isOnline_task(params)
 
-        except Timeout:
-            print "timeout of url==>", url
+        except (Timeout, ConnectionError) as e:
+            print "timeout of url==>", url, "  exception==>", e
             continue
 
     logging.warning("##################### task complete ********************")
@@ -196,7 +221,6 @@ def get_relate_news_by_url(url):
     return relate
 
 
-
 def do_douban_task(params):
 
     print "==================douban task start================"
@@ -205,8 +229,13 @@ def do_douban_task(params):
 
     tagUrl = "http://www.douban.com/tag/%s/?source=topic_search"
     douban_tags = []
+    tags = []
+    ner = fetch_ne_by_url(url, all=True)
 
-    tags = extract_tags(title)
+    if ner:
+        tags = ner
+    else:
+        print "when get douan, the  ner is None, the url, title==>", url, "|| ", title
 
     for tag in tags:
         if isDoubanTag(tag):
@@ -224,21 +253,23 @@ def do_douban_task(params):
     set_task_ok_by_url_and_field(url, "doubanOk")
 
 
-
 def isDoubanTag(tag):
 
     url = "http://www.douban.com/tag/%s/?source=topic_search" % tag
     try:
         headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.101 Safari/537.36"}
-        r = requests.get(url, headers=headers)
+        r = requests.get_tag(url, headers=headers)
         print "status code:", r.status_code
-
+        if r.status_code != 200:
+            print "error"
+            return False
         url_after = r.url.encode("utf-8")
         url_after = urllib.unquote(url_after)
 
         if url_after == url:
             return True
-    except:
+    except Exception as e:
+        print "douban tag request error==>", e
         return False
     return False
 
@@ -290,11 +321,11 @@ def parseBaike(keyword):
     dom =etree.HTML(text)
     # dom = soupparser.fromstring(text)
     try:
-        element = dom.xpath('//div[@class="mod-list"]/descendant::a[@target="_blank"]')[0]
+        element = dom.xpath('//dl[@class="search-list"]/descendant::a[@target="_blank"]')[0]
 
-        element_href = dom.xpath('//div[@class="mod-list"]/descendant::a[@target="_blank"]/@href')[0]
+        element_href = dom.xpath('//dl[@class="search-list"]/descendant::a[@target="_blank"]/@href')[0]
 
-        element_abstract = dom.xpath('//div[@class="mod-list"]/descendant::div[@class="abstract"]')[0]
+        element_abstract = dom.xpath('//dl[@class="search-list"]/descendant::p[@class="result-summary"]')[0]
 
 
         raw_content = etree.tostring(element, encoding="utf-8")
@@ -334,8 +365,8 @@ def do_zhihu_task(params):
         keyword = ner
     else:
         print "when get zhihu, the  ner is None, the url, title==>", url, "|| ", title
-        keywords = extract_tags(title, 2)
-        keyword = "".join(keywords)
+        keywords = extract_tags_helper(title)
+        keyword = " ".join(keywords)
 
     zhihu = GetZhihu(keyword)
 
@@ -351,7 +382,7 @@ def GetZhihu(keyword):
 
     r = requests.get(apiUrl)
 
-    dom =etree.HTML(r.text)
+    dom = etree.HTML(r.text)
 
     pat = re.compile('<[^<>]+?>')
     pat_user = re.compile('<[^<>]+?>|[\,，]')
@@ -390,7 +421,6 @@ def GetZhihu(keyword):
     return zhihus
 
 
-
 def do_abs_task(params):
     url = params["url"]
     title = params["title"]
@@ -400,10 +430,10 @@ def do_abs_task(params):
     if not content:
         return False
 
-    abstract_here = KeywordExtraction.abstract(content)
-    print ">>>>>>>>abstract:", abstract_here
-
     try:
+        abstract_here = KeywordExtraction.abstract(content)
+        print ">>>>>>>>abstract:", abstract_here
+
         set_googlenews_by_url_with_field_and_value(url, "abstract", abstract_here)
     except:
         return False
@@ -413,18 +443,24 @@ def do_abs_task(params):
     return True
 
 
-
-
-def fetch_ne_by_url(url):
+def fetch_ne_by_url(url,all=False):
     doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
-
     ne = ''
     if doc:
         if "ne" in doc.keys():
             temp = doc["ne"]
-            ne = get_first_one_of_ne(temp)
-
+            if all:
+                ne = []
+                ne = get_all_one_of_ne(temp)
+            else:
+                ne = ''
+                ne = get_first_one_of_ne(temp)
+        else:
+            print 'Not found ne in ', url
     return ne
+
+
+
 
 def get_first_one_of_ne(ne):
 
@@ -438,7 +474,30 @@ def get_first_one_of_ne(ne):
     elif "org" in ne.keys() and len(ne['org']) > 0:
         keyword = ne['org'][0]
 
+    elif "gpe" in ne.keys() and len(ne['gpe']) > 0:
+        keyword = ne['gpe'][0]
+
     return keyword
+
+
+def get_all_one_of_ne(ne):
+
+    keyword = []
+    if "person" in ne.keys() and len(ne['person']) > 0:
+        keyword.append(ne['person'][0])
+
+    if "loc" in ne.keys() and len(ne['loc']) > 0:
+        keyword.append(ne['loc'][0])
+
+    if "org" in ne.keys() and len(ne['org']) > 0:
+        keyword.append(ne['org'][0])
+
+    if "gpe" in ne.keys() and len(ne['gpe']) > 0:
+        keyword.append(ne['gpe'][0])
+
+    return keyword
+
+
 
 def fetch_content_by_url(url):
 
@@ -504,13 +563,12 @@ def fetch_and_save_content(url, url_use_to_fetch_content_img):
 
 def GetImgByUrl(url):
 
+    result = {}
     apiUrl_img = "http://121.41.75.213:8080/extractors_mvc_war/api/getImg?url="+url
-
     r_img = requests.get(apiUrl_img)
 
     imgs = (r_img.json())["imgs"]
 
-    result = {}
 
     if isinstance(imgs, list) and len(imgs) > 0:
 
@@ -566,7 +624,7 @@ def preCopyImg(url, img_urls):
 
 def find_first_img_meet_condition(img_result):
 
-
+    img_result = [x.encode('utf-8') for x in img_result]
     for i in img_result:
         time.sleep(3)
         if not i.endswith('.gif') and (not 'weima' in i) and (not ImgNotMeetCondition(i, 80000)) and  not is_exist_mongodb(i) and not is_erwei_ma(i):
@@ -575,17 +633,20 @@ def find_first_img_meet_condition(img_result):
     return ''
 
 def is_exist_mongodb(img_url):
-
-    doc=conn["news_ver2"]["googleNewsItem"].find_one({'imgUrls':img_url})
+    img_url_pattern = img_url.split('/')[-1]
+    doc = conn["news_ver2"]["googleNewsItem"].find_one({'imgUrls': re.compile(img_url_pattern)})
     if doc:
         return True
     else:
         return False
 
 def is_erwei_ma(img_url):
-
-    file = cStringIO.StringIO(urllib.urlopen(img_url).read())
-    pil = Image.open(file).convert('L')
+    try:
+        file = cStringIO.StringIO(urllib.urlopen(img_url).read())
+        pil = Image.open(file).convert('L')
+    except IOError:
+        print "IOError, imgurl===>", img_url
+        return True
     width, height = pil.size
     print width, height
 
@@ -654,12 +715,15 @@ def width_height_ratio_meet_condition(width, height, ratio):
 
     return False
 
+
 def do_ner_task(params):
 
     print "==================ner task start================"
     url = params["url"]
     title = params["title"]
     title_after_cut = jieba.cut(title)
+    title_after_cut = [x.strip(':') and x.strip('：') and x.strip('-') for x in title_after_cut]
+    title_after_cut = filter(None, title_after_cut)
     title_after_cut = " ".join(title_after_cut)
 
     ne = getNe(title_after_cut)
@@ -671,6 +735,54 @@ def do_ner_task(params):
 
     return True
 
+
+def is_ne_empty(ne):
+    if ne.get('gpe', None):
+        return False
+    if ne.get('loc', None):
+        return False
+    if ne.get('org', None):
+        return False
+    if ne.get('person', None):
+        return False
+    if ne.get('time', None):
+        return False
+    return True
+
+
+# need behind ner task
+def do_event_task(params, start_time, end_time):
+    print "==================event task start================"
+    url = params["url"]
+    title = params["title"]
+    doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
+
+    if doc:
+
+        eventCount = 0
+        topStory = ''
+
+        if "ne" in doc.keys() and not is_ne_empty(doc['ne']):
+            events = conn["news_ver2"]["googleNewsItem"].find({'$or': [{"ne.gpe": {'$in': doc['ne']['gpe']}},
+                                                {"ne.person": {'$in': doc['ne']['person']}}], "createTime": {"$gte": start_time, '$lte': end_time}}).sort([("createTime", pymongo.DESCENDING)])
+
+        else:
+            #TODO may cause flipping , as tags contain ner
+            tags = extract_tags_helper(title)
+            re_tags = [re.compile(x) for x in tags]
+            events = conn["news_ver2"]["googleNewsItem"].find({"title": {'$in': re_tags},
+                                "createTime": {"$gte": start_time, '$lte': end_time}, "eventId": {'$exists': False}}).sort([("createTime", pymongo.DESCENDING)])
+
+        for story in events:
+            #if story.get("eventId", None):  //TODO
+            if eventCount is 0:
+                set_googlenews_by_url_with_field_and_value(url, "eventId", story["_id"])
+                topStory = story["_id"]
+            set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", topStory)
+            eventCount += 1
+        print 'found topic events count ===>' , eventCount
+
+
 def do_weibo_task(params):
 
     print "==================weibo task start================"
@@ -678,7 +790,14 @@ def do_weibo_task(params):
     url = params["url"]
     title = params["title"]
 
-    keyword, ner = GetLastKeyWord(title)
+
+    ner = fetch_ne_by_url(url)
+    if ner:
+        keyword = ner
+    else:
+        print "when get weibo, the  ner is None, the url, title==>", url, "|| ", title
+        keywords = extract_tags_helper(title)
+        keyword = " ".join(keywords)
 
     weibo_ready = GetWeibo(keyword)
 
@@ -753,7 +872,7 @@ def GetWeibo(title):
 
 def GetLastKeyWord(title):
 
-    keywords = extract_tags(title, 2)
+    keywords = extract_tags_helper(title, 2)
     keyword = " ".join(keywords)
 
     ner = Getner(title)
@@ -763,9 +882,10 @@ def GetLastKeyWord(title):
     return keyword, ner
 
 
-def parseNerResult(json_r):
 
-    time_filter = ["今天","明天","后天"]
+
+
+def parseNerResult(json_r):
     times = []
     locs = []
     persons = []
@@ -775,7 +895,7 @@ def parseNerResult(json_r):
     for t in json_r["misc"]:
 
         t = re.sub(pat, '', t)
-        if t in time_filter or len(t) <= 2 or not isTime(t):
+        if t in g_time_filter or len(t) <= 2 or not isTime(t):
             continue
         times.append(t)
 
@@ -792,6 +912,8 @@ def parseNerResult(json_r):
     for gpe in json_r["gpe"]:
 
         gpe = re.sub(pat, '', gpe)
+        if gpe in g_gpes_filter or len(gpe) <= 2:
+            continue
         gpes.append(gpe)
 
     for org in json_r["org"]:
@@ -878,6 +1000,19 @@ def fetch_unrunned_docs():
     return un_runned_docs
 
 
+def fetch_unrunned_docs_by_date(lastUpdate=False, update_direction=pymongo.ASCENDING):
+    start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
+    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+
+
+    if not lastUpdate:
+        docs = conn["news_ver2"]["Task"].find({"isOnline": 0, "updateTime": {"$gte": end_time}}).sort([("updateTime", update_direction)])
+    else:
+        docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "updateTime": {"$gte": start_time, '$lte': end_time}}).sort([("updateTime", 1)])
+    return docs
+
+
 def fetch_url_title_lefturl_pairs(docs):
 
     url_title_lefturl_sourceSite_pairs = []
@@ -908,10 +1043,28 @@ def fetch_url_title_lefturl_pairs(docs):
 
     return url_title_lefturl_sourceSite_pairs
 
+
 def get_googlenews_by_url(url):
 
-
     return conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
+
+
+def recovery_old_event():
+    docs = fetch_unrunned_docs_by_date(True)
+
+    url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
+
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
+        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+        start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+        end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+        now = datetime.datetime.now()
+        now_time = now.strftime('%Y-%m-%d %H:%M:%S')
+        print "*****************************task start, the url is %s, sourceSiteName: %s " \
+                  "*****************************" % (url, sourceSiteName)
+        #do_ner_task(params)
+        do_event_task(params, start_time, end_time)
 
 if __name__ == '__main__':
 
@@ -921,6 +1074,17 @@ if __name__ == '__main__':
     #     print "width_height_ratio_meet_condition test ok"
 
     # find_first_img_meet_condition(["http://i3.sinaimg.cn/dy/main/other/qrcode_news.jpg"])
+    #recovery_old_event()
+    #print " ".join(extract_tags_helper("网易网络受攻击影响巨大损失或超1500万"))
+    #extract_tags_helper("工信部:多措并举挖掘宽带\"提速降费\"潜力")
+    #extract_tags_helper("《何以笙箫默》武汉校园之旅黄晓明险被女粉丝'胸咚'")
+    # is_exist_mongodb('http://ent.people.com.cn/NMediaFile/2015/0430/MAIN201504301328396563201369173.jpg')
+    # isDoubanTag('战机')
+    # isDoubanTag('首次')
+    # isDoubanTag('展示')
+    # do_douban_task({'url':'http://sports.dbw.cn/system/2015/05/10/056499871.shtml','title':"亚冠16强对阵出炉东亚“三国杀”韩国围中日"})
+
+    #parseBaike('安培晋三')
 
     while True:
         doc_num = total_task()
@@ -928,3 +1092,7 @@ if __name__ == '__main__':
             time.sleep(60)
 
     # GetWeibo("孙楠 歌手")
+
+
+
+
