@@ -28,6 +28,7 @@ def loginContentFetch(options):
             options["expiresIn"] = long(options["expiresIn"])
             options["expiresTime"] = long(options["expiresTime"])
 
+            #TODO use bulk update, don't update one by one
             set_login_by_userId_platformType_with_field_and_value(options, "uuid", options["uuid"])
             set_login_by_userId_platformType_with_field_and_value(options, "token", options["token"])
             set_login_by_userId_platformType_with_field_and_value(options, "userIcon", options["userIcon"])

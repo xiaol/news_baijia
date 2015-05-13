@@ -135,6 +135,23 @@ class FetchLoginHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+class PointHandler(tornado.web.RequestHandler):
+
+    def get(self):
+        result = {}
+        print result
+
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+    def post(self):
+        result = {}
+        print result
+
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
 class Application(tornado.web.Application):
 
     def __init__(self):
@@ -143,7 +160,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchTime", FetchTimeHandler),
             (r"/news/baijia/fetchHome", FetchHomeHandler),
             (r"/news/baijia/fetchContent", FetchContentHandler),
-            (r"/news/baijia/fetchLogin", FetchLoginHandler)
+            (r"/news/baijia/fetchLogin", FetchLoginHandler),
+            (r"/news/baijia/point", PointHandler)
 
 
 
