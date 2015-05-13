@@ -35,11 +35,11 @@ sys.path.append(path_add+"/controller/")
 sys.path.append(path_add)
 try:
     from weibo import weibo_relate_docs_get, user_info_get
-    from controller.utils import get_start_end_time
+    from controller.utils import get_start_end_time, is_number
 except ImportError:
     import user_info_get
     import weibo_relate_docs_get
-    from utils import get_start_end_time
+    from utils import get_start_end_time, is_number
     print "import error"
 
 from abstract import KeywordExtraction
@@ -51,13 +51,8 @@ HOST_NER = "60.28.29.47"
 not_need_copy_content_news = ["网易新闻图片", "观察者网"]
 
 
-def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-
+g_time_filter = ["今天","明天","后天"]
+g_gpes_filter = ["中国"]
 
 def extract_tags_helper(sentence, topK=20, withWeight=False):
     tags = extract_tags(sentence, topK, withWeight, allowPOS=('ns', 'n'))
@@ -450,7 +445,7 @@ def do_abs_task(params):
 
 def fetch_ne_by_url(url,all=False):
     doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
-
+    ne = ''
     if doc:
         if "ne" in doc.keys():
             temp = doc["ne"]
@@ -460,6 +455,8 @@ def fetch_ne_by_url(url,all=False):
             else:
                 ne = ''
                 ne = get_first_one_of_ne(temp)
+        else:
+            print 'Not found ne in ', url
     return ne
 
 
@@ -885,8 +882,7 @@ def GetLastKeyWord(title):
     return keyword, ner
 
 
-g_time_filter = ["今天","明天","后天"]
-g_gpes_filter = ["中国"]
+
 
 
 def parseNerResult(json_r):

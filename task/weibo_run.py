@@ -25,15 +25,26 @@ path_add = arg[:-1]
 path_add = '/'.join(path_add)
 
 sys.path.append(path_add+"/weibo/")
+sys.path.append(path_add+"/controller/")
 sys.path.append(path_add)
 try:
     from weibo import weibo_relate_docs_get, user_info_get
+    from controller.utils import get_start_end_time, is_number
 except ImportError:
     import weibo_relate_docs_get
     import user_info_get
+    from utils import get_start_end_time, is_number
 
 from abstract import KeywordExtraction
 
+g_time_filter = ["今天","明天","后天"]
+g_gpes_filter = ["中国"]
+
+def extract_tags_helper(sentence, topK=20, withWeight=False):
+    tags = extract_tags(sentence, topK, withWeight, allowPOS=('ns', 'n'))
+    tags = [x for x in tags if not is_number(x)]
+    tags = [x for x in tags if not x in g_gpes_filter and not x in g_time_filter]
+    return tags
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                                              read_preference=ReadPreference.SECONDARY)
@@ -808,10 +819,12 @@ def isDoubanTag(tag):
     return False
 
 def baiduNewsTaskRun():
+    start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
+    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"$or":[{"baiduSearchOk": 0}, {"baiduSearchOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
-
-    # un_runned_docs = conn["news_ver2"]["Task"].find().sort([("updateTime", -1)]).limit(100)
+    un_runned_docs = conn["news_ver2"]["Task"].find({"updateTime": {"$gte": end_time}, "isOnline": 1,
+                        "$or":[{"baiduSearchOk": 0}, {"baiduSearchOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
 
     url_title_pairs = []
     for doc in un_runned_docs:
@@ -834,7 +847,7 @@ def baiduNewsTaskRun():
 
         topic = Getner(title_here)
         if not topic:
-            topic = extract_tags(title_here, 2)
+            topic = extract_tags_helper(title_here)
             topic = 's'.join(topic)
 
         # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'

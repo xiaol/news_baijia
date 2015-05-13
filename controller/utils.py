@@ -74,3 +74,11 @@ def get_start_end_time(oneday=False,halfday=False):
         end_time = datetime.datetime(today_year, today_month, today_day, 20, 0)
 
     return start_time, end_time
+
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
