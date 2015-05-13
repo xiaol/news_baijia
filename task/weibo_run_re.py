@@ -1086,6 +1086,8 @@ if __name__ == '__main__':
     # isDoubanTag('战机')
     # isDoubanTag('首次')
     # isDoubanTag('展示')
+    # do_douban_task({'url':'http://sports.dbw.cn/system/2015/05/10/056499871.shtml','title':"亚冠16强对阵出炉东亚“三国杀”韩国围中日"})
+
     #parseBaike('安培晋三')
 
     while True:

@@ -382,6 +382,14 @@ def get_time_type_date_freq(update_time,update_type,upate_frequency):
     return request_time, next_update_time, next_update_type, history_date, next_update_freq
 
 
+def get_time():
+    now = datetime.datetime.now()
+    tommorow = now + datetime.timedelta(days=1)
+    request_time = int(convertTimestrtosecond(now)*1000)
+    return request_time
+
+
+
 
 
 def convertTimestrtosecond(date):
