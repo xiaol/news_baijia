@@ -21,8 +21,9 @@ def loginContentFetch(options):
         conn = DBStore._connect_news
         doc = conn['news_ver2']['loginItem'].find_one(Item)
         if doc:
+            options_ex = {}
             print "user_id,%salread exists in databases"%options['userId']
-            options["last_login_time"] = get_time()
+            options["lastLoginTime"] = get_time()
             set_login_by_userId_platformType_with_field_and_value(options, "uuid", options["uuid"])
             set_login_by_userId_platformType_with_field_and_value(options, "token", options["token"])
             set_login_by_userId_platformType_with_field_and_value(options, "userIcon", options["userIcon"])
@@ -30,17 +31,23 @@ def loginContentFetch(options):
             set_login_by_userId_platformType_with_field_and_value(options, "userName", options["userName"])
             set_login_by_userId_platformType_with_field_and_value(options, "expiresIn", options["expiresIn"])
             set_login_by_userId_platformType_with_field_and_value(options, "expiresTime", options["expiresTime"])
-            set_login_by_userId_platformType_with_field_and_value(options, "last_login_time", options["last_login_time"])
-            options["first_login_time"] = doc["first_login_time"]
+            set_login_by_userId_platformType_with_field_and_value(options, "lastLoginTime", options["lastLoginTime"])
+            options["firstLoginTime"] = doc["firstLoginTime"]
+            options_ex["user"] = options
+            options_ex["response"] = 200
 
-            return options
+            return options_ex
 
         else:
-            options["first_login_time"] = get_time()
-            options["last_login_time"] = get_time()
+            options_ex={}
+            options["firstLoginTime"] = get_time()
+            options["lastLoginTime"] = get_time()
+            options_ex["user"] = options
+            options_ex["response"] = 200
             item_dict=dict(options)
             conn['news_ver2']['loginItem'].save(item_dict)
-            return options
+
+            return options_ex
     else:
         print "uerId/platformType value is None"
         return None
