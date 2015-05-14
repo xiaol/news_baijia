@@ -149,6 +149,9 @@ class FetchImHandler(tornado.web.RequestHandler):
 
         result = im_get.imContentFetch(options)
         print result
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
 
 class PointHandler(tornado.web.RequestHandler):
 
@@ -188,6 +191,9 @@ class FetchImUserHandler(tornado.web.RequestHandler):
         options["platformType"] = platformType
         result = im_get.imUserFetch(options)
         print result
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
 
 
 
