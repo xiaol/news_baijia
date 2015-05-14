@@ -27,9 +27,7 @@ def loginContentFetch(options):
             options["lastLoginTime"] = get_time()
             options["expiresIn"] = long(options["expiresIn"])
             options["expiresTime"] = long(options["expiresTime"])
-
             set_login_by_userId_platformType_with_field_and_value(options)
-
             options["firstLoginTime"] = doc["firstLoginTime"]
             options_ex["user"] = options
             options_ex["response"] = 200

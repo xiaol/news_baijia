@@ -135,7 +135,6 @@ class FetchLoginHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
-
 class FetchImHandler(tornado.web.RequestHandler):
     def get(self):
         # updateTime = self.get_argument("updateTime", None)
@@ -150,8 +149,25 @@ class FetchImHandler(tornado.web.RequestHandler):
 
         result = im_get.imContentFetch(options)
         print result
+
+class PointHandler(tornado.web.RequestHandler):
+
+    def get(self):
+        result = {}
+        print result
+
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
+
+    def post(self):
+        result = {}
+        print result
+
+
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
 
 
 
@@ -165,6 +181,7 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchContent", FetchContentHandler),
             (r"/news/baijia/fetchLogin", FetchLoginHandler),
             (r"/news/baijia/fetchIm", FetchImHandler),
+            (r"/news/baijia/point", PointHandler)
 
 
 
