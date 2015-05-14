@@ -75,13 +75,13 @@ def imUserFetch(options):
             print "_id,%salread exists in databases"%options['_id']
             item_dict = dict(options)
             conn['news_ver2']['imUserItem'].save(item_dict)
-            return None
+            return {"response": "200"}
         else:
             item_dict = dict(options)
             conn['news_ver2']['imUserItem'].save(item_dict)
-            return None
+            return {"response": "200"}
 
     else:
 
         print "uuid or jpushid is none"
-        return None
+        return {"response": "404"}
