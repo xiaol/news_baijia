@@ -60,3 +60,28 @@ def merge_message(listInfos):
             commTimeSet.append(commTime_ex)
             merge_listInfos=merge_listInfos+[item]
     return merge_listInfos
+
+
+
+def imUserFetch(options):
+
+    if "uuid" in options.keys() and options["uuid"] and "jpushId" in options.keys() and options["jpushId"]:
+        options['_id'] = options["jpushId"]
+        Item = {'_id': options['_id']}
+        conn = DBStore._connect_news
+        doc = conn['news_ver2']['imUserItem'].find_one(Item)
+
+        if doc:
+            print "_id,%salread exists in databases"%options['_id']
+            item_dict = dict(options)
+            conn['news_ver2']['imUserItem'].save(item_dict)
+            return None
+        else:
+            item_dict = dict(options)
+            conn['news_ver2']['imUserItem'].save(item_dict)
+            return None
+
+    else:
+
+        print "uuid or jpushid is none"
+        return None
