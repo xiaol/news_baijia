@@ -12,7 +12,7 @@ import tornado.httpclient
 
 import tornado.netutil
 import json
-from controller import home_get, content_get, time_get, login_get
+from controller import home_get, content_get, time_get, login_get, im_get
 
 import abstract
 
@@ -135,6 +135,26 @@ class FetchLoginHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+
+class FetchImHandler(tornado.web.RequestHandler):
+    def get(self):
+        # updateTime = self.get_argument("updateTime", None)
+        userId = self.get_argument("userId", None)
+        commType = self.get_argument("commType", None)
+        message = self.get_argument("message", None)
+
+        options = {}
+        options["userId"] = userId
+        options["commType"] = commType
+        options["message"] = message
+
+        result = im_get.imContentFetch(options)
+        print result
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
+
 class Application(tornado.web.Application):
 
     def __init__(self):
@@ -143,7 +163,9 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchTime", FetchTimeHandler),
             (r"/news/baijia/fetchHome", FetchHomeHandler),
             (r"/news/baijia/fetchContent", FetchContentHandler),
-            (r"/news/baijia/fetchLogin", FetchLoginHandler)
+            (r"/news/baijia/fetchLogin", FetchLoginHandler),
+            (r"/news/baijia/fetchIm", FetchImHandler),
+
 
 
 

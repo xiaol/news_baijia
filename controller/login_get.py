@@ -28,14 +28,8 @@ def loginContentFetch(options):
             options["expiresIn"] = long(options["expiresIn"])
             options["expiresTime"] = long(options["expiresTime"])
 
-            set_login_by_userId_platformType_with_field_and_value(options, "uuid", options["uuid"])
-            set_login_by_userId_platformType_with_field_and_value(options, "token", options["token"])
-            set_login_by_userId_platformType_with_field_and_value(options, "userIcon", options["userIcon"])
-            set_login_by_userId_platformType_with_field_and_value(options, "userGender", options["userGender"])
-            set_login_by_userId_platformType_with_field_and_value(options, "userName", options["userName"])
-            set_login_by_userId_platformType_with_field_and_value(options, "expiresIn", options["expiresIn"])
-            set_login_by_userId_platformType_with_field_and_value(options, "expiresTime", options["expiresTime"])
-            set_login_by_userId_platformType_with_field_and_value(options, "lastLoginTime", options["lastLoginTime"])
+            set_login_by_userId_platformType_with_field_and_value(options)
+
             options["firstLoginTime"] = doc["firstLoginTime"]
             options_ex["user"] = options
             options_ex["response"] = 200
@@ -56,8 +50,21 @@ def loginContentFetch(options):
         print "uerId/platformType value is None"
         return None
 
-def set_login_by_userId_platformType_with_field_and_value(options, field, value):
-    conn["news_ver2"]["loginItem"].update({"userId": options['userId'], "platformType": options['platformType']}, {"$set": {field: value}})
+def set_login_by_userId_platformType_with_field_and_value(options):
+    conn["news_ver2"]["loginItem"].update({"userId": options['userId'], "platformType": options['platformType']},
+                                          {"$set": {
+                                                    "uuid": options["uuid"],
+                                                    "token": options["token"],
+                                                    "userIcon": options["userIcon"],
+                                                    "userGender": options["userGender"],
+                                                    "userName": options["userName"],
+                                                    "expiresIn": options["expiresIn"],
+                                                    "expiresTime": options["expiresTime"],
+                                                    "lastLoginTime": options["lastLoginTime"]
+
+                                                    }
+
+                                           })
 
 
 
