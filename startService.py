@@ -12,7 +12,7 @@ import tornado.httpclient
 
 import tornado.netutil
 import json
-from controller import home_get, content_get, time_get, login_get, im_get
+from controller import home_get, content_get, time_get, login_get, im_get, point_post
 
 import abstract
 
@@ -160,7 +160,12 @@ class PointHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
     def post(self):
-        result = {}
+        args = self.request.arguments
+        if len(args) < 8:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = point_post.AddPoint(args['sourceUrl'][0], args['srcText'][0], args['desText'][0], args['paragraphIndex'][0],
+                                     args['type'][0], args['uuid'][0], args['userIcon'][0], args['userName'][0])
         print result
 
 

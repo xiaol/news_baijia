@@ -90,7 +90,20 @@ def fetchContent(url, filterurls, updateTime=None):
     result["relate"] = allrelate
     result["rc"] = 200
 
+    pointsCursor = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).sort([("type", -1)])
+    points = get_points(pointsCursor)
+    result["point"] = points
+
     return result
+
+
+def get_points(points):
+    result_points = []
+    for point in points:
+        result_points.append(point)
+
+    return result_points
+
 
 def Get_Relate_docs(doc, docs_relate, filterurls):
 

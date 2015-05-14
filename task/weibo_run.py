@@ -41,7 +41,7 @@ g_time_filter = ["今天","明天","后天"]
 g_gpes_filter = ["中国"]
 
 def extract_tags_helper(sentence, topK=20, withWeight=False):
-    tags = extract_tags(sentence, topK, withWeight, allowPOS=('ns', 'n'))
+    tags = extract_tags(sentence, topK, withWeight, allowPOS=('ns', 'n', 'nr'))
     tags = [x for x in tags if not is_number(x)]
     tags = [x for x in tags if not x in g_gpes_filter and not x in g_time_filter]
     return tags
