@@ -1066,6 +1066,54 @@ def ImgMeetCondition_ver2(url, getSize=False):
         print width, "+", height, " url=======>", img_url
         return False
 
+
+
+
+def googleNewsTaskRun():
+    start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
+    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    un_runned_docs = conn["news_ver2"]["Task"].find({"updateTime": {"$gte": end_time}, "isOnline": 1,
+                        "$or":[{"googleSearchOk": 0}, {"googleSearchOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
+
+    url_title_pairs = []
+    for doc in un_runned_docs:
+
+        url = doc["url"]
+        title = doc["title"]
+        if not url or not title:
+            print "when doing baiduNewsTask, there is no url or title, url==>", url, "title===>", title
+            continue
+
+        ls = [url, title]
+
+        url_title_pairs.append(ls)
+
+
+    for url_title_pair in url_title_pairs:
+
+        url_here = url_title_pair[0]
+        title_here = url_title_pair[1]
+
+        topic = Getner(title_here)
+        if not topic:
+            topic = extract_tags_helper(title_here)
+            topic = 's'.join(topic)
+
+        # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
+
+
+
+        cmd = 'sh /root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
+        # cmd = 'sh script.sh ' + url_here + ' ' + topic
+        print cmd
+
+        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
+        print "complete url===>", url_here,
+
+        conn["news_ver2"]["Task"].update({"url": url_here}, {"$set": {"googleSearchOk": 1}})
+
 if __name__ == '__main__':
 
     # ImgMeetCondition_ver2("111")
@@ -1119,6 +1167,13 @@ if __name__ == '__main__':
                 time.sleep(50)
                 baiduNewsTaskRun()
                 logging.warn("===============this round of baiduNews complete====================")
+
+        elif arg == 'googleNews':
+            while True:
+                time.sleep(50)
+                googleNewsTaskRun()
+                logging.warn("===============this round of googleNews complete====================")
+
         elif arg == 'relateimg':
             while True:
                 time.sleep(40)

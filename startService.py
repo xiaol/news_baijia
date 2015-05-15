@@ -138,17 +138,20 @@ class FetchLoginHandler(tornado.web.RequestHandler):
 
 class FetchImHandler(tornado.web.RequestHandler):
     def get(self):
-        # updateTime = self.get_argument("updateTime", None)
-        jpushId = self.get_argument("jpushId", None)
-        msgType = self.get_argument("msgType", None)
         message = self.get_argument("message", None)
+        try:
+            dict_obj=json.loads(message)
 
-        options = {}
-        options["jpushId"] = jpushId
-        options["msgType"] = msgType
-        options["message"] = message
+            options = {}
+            options["receiverId"] = dict_obj["receiverId"]
+            options["senderId"] = dict_obj["senderId"]
+            options["content"] = dict_obj["content"]
+            options["msgType"] = dict_obj["msgType"]
+            result = push_message.imContentFetch(options)
+        except Exception as e:
+            print e
+            result = {"response": 303}
 
-        result = push_message.imContentFetch(options)
         print result
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
