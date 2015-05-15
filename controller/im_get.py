@@ -34,3 +34,33 @@ def imUserFetch(options):
 
         print "uuid or jpushid is none"
         return {"response": "404"}
+
+def imContentFetch(options):
+    # "$or":[{"googleSearchOk": 0}, {"googleSearchOk": {"$exists": 0}}]
+    if "jpushId" in options.keys() and options["jpushId"]:
+        conn = DBStore._connect_news
+        docs = conn['news_ver2']['imItem'].find({"$or":[{'senderId': options['jpushId']}, {'receiverId': options['jpushId']}]})
+
+        if docs:
+            result = []
+            for doc in docs:
+
+                print "jpushId,%salread exists in databases"%options['jpushId']
+                content = doc["listInfos"]
+                if doc["senderId"] == options['jpushId']:
+                    type = 0
+                else:
+                    type = 1
+                for content_elem in content:
+                    result_elem=[]
+                    result_elem={"serviceId": "020c3e7a89d", "updateTime": content_elem["msgTime"],"content": [{"content":content_elem["content"], "type": type, "imgUrl": None}]}
+                    result.append(result_elem)
+            return result
+        else:
+            return [{"serviceId": "020c3e7a89d","updateTime": None,"content": []}]
+
+    else:
+
+        print "jpushid is none"
+        return {"response": "404"}
+

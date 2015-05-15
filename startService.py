@@ -199,6 +199,20 @@ class FetchImUserHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+class FetchImContentHandler(tornado.web.RequestHandler):
+    def get(self):
+        jpushId = self.get_argument("jpushId", None)
+        userId = self.get_argument("userId", None)
+        platformType = self.get_argument("platformType", None)
+
+        options = {}
+        options["jpushId"] = jpushId
+        options["userId"] = userId
+        options["platformType"] = platformType
+        result = im_get.imContentFetch(options)
+        print result
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
 
 
 class Application(tornado.web.Application):
@@ -212,7 +226,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchLogin", FetchLoginHandler),
             (r"/news/baijia/fetchIm", FetchImHandler),
             (r"/news/baijia/point", PointHandler),
-            (r"/news/baijia/fetchImUser", FetchImUserHandler)
+            (r"/news/baijia/fetchImUser", FetchImUserHandler),
+            (r"/news/baijia/fetchImContent", FetchImContentHandler)
 
 
 
