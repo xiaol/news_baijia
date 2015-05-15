@@ -13,6 +13,7 @@ import tornado.httpclient
 import tornado.netutil
 import json
 from controller import home_get, content_get, time_get, login_get, im_get, point_post
+from controller.push import push_message
 
 import abstract
 
@@ -138,17 +139,20 @@ class FetchLoginHandler(tornado.web.RequestHandler):
 class FetchImHandler(tornado.web.RequestHandler):
     def get(self):
         # updateTime = self.get_argument("updateTime", None)
-        userId = self.get_argument("userId", None)
-        commType = self.get_argument("commType", None)
+        jpushId = self.get_argument("jpushId", None)
+        msgType = self.get_argument("msgType", None)
         message = self.get_argument("message", None)
 
         options = {}
-        options["userId"] = userId
-        options["commType"] = commType
+        options["jpushId"] = jpushId
+        options["msgType"] = msgType
         options["message"] = message
 
-        result = im_get.imContentFetch(options)
+        result = push_message.imContentFetch(options)
         print result
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
 
 class PointHandler(tornado.web.RequestHandler):
 
@@ -173,6 +177,24 @@ class PointHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+class FetchImUserHandler(tornado.web.RequestHandler):
+    def get(self):
+
+        uuid = self.get_argument("uuid", None)
+        jpushId = self.get_argument("jpushId", None)
+        userId = self.get_argument("userId", None)
+        platformType = self.get_argument("platformType", None)
+
+        options = {}
+        options["uuid"] = uuid
+        options["jpushId"] = jpushId
+        options["userId"] = userId
+        options["platformType"] = platformType
+        result = im_get.imUserFetch(options)
+        print result
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
 
 
 
@@ -186,7 +208,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchContent", FetchContentHandler),
             (r"/news/baijia/fetchLogin", FetchLoginHandler),
             (r"/news/baijia/fetchIm", FetchImHandler),
-            (r"/news/baijia/point", PointHandler)
+            (r"/news/baijia/point", PointHandler),
+            (r"/news/baijia/fetchImUser", FetchImUserHandler)
 
 
 
