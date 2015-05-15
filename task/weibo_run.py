@@ -1083,7 +1083,7 @@ def googleNewsTaskRun():
         url = doc["url"]
         title = doc["title"]
         if not url or not title:
-            print "when doing baiduNewsTask, there is no url or title, url==>", url, "title===>", title
+            print "when doing googleNewsTask, there is no url or title, url==>", url, "title===>", title
             continue
 
         ls = [url, title]
@@ -1101,11 +1101,8 @@ def googleNewsTaskRun():
             topic = extract_tags_helper(title_here)
             topic = 's'.join(topic)
 
-        # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
-
-
-
-        cmd = 'sh /root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
+        # cmd = 'scrapy crawl google.com.hk -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
+        cmd = '. /root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
         # cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
 
@@ -1113,6 +1110,7 @@ def googleNewsTaskRun():
         print "complete url===>", url_here,
 
         conn["news_ver2"]["Task"].update({"url": url_here}, {"$set": {"googleSearchOk": 1}})
+        time.sleep(30)
 
 if __name__ == '__main__':
 
