@@ -84,6 +84,10 @@ def fetchContent(url, filterurls, updateTime=None):
         category = doc["sourceSitename"]
         result["category"] = category[2:4]
 
+    if "imgWall" in doc.keys():
+        result["imgWall"] = doc["imgWall"]
+
+
     result["updateTime"] = doc["updateTime"]
     result["title"] = doc["title"]
 
