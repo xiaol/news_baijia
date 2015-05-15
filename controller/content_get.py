@@ -104,6 +104,9 @@ def fetchContent(url, filterurls, updateTime=None):
 def get_points(points):
     result_points = []
     for point in points:
+        point.pop('_id', None)
+        createTime = point.pop('createTime', None)
+        point['createTime_str'] = createTime.strftime("%Y-%m-%d %H:%M:%S")
         result_points.append(point)
 
     return result_points
