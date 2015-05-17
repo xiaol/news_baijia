@@ -9,7 +9,7 @@ echo $url  $topic
 
 cd /root/workspace/news_spiders
 
-scrapy crawl news.baidu.com -a url=${url} -a topic=${topic}
+scrapy crawl www.baidu.com -a url=${url} -a topic=${topic}
 
 
 
