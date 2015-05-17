@@ -169,6 +169,9 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
                 imgUrl = imgUrls['img']
             elif isinstance(imgUrls, str):
                 imgUrl = imgUrls
+            elif isinstance(imgUrls, unicode):
+                imgUrl = imgUrls.encode('utf-8')
+
 
         # if not imgUrl:
         #     continue
