@@ -27,6 +27,6 @@ def AddPoint(sourceUrl, srcText, desText, paragraphIndex, type, uuid, userIcon, 
     now = datetime.datetime.now()
     point['createTime'] = now
 
-    conn['news_ver2']['pointItem'].update({}, point, upsert=True)
+    conn['news_ver2']['pointItem'].insert(point)
     result = {'response': 200}
     return result

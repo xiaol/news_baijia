@@ -200,6 +200,9 @@ def homeContentFetch(options):
         if "baiduSearch" in doc.keys():
             del doc["baiduSearch"]
 
+        if "imgWall" in doc.keys():
+            del doc["imgWall"]
+
         #相关新闻每一个来源 选一条
         if relate:
             distinctList, distinctNum, distinct_response_urls, otherNum = GetRelateNews(relate)

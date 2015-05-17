@@ -84,6 +84,10 @@ def fetchContent(url, filterurls, updateTime=None):
         category = doc["sourceSitename"]
         result["category"] = category[2:4]
 
+    if "imgWall" in doc.keys():
+        result["imgWall"] = doc["imgWall"]
+
+
     result["updateTime"] = doc["updateTime"]
     result["title"] = doc["title"]
 
@@ -100,6 +104,9 @@ def fetchContent(url, filterurls, updateTime=None):
 def get_points(points):
     result_points = []
     for point in points:
+        point.pop('_id', None)
+        createTime = point.pop('createTime', None)
+        point['createTime_str'] = createTime.strftime("%Y-%m-%d %H:%M:%S")
         result_points.append(point)
 
     return result_points
