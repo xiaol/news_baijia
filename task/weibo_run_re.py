@@ -357,7 +357,7 @@ def do_zhihu_task(params):
 
     print "=============zhihu task start==========="
 
-    ner = fetch_ne_by_url(url)
+    ner = None#fetch_ne_by_url(url)
 
     keyword = ''
 
@@ -791,7 +791,7 @@ def do_weibo_task(params):
     title = params["title"]
 
 
-    ner = fetch_ne_by_url(url)
+    ner = None#fetch_ne_by_url(url)
     if ner:
         keyword = ner
     else:
@@ -1078,6 +1078,8 @@ if __name__ == '__main__':
     #recovery_old_event()
     #print " ".join(extract_tags_helper("网易网络受攻击影响巨大损失或超1500万"))
     #extract_tags_helper("工信部:多措并举挖掘宽带\"提速降费\"潜力")
+    #extract_tags_helper("印度总理莫迪晒与李克强自拍照")
+    #print " ".join(extract_tags_helper("【原油收盘】美油微跌0.6美元破60关口，供应过剩阴魂不散"))
     #extract_tags_helper("《何以笙箫默》武汉校园之旅黄晓明险被女粉丝'胸咚'")
     #extract_tags_helper("杨幂否认拍不雅视频公公:很多人照她的样子整形")
     # is_exist_mongodb('http://ent.people.com.cn/NMediaFile/2015/0430/MAIN201504301328396563201369173.jpg')
