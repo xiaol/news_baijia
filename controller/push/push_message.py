@@ -63,12 +63,12 @@ def merge_message(listInfos):
     merge_listInfos = []
     msgTimeSet = []
     for item in listInfos:
-        msgTime_ex = item["msgTime"]/10000000
-        msgType_ex = item["msgType"]
-        if [msgType_ex, msgTime_ex] in msgTimeSet:
-            position = msgTimeSet.index([msgType_ex, msgTime_ex])
-            merge_listInfos[position]["content"] = merge_listInfos[position]["content"]+"."+item["content"]
+        msgTime_ex = item["msgTime"]/1000000
+        # msgType_ex = item["msgType"]
+        if [ msgTime_ex] in msgTimeSet:
+            position = msgTimeSet.index([msgTime_ex])
+            merge_listInfos[position]["content"] = merge_listInfos[position]["content"]+"sperateby1000s"+item["content"]
         else:
-            msgTimeSet.append([msgType_ex, msgTime_ex])
-            merge_listInfos=merge_listInfos+[item]
+            msgTimeSet.append([ msgTime_ex])
+            merge_listInfos = merge_listInfos+[item]
     return merge_listInfos

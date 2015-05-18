@@ -46,15 +46,21 @@ def imContentFetch(options):
             for doc in docs:
 
                 print "jpushId,%salread exists in databases"%options['jpushId']
-                content = doc["listInfos"]
+                content = doc["merge_listInfos"]
                 if doc["senderId"] == options['jpushId']:
                     type = 0
                 else:
                     type = 1
                 for content_elem in content:
                     result_elem=[]
-                    result_elem={"serviceId": "020c3e7a89d", "updateTime": content_elem["msgTime"],"content": [{"content":content_elem["content"], "type": type, "imgUrl": None}]}
+                    content=[]
+                    for sperate_elem in content_elem["content"].split("sperateby1000s"):
+                        content.append({"content": sperate_elem, "type": type, "imgUrl": None})
+                    result_elem={"serviceId": "020c3e7a89d", "updateTime": content_elem["msgTime"], "content": content}
                     result.append(result_elem)
+
+            result = merge_messageBytype(result)
+
             return result
         else:
             return [{"serviceId": "020c3e7a89d","updateTime": None,"content": []}]
@@ -63,4 +69,22 @@ def imContentFetch(options):
 
         print "jpushid is none"
         return {"response": "404"}
+
+def merge_messageBytype(result):
+    merge_listInfos=[]
+    msgTimeSet = []
+    result= sorted(result,key=operator.itemgetter("updateTime"))
+    for item in result:
+        msgTime_ex = item["updateTime"]/1000000
+
+        if msgTime_ex in msgTimeSet:
+           position = msgTimeSet.index(msgTime_ex)
+           merge_listInfos[position]["content"] = merge_listInfos[position]["content"]+item["content"]
+        else:
+            msgTimeSet.append(msgTime_ex)
+            merge_listInfos.append(item)
+
+    return merge_listInfos
+
+
 
