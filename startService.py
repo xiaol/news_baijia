@@ -214,6 +214,18 @@ class FetchImContentHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
+class FetchImListHandler(tornado.web.RequestHandler):
+    def get(self):
+        jpushId = self.get_argument("jpushId", None)
+
+        options = {}
+        options["jpushId"] = jpushId
+        result = im_get.imListFetch(options)
+        print result
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
 
 class Application(tornado.web.Application):
 
@@ -227,7 +239,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchIm", FetchImHandler),
             (r"/news/baijia/point", PointHandler),
             (r"/news/baijia/fetchImUser", FetchImUserHandler),
-            (r"/news/baijia/fetchImContent", FetchImContentHandler)
+            (r"/news/baijia/fetchImList", FetchImListHandler)
+
 
 
 

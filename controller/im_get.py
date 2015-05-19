@@ -70,6 +70,60 @@ def imContentFetch(options):
         print "jpushid is none"
         return {"response": "404"}
 
+
+
+def imListFetch(options):
+    # "$or":[{"googleSearchOk": 0}, {"googleSearchOk": {"$exists": 0}}]
+    if "jpushId" in options.keys() and options["jpushId"]:
+        conn = DBStore._connect_news
+        docs = conn['news_ver2']['imItem'].find({"$or":[{'senderId': options['jpushId']}, {'receiverId': options['jpushId']}]})
+
+        if docs:
+            result = []
+            for doc in docs:
+                print "jpushId,%salread exists in databases"%options['jpushId']
+                content = doc["listInfos"]
+                if doc["senderId"] == options['jpushId']:
+                    jpushId = doc["receiverId"]
+                    lastMsgTime = content[-1]["msgTime"]
+
+                else:
+                    jpushId = doc["senderId"]
+                    lastMsgTime = content[-1]["msgTime"]
+                result.append({"jpushId": jpushId, "lastMsgTime": lastMsgTime})
+
+
+            result= sorted(result,key=operator.itemgetter("lastMsgTime"),reverse=True)
+            result= delDuplicateById(result)
+            result_ex=[]
+            for result_elem in result:
+                userId, platformType=searchUseridByJpushid(result_elem["jpushId"])
+                if len(userId) > 0 and len(platformType) >0:
+                    userName = searchUserNameByUserid(userId, platformType)
+                else:
+                    userName = ""
+
+                result_elem["userId"] = userId
+                result_elem["platformType"] = platformType
+                result_elem["userName"] = userName
+                result_ex.append(result_elem)
+            return result_ex
+        else:
+            print "Don't talk to  anyone"
+            return {"response": "303"}
+
+    else:
+        print "jpushid is none"
+        return {"response": "404"}
+
+
+
+
+
+
+
+
+
 def merge_messageBytype(result):
     merge_listInfos=[]
     msgTimeSet = []
@@ -85,6 +139,39 @@ def merge_messageBytype(result):
             merge_listInfos.append(item)
 
     return merge_listInfos
+
+
+def delDuplicateById(result):
+    jpushIdSet = []
+    uniqueResult = []
+    for elem in result:
+        jpushId =elem["jpushId"]
+        if jpushId in jpushIdSet:
+            continue
+        else:
+            jpushIdSet.append(jpushId)
+            uniqueResult.append(elem)
+    return uniqueResult
+
+
+def searchUseridByJpushid(jpushId):
+    doc = conn['news_ver2']['imUserItem'].find_one({'jpushId': jpushId})
+    if doc:
+        userId=doc["userId"]
+        platformType=doc["platformType"]
+    else:
+        userId = ""
+        platformType = ""
+
+    return userId, platformType
+
+def searchUserNameByUserid(userId, platformType):
+    doc = conn['news_ver2']['loginItem'].find_one({'userId': userId, 'platformType':platformType})
+    if doc:
+        userName = doc["userName"]
+    else:
+        userName = ""
+    return userName
 
 
 
