@@ -1102,7 +1102,7 @@ def googleNewsTaskRun():
             topic = 's'.join(topic)
 
         # cmd = 'scrapy crawl google.com.hk -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
-        cmd = '. /root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
+        cmd = 'sh /root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
         # cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
 
