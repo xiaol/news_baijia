@@ -181,6 +181,8 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
         ls["img"] = imgUrl
         ls["sourceSitename"] = sourceSiteName
         ls["updateTime"] = updatetime
+        ls['height'] =121
+        ls['width'] = 75
 
         allrelate.append(ls)
 
