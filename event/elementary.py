@@ -63,4 +63,5 @@ if __name__ == '__main__':
     construct_ionic('三大评测机构', '杀软')
     construct_ionic('生日', '谢娜')
     construct_ionic('烟草消费税', '烟草税')
+    construct_ionic('冯绍峰', '倪妮')
 
