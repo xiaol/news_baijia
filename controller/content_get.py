@@ -21,6 +21,8 @@ def fetchContent(url, filterurls, updateTime=None):
 
     docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime",-1)]).limit(10)
 
+    doc_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
+
     result = {}
 
     allrelate = Get_Relate_docs(doc, docs_relate, filterurls)
@@ -50,6 +52,27 @@ def fetchContent(url, filterurls, updateTime=None):
             result['weibo'] = [weibo]
         elif isinstance(weibo, list) and len(weibo) > 0:
             result['weibo'] = weibo
+
+    if doc_comment:
+        if len(doc_comment["comments"]) > 0:
+            if 'weibo' not in doc.keys():
+                result['weibo'] = []
+            comments_list = doc_comment["comments"]
+            for comments_elem in comments_list:
+                comments_elem_dict={}
+                dict_len = len(comments_elem)
+                comment_result = comments_elem[str(dict_len)]
+                comments_elem_dict["user"] = comment_result["author_name"]
+                comments_elem_dict["title"] = comment_result["message"]
+                comments_elem_dict["sourceSitename"] = "weibo"
+                comments_elem_dict["img"] = ""
+                comments_elem_dict["url"] = ""
+                comments_elem_dict["profileImageUrl"] = ""
+                comments_elem_dict["isCommentFlag"] = 1
+                comments_elem_dict["up"] = comment_result["up"]
+                comments_elem_dict["down"] = comment_result["down"]
+                result['weibo'].append(comments_elem_dict)
+
 
 
     if 'douban' in doc.keys():
