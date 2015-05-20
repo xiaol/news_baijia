@@ -57,7 +57,8 @@ g_gpes_filter = ["中国"]
 def extract_tags_helper(sentence, topK=20, withWeight=False):
     tags = []
     for eng in re.findall(r'[A-Za-z ]+',sentence):
-        tags.append(eng)
+        if len(eng) > 2:
+            tags.append(eng)
     tags.extend(extract_tags(sentence, topK, withWeight, allowPOS=('ns', 'n', 'nr')))
     tags = [x for x in tags if not is_number(x)]
     tags = [x for x in tags if not x in g_gpes_filter and not x in g_time_filter]
