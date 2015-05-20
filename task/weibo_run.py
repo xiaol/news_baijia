@@ -850,7 +850,7 @@ def baiduNewsTaskRun():
         if not topic:
             topic = extract_tags_helper(title_here)
             topic = 's'.join(topic)'''
-        topic = topic[:len(title_here)/3*2]
+        topic = title_here[:len(title_here)/3*2]
 
         # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
 
