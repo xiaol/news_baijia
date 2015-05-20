@@ -765,17 +765,18 @@ def do_event_task(params, start_time, end_time):
 
         eventCount = 0
         topStory = ''
-
+        '''
         if "ne" in doc.keys() and not is_ne_empty(doc['ne']):
             events = conn["news_ver2"]["googleNewsItem"].find({'$or': [{"ne.gpe": {'$in': doc['ne']['gpe']}},
                                                 {"ne.person": {'$in': doc['ne']['person']}}], "createTime": {"$gte": start_time, '$lte': end_time}}).sort([("createTime", pymongo.DESCENDING)])
 
-        else:
-            #TODO may cause flipping , as tags contain ner
-            tags = extract_tags_helper(title)
-            re_tags = [re.compile(x) for x in tags]
-            events = conn["news_ver2"]["googleNewsItem"].find({"title": {'$in': re_tags},
-                                "createTime": {"$gte": start_time, '$lte': end_time}, "eventId": {'$exists': False}}).sort([("createTime", pymongo.DESCENDING)])
+        else:'''
+
+        #TODO may cause flipping , as tags contain ner
+        tags = extract_tags_helper(title)
+        re_tags = [re.compile(x) for x in tags]
+        events = conn["news_ver2"]["googleNewsItem"].find({"title": {'$in': re_tags},
+                            "createTime": {"$gte": start_time, '$lte': end_time}, "eventId": {'$exists': False}}).sort([("createTime", pymongo.DESCENDING)])
 
         for story in events:
             #if story.get("eventId", None):  //TODO
