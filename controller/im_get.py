@@ -99,13 +99,15 @@ def imListFetch(options):
             for result_elem in result:
                 userId, platformType=searchUseridByJpushid(result_elem["jpushId"])
                 if len(userId) > 0 and len(platformType) >0:
-                    userName = searchUserNameByUserid(userId, platformType)
+                    userName, userIcon = searchUserNameIconByUserid(userId, platformType)
                 else:
                     userName = ""
+                    userIcon = ""
 
                 result_elem["userId"] = userId
                 result_elem["platformType"] = platformType
                 result_elem["userName"] = userName
+                result_elem["userIcon"] = userIcon
                 result_ex.append(result_elem)
             return result_ex
         else:
@@ -165,13 +167,16 @@ def searchUseridByJpushid(jpushId):
 
     return userId, platformType
 
-def searchUserNameByUserid(userId, platformType):
+def searchUserNameIconByUserid(userId, platformType):
     doc = conn['news_ver2']['loginItem'].find_one({'userId': userId, 'platformType':platformType})
     if doc:
         userName = doc["userName"]
+        userIcon = doc["userIcon"]
     else:
         userName = ""
-    return userName
+        userIcon = ""
+    return userName, userIcon
+
 
 
 

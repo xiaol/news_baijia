@@ -95,6 +95,8 @@ def homeContentFetch(options):
         docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1, "createTime": {"$gte": start_time,
                                                                                        "$lt": end_time}}).sort([("createTime", -1)])
 
+
+
     special_list=[]
     nospecial_list=[]
 
@@ -227,6 +229,7 @@ def homeContentFetch(options):
             special_list.append(doc)
         else:
             nospecial_list.append(doc)
+
 
     special_list= sorted(special_list,key=operator.itemgetter("createTime"))
     docs_return=special_list+nospecial_list
