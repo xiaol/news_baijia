@@ -54,7 +54,7 @@ def fetchContent(url, filterurls, updateTime=None):
             result['weibo'] = weibo
 
     if doc_comment:
-        if len(doc_comment["comments"]) > 0:
+        if doc_comment["comments"] is not None:
             if 'weibo' not in doc.keys():
                 result['weibo'] = []
             comments_list = doc_comment["comments"]
