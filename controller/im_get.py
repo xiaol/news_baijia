@@ -56,14 +56,14 @@ def imContentFetch(options):
                     content=[]
                     for sperate_elem in content_elem["content"].split("sperateby1000s"):
                         content.append({"content": sperate_elem, "type": type, "imgUrl": None})
-                    result_elem={"serviceId": "020c3e7a89d", "updateTime": content_elem["msgTime"], "content": content}
+                    result_elem={"serviceId": "0005150a7dd", "updateTime": content_elem["msgTime"], "content": content}
                     result.append(result_elem)
 
             result = merge_messageBytype(result)
 
             return result
         else:
-            return [{"serviceId": "020c3e7a89d","updateTime": None,"content": []}]
+            return [{"serviceId": "0005150a7dd","updateTime": None,"content": []}]
 
     else:
 

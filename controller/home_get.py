@@ -73,27 +73,41 @@ def homeContentFetch(options):
         docs=[]
         for day_night_elem in day_night:
             start_time = day_night_elem[0]
+            start_time_yes = start_time + datetime.timedelta(days=-1)
             end_time = day_night_elem[1]
             start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
             end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+            start_time_yes = start_time_yes.strftime('%Y-%m-%d %H:%M:%S')
 
             doc = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1, "createTime": {"$gte": start_time,
                                                                                             "$lt": end_time}}).sort([("createTime", -1)])
 
             for doc_elem in doc:
                 docs.append(doc_elem)
+            undocs = conn["news_ver2"]["googleNewsItem"].find({"$or":[{"isOnline": 0}, {"isOnline": {"$exists": 0}}],"createTime":{"$gte": start_time_yes, "$lt": end_time}, "eventId": {"$exists": 1}}).sort([("createTime", -1)])
+            undocs_list = extratInfoInUndocs(undocs)
+
 
         docs= sorted(docs, key=operator.itemgetter("createTime"), reverse=True)
+
 
     else:
         # start_time, end_time = get_start_end_time()
         start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
+        start_time_yes = start_time + datetime.timedelta(days=-1)
         start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
         end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+        start_time_yes = start_time_yes.strftime('%Y-%m-%d %H:%M:%S')
 
 
         docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1, "createTime": {"$gte": start_time,
                                                                                        "$lt": end_time}}).sort([("createTime", -1)])
+
+        undocs = conn["news_ver2"]["googleNewsItem"].find({"$or":[{"isOnline": 0}, {"isOnline": {"$exists": 0}}],"createTime":{"$gte": start_time_yes, "$lt": end_time}, "eventId": {"$exists": 1}}).sort([("createTime", -1)])
+        undocs_list = extratInfoInUndocs(undocs)
+
+        # db.googleNewsItem.find({'isOnline':{"$exists": 0},'createTime':{"$gte": '2015-05-15 18:00:00',"$lt": '2015-05-16 06:00:00'}, "eventId": {"$exists": 1} }).sort( { createTime: -1 } ).count()
+
 
 
 
@@ -106,15 +120,19 @@ def homeContentFetch(options):
 
         sublist = []
         reorganize_num = 0
+        filter_url=[]
         if "sublist" in doc.keys():
             sublist = doc["sublist"]
             reorganize_num = reorganize_num + len(sublist)
             set_googlenews_by_url_with_field_and_value(doc['sourceUrl'], "reorganize", sublist)
+            for subelem in sublist:
+                filter_url.append(subelem["url"])
             del doc["sublist"]
 
         if "sourceUrl" not in doc.keys():
             print "error"
             continue
+
         url = doc['sourceUrl']
         title = doc["title"]
         sourceSiteName = doc["sourceSiteName"]
@@ -207,7 +225,7 @@ def homeContentFetch(options):
 
         #相关新闻每一个来源 选一条
         if relate:
-            distinctList, distinctNum, distinct_response_urls, otherNum = GetRelateNews(relate)
+            distinctList, distinctNum, distinct_response_urls, otherNum = GetRelateNews(relate, filter_url)
 
         else:
             distinctList = []
@@ -217,9 +235,18 @@ def homeContentFetch(options):
 
         sublist.extend(distinctList)
 
+        if 'eventId' in doc.keys():
+            eventId = doc["eventId"]
+            for undocs_elem in undocs_list:
+                if eventId == undocs_elem["eventId"] and undocs_elem["url"] not in distinct_response_urls and undocs_elem["url"] not in filter_url:
+                    sublist.append(undocs_elem)
+                else:
+                    continue
+
         doc["sublist"] = sublist
         doc["otherNum"] = otherNum + baidu_news_num + reorganize_num
         doc["urls_response"] = distinct_response_urls  #返回的urls，用于获取其他相关新闻时过滤掉 这几条已经有的新闻
+
 
         # if timefeedback:
         #     doc["timefeedback"]=timefeedback_dict
@@ -298,7 +325,7 @@ def constructEvent(eventList):
 
 
 # 相关新闻的获取
-def GetRelateNews(relate):
+def GetRelateNews(relate, filter_url):
 
     # if not relate:
     #     return
@@ -314,13 +341,14 @@ def GetRelateNews(relate):
     distinct_response_urls = []
     sumList = []
 
+
     total_relate = [left_relate, mid_relate, bottom_relate, opinion, deep_relate]
 
     for relate in total_relate:
         for e in relate:
             if not e["title"]:
                 continue
-            if e["sourceSitename"] not in sourceNameSet:
+            if e["sourceSitename"] not in sourceNameSet and e["url"] not in filter_url:
                 e["user"]=""
                 distinctList.append(e)
                 distinct_response_urls.append(e["url"])
@@ -509,10 +537,20 @@ def del_dup_relatedoc(relate, sublist):
 
 
 
+def extratInfoInUndocs(undocs):
+    undocs_list = []
+    for doc in undocs:
+        url = doc["sourceUrl"]
+        sourceSitename = doc["originsourceSiteName"]
+        if 'imgUrls' in doc.keys():
+            img = doc["imgUrls"]
+        else:
+            img = ""
+        title = doc["title"]
+        eventId = doc["eventId"]
 
-
-
-
+        undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId})
+    return undocs_list
 
 
 
