@@ -55,7 +55,10 @@ g_time_filter = ["今天","明天","后天"]
 g_gpes_filter = ["中国"]
 
 def extract_tags_helper(sentence, topK=20, withWeight=False):
-    tags = extract_tags(sentence, topK, withWeight, allowPOS=('ns', 'n', 'nr'))
+    tags = []
+    for eng in re.findall(r'[A-Za-z ]+',sentence):
+        tags.append(eng)
+    tags.extend(extract_tags(sentence, topK, withWeight, allowPOS=('ns', 'n', 'nr')))
     tags = [x for x in tags if not is_number(x)]
     tags = [x for x in tags if not x in g_gpes_filter and not x in g_time_filter]
     return tags
@@ -1076,12 +1079,13 @@ if __name__ == '__main__':
 
     # find_first_img_meet_condition(["http://i3.sinaimg.cn/dy/main/other/qrcode_news.jpg"])
     #recovery_old_event()
-    #print " ".join(extract_tags_helper("网易网络受攻击影响巨大损失或超1500万"))
-    #extract_tags_helper("工信部:多措并举挖掘宽带\"提速降费\"潜力")
-    #extract_tags_helper("印度总理莫迪晒与李克强自拍照")
-    #print " ".join(extract_tags_helper("【原油收盘】美油微跌0.6美元破60关口，供应过剩阴魂不散"))
-    #extract_tags_helper("《何以笙箫默》武汉校园之旅黄晓明险被女粉丝'胸咚'")
-    #extract_tags_helper("杨幂否认拍不雅视频公公:很多人照她的样子整形")
+    '''print " ".join(extract_tags_helper("网易网络受攻击影响巨大损失或超1500万"))
+    print " ".join(extract_tags_helper("工信部:多措并举挖掘宽带\"提速降费\"潜力"))
+    print " ".join(extract_tags_helper("爆料称Apple Watch迎重磅更新：大量新功能"))
+    print " ".join(extract_tags_helper("印度总理莫迪晒与李克强自拍照"))
+    print " ".join(extract_tags_helper("【原油收盘】美油微跌0.6美元破60关口，供应过剩阴魂不散"))
+    print " ".join(extract_tags_helper("《何以笙箫默》武汉校园之旅黄晓明险被女粉丝'胸咚'"))
+    print " ".join(extract_tags_helper("杨幂否认拍不雅视频公公:很多人照她的样子整形"))'''
     # is_exist_mongodb('http://ent.people.com.cn/NMediaFile/2015/0430/MAIN201504301328396563201369173.jpg')
     # isDoubanTag('战机')
     # isDoubanTag('首次')
