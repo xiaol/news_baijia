@@ -12,7 +12,7 @@ import tornado.httpclient
 
 import tornado.netutil
 import json
-from controller import home_get, content_get, time_get, login_get, im_get, point_post
+from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get
 from controller.push import push_message
 
 import abstract
@@ -36,6 +36,7 @@ class FetchHomeHandler(tornado.web.RequestHandler):
         timefeedback=self.get_argument("timefeedback",None)
         date = self.get_argument("date",None)
         type = self.get_argument("type",None)
+        channelId = self.get_argument("channelId",None)
 
 
         options = {}
@@ -53,6 +54,9 @@ class FetchHomeHandler(tornado.web.RequestHandler):
             options["date"] = date
         if type:
             options["type"] = type
+
+        if channelId:
+            options["channelId"] = channelId
 
 
         # if updateTime:
@@ -226,6 +230,16 @@ class FetchImListHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+class FetchChannel(tornado.web.RequestHandler):
+    def get(self):
+        channelId = self.get_argument("channelId", None)
+        page = self.get_argument("page", 1)
+        limit = self.get_argument("limit", 50)
+        result = channel_get.fetch_channel(int(channelId), int(page), int(limit))
+        print result
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
 
 class Application(tornado.web.Application):
 
@@ -239,7 +253,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchIm", FetchImHandler),
             (r"/news/baijia/point", PointHandler),
             (r"/news/baijia/fetchImUser", FetchImUserHandler),
-            (r"/news/baijia/fetchImList", FetchImListHandler)
+            (r"/news/baijia/fetchImList", FetchImListHandler),
+            (r"/news/baijia/fetchChannel", FetchChannel)
 
 
 

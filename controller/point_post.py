@@ -7,14 +7,12 @@ import operator
 import pymongo
 from pymongo.read_preferences import ReadPreference
 
-conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
-                                                             read_preference=ReadPreference.SECONDARY)
 DBStore = dbConn.GetDateStore()
 
 
 
 def AddPoint(sourceUrl, srcText, desText, paragraphIndex, type, uuid, userIcon, userName): #type title abstract content
-
+    conn = DBStore._connect_news
     point = {}
     point['sourceUrl'] = sourceUrl
     point['srcText'] = srcText
