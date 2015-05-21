@@ -254,7 +254,7 @@ class Application(tornado.web.Application):
             (r"/news/baijia/point", PointHandler),
             (r"/news/baijia/fetchImUser", FetchImUserHandler),
             (r"/news/baijia/fetchImList", FetchImListHandler),
-            (r"/news/baijia/fetchChannel", FetchChannel)
+            (r"/news/baijia/fetchChannel", FetchChannel),
             (r"/news/baijia/fetchImContent", FetchImContentHandler)
 
 
