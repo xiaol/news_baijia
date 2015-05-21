@@ -8,12 +8,9 @@ import pymongo
 from pymongo.read_preferences import ReadPreference
 from  home_get import get_time
 
-conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
-                                                             read_preference=ReadPreference.SECONDARY)
 
-
-DBStore = dbConn.GetDateStore()
 def loginContentFetch(options):
+    DBStore = dbConn.GetDateStore()
     if "userId" in options.keys() and "platformType" in options.keys():
         userId = options['userId']
         platformType = options['platformType']
@@ -49,6 +46,8 @@ def loginContentFetch(options):
         return None
 
 def set_login_by_userId_platformType_with_field_and_value(options):
+    DBStore = dbConn.GetDateStore()
+    conn = DBStore._connect_news
     conn["news_ver2"]["loginItem"].update({"userId": options['userId'], "platformType": options['platformType']},
                                           {"$set": {
                                                     "uuid": options["uuid"],
