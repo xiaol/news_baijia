@@ -7,12 +7,10 @@ from pymongo.read_preferences import ReadPreference
 from controller.config import dbConn
 
 
-conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
-                                                             read_preference=ReadPreference.SECONDARY)
 
-DBStore = dbConn.GetDateStore()
 
 def imContentFetch(options):
+    DBStore = dbConn.GetDateStore()
 
     if "content" in options.keys() and options["content"]:
         options["msgTime"] = get_time()
@@ -57,6 +55,8 @@ def imContentFetch(options):
         return {"response": 404}
 
 def set_im_by_jpushId_with_field_and_value(options, field, value):
+    DBStore = dbConn.GetDateStore()
+    conn = DBStore._connect_news
     conn["news_ver2"]["imItem"].update({'senderId': options["senderId"], "receiverId": options["receiverId"]}, {"$set": {field: value}})
 
 def merge_message(listInfos):

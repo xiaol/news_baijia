@@ -8,12 +8,10 @@ import pymongo
 from pymongo.read_preferences import ReadPreference
 from  home_get import get_time
 
-conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
-                                                             read_preference=ReadPreference.SECONDARY)
-DBStore = dbConn.GetDateStore()
+
 
 def imUserFetch(options):
-
+    DBStore = dbConn.GetDateStore()
     if "uuid" in options.keys() and options["uuid"] and "jpushId" in options.keys() and options["jpushId"]:
         options['_id'] = options["jpushId"]
         Item = {'_id': options['_id']}
@@ -36,6 +34,7 @@ def imUserFetch(options):
         return {"response": "404"}
 
 def imContentFetch(options):
+    DBStore = dbConn.GetDateStore()
     # "$or":[{"googleSearchOk": 0}, {"googleSearchOk": {"$exists": 0}}]
     if "jpushId" in options.keys() and options["jpushId"]:
         conn = DBStore._connect_news
@@ -73,6 +72,7 @@ def imContentFetch(options):
 
 
 def imListFetch(options):
+    DBStore = dbConn.GetDateStore()
     # "$or":[{"googleSearchOk": 0}, {"googleSearchOk": {"$exists": 0}}]
     if "jpushId" in options.keys() and options["jpushId"]:
         conn = DBStore._connect_news
@@ -121,11 +121,6 @@ def imListFetch(options):
 
 
 
-
-
-
-
-
 def merge_messageBytype(result):
     merge_listInfos=[]
     msgTimeSet = []
@@ -157,6 +152,8 @@ def delDuplicateById(result):
 
 
 def searchUseridByJpushid(jpushId):
+    DBStore = dbConn.GetDateStore()
+    conn = DBStore._connect_news
     doc = conn['news_ver2']['imUserItem'].find_one({'jpushId': jpushId})
     if doc:
         userId=doc["userId"]
@@ -168,6 +165,8 @@ def searchUseridByJpushid(jpushId):
     return userId, platformType
 
 def searchUserNameIconByUserid(userId, platformType):
+    DBStore = dbConn.GetDateStore()
+    conn = DBStore._connect_news
     doc = conn['news_ver2']['loginItem'].find_one({'userId': userId, 'platformType':platformType})
     if doc:
         userName = doc["userName"]
