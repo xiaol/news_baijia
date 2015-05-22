@@ -8,6 +8,7 @@ import operator
 import pymongo
 from utils import get_start_end_time
 from pymongo.read_preferences import ReadPreference
+from channel_get import fetch_channel
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                                              read_preference=ReadPreference.SECONDARY)
 
@@ -56,12 +57,15 @@ def homeContentFetch(options):
     else:
         timefeedback = None
 
+    channelId = options.get("channelId", None)
+
 
     conn = DBStore._connect_news
 
-    if not timing and not date and not type:
+    if not timing and not date and not type and not channelId:
 
         docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1}).sort([("createTime",-1)]).skip((page-1)*limit).limit(limit)
+        undocs_list = []
 
     # elif not timing:
 
@@ -90,6 +94,9 @@ def homeContentFetch(options):
 
         docs= sorted(docs, key=operator.itemgetter("createTime"), reverse=True)
 
+    elif channelId:
+        docs = fetch_channel(int(channelId), page, limit)
+        undocs_list =[]
 
     else:
         # start_time, end_time = get_start_end_time()
@@ -289,7 +296,6 @@ def reorganize_news(docs):
     for (eventId, eventList) in eventId_dict.items():
         results_docs.append(constructEvent(eventList))
 
-    print "hello"
     results_docs= sorted(results_docs,key=operator.itemgetter("createTime"))
     return results_docs
 
