@@ -231,7 +231,8 @@ def do_douban_task(params):
     url = params["url"]
     title = params["title"]
 
-    tagUrl = "http://www.douban.com/tag/%s/?source=topic_search"
+    # tagUrl = "http://www.douban.com/tag/%s/?source=topic_search"
+    tagUrl = "http://www.douban.com/search?cat=1019&q=%s"
     douban_tags = []
     tags = []
     ner = fetch_ne_by_url(url, all=True)
@@ -242,9 +243,10 @@ def do_douban_task(params):
         print "when get douan, the  ner is None, the url, title==>", url, "|| ", title
 
     for tag in tags:
-        if isDoubanTag(tag):
+        url_tag = isDoubanTag(tag)
+        if url_tag :
             print "douban tag======>", tag
-            url_tag = tagUrl%tag
+            # url_tag = tagUrl%tag
             tag_url_pairs = [tag, url_tag]
             douban_tags.append(tag_url_pairs)
 
@@ -259,7 +261,8 @@ def do_douban_task(params):
 
 def isDoubanTag(tag):
 
-    url = "http://www.douban.com/tag/%s/?source=topic_search" % tag
+    # url = "http://www.douban.com/tag/%s/?source=topic_search" % tag
+    url = "http://www.douban.com/search?cat=1019&q=%s" % tag
     try:
         headers={'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.101 Safari/537.36"}
         r = requests.get_tag(url, headers=headers)
@@ -267,11 +270,14 @@ def isDoubanTag(tag):
         if r.status_code != 200:
             print "error"
             return False
-        url_after = r.url.encode("utf-8")
-        url_after = urllib.unquote(url_after)
-
-        if url_after == url:
-            return True
+        # url_after = r.url.encode("utf-8")
+        # url_after = urllib.unquote(url_after)
+        #
+        # if url_after == url:
+        # r = requests.get(url)
+        dom = etree.HTML(r.text)
+        element_href = dom.xpath('//div[@class="result"]/div[@class="content"]/div[@class="title"]/descendant::a[@target="_blank"]/@href')[0]
+        return element_href
     except Exception as e:
         print "douban tag request error==>", e
         return False
@@ -1091,7 +1097,7 @@ if __name__ == '__main__':
     # is_exist_mongodb('http://ent.people.com.cn/NMediaFile/2015/0430/MAIN201504301328396563201369173.jpg')
     # isDoubanTag('战机')
     # isDoubanTag('首次')
-    # isDoubanTag('展示')
+    # isDoubanTag('刘翔')
     # do_douban_task({'url':'http://sports.dbw.cn/system/2015/05/10/056499871.shtml','title':"亚冠16强对阵出炉东亚“三国杀”韩国围中日"})
 
     #parseBaike('安培晋三')
