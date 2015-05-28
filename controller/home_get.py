@@ -121,7 +121,7 @@ def homeContentFetch(options):
     special_list=[]
     nospecial_list=[]
 
-    results_docs = reorganize_news(docs)
+    results_docs = reorganize_news(docs, not channelId)
 
     for doc in results_docs:
 
@@ -280,7 +280,9 @@ def count_relate_baidu_news(url):
 
     return num
 
-def reorganize_news(docs):
+
+#TODO android has a bug to list the channel item ,so just don't do sort for channel items.
+def reorganize_news(docs, is_channel=False):
     results_docs = []
     eventId_dict = {}
 
@@ -296,7 +298,7 @@ def reorganize_news(docs):
     for (eventId, eventList) in eventId_dict.items():
         results_docs.append(constructEvent(eventList))
 
-    results_docs= sorted(results_docs,key=operator.itemgetter("createTime"))
+    results_docs= sorted(results_docs,key=operator.itemgetter("createTime"), reverse= not is_channel)
     return results_docs
 
 
