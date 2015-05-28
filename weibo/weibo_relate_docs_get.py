@@ -8,6 +8,8 @@ import re
 import time
 import datetime
 import urllib2
+# import urllib
+# import HTMLParser
 reload(sys)
 sys.setdefaultencoding("utf-8")
 def search_relate_docs(topic, page):
@@ -48,8 +50,27 @@ def convertbaidutosina(url):
     return None
 
 
-def baidusearch_relate_docs(topic,page):
 
+
+def baidusearch_relate_docs_1(topic, page):
+
+    # print topic
+    url='http://opendata.baidu.com/weibo/?ie=utf-8&oe=utf-8&format=json&wd=%s&rn=20&pn=0'%topic
+    result = extractInfoByUrl(url)
+
+    url_ex1='http://opendata.baidu.com/weibo/?ie=utf-8&oe=utf-8&format=json&wd=%s&rn=20&pn=20'%topic
+    result_ex1 = extractInfoByUrl(url_ex1)
+
+    url_ex2='http://opendata.baidu.com/weibo/?ie=utf-8&oe=utf-8&format=json&wd=%s&rn=20&pn=40'%topic
+    result_ex2 = extractInfoByUrl(url_ex2)
+
+    result.extend(result_ex1)
+    result.extend(result_ex2)
+
+    return result
+
+
+def extractInfoByUrl(url):
 
     json_list_pat=re.compile(r'<a target=\'_blank\'.*?</div></div></a>')
     img_url_pat=re.compile(r'<img class=\'wa-weibo-img\' src=\'(.*?)\'')
@@ -58,8 +79,6 @@ def baidusearch_relate_docs(topic,page):
     source_name_pat=re.compile(r'<span class=.*?>(.*?)</span>')
     updateTime_pat=re.compile(r'<span class=\'wa\-weibo\-t\' data-time=\'(.*?)\'>')
 
-    # print topic
-    url='http://opendata.baidu.com/weibo/?ie=utf-8&oe=utf-8&format=json&wd=%s&rn=20&pn=0'%topic
     # print url
     response = requests.get(url)
     content = response.content
@@ -115,13 +134,75 @@ def baidusearch_relate_docs(topic,page):
 
     return result
 
+def trim_bracket(content):
+    bracket_pat=re.compile(r'<.*?>')
+    content = re.sub(bracket_pat, "", content)
+    return content
 
+def baidusearch_relate_docs(topic, page):
+    result =[]
+    # url = html_parser.unescape(url)
+    # url=url
+    # url=urllib.quote(url)
+    # html_parser = HTMLParser.HTMLParser()
+    # url = html_parser.unescape('http://m.weibo.cn/page/pageJson?containerid=&containerid=100103type%3D7%26q%3D%s%26topids%3D3846804812165441%2C3846900455810225%2C3847133662958521%26title%3D%E7%B2%BE%E9%80%89%E5%BE%AE%E5%8D%9A%26weibo_type%3Dhot%26t%3D&title=%E7%B2%BE%E9%80%89%E5%BE%AE%E5%8D%9A&cardid=weibo_page&uid=&luicode=10000011&lfid=100103type%3D1%26q%3D%s&v_p=11&ext=&fid=100103type%3D7%26q%3D%s%26topids%3D3846804812165441%2C3846900455810225%2C3847133662958521%26title%3D%E7%B2%BE%E9%80%89%E5%BE%AE%E5%8D%9A%26weibo_type%3Dhot%26t%3D&uicode=10000011&page=4'%topic)
+    url='http://m.weibo.cn/page/pageJson?containerid=&containerid=100103type%3D7%26q%3D{0}%26topids%3D3846804812165441%2C3846900455810225%2C3847133662958521%26title%3D%E7%B2%BE%E9%80%89%E5%BE%AE%E5%8D%9A%26weibo_type%3Dhot%26t%3D&title=%E7%B2%BE%E9%80%89%E5%BE%AE%E5%8D%9A&cardid=weibo_page&uid=&luicode=10000011&lfid=100103type%3D1%26q%3D{0}&v_p=11&ext=&fid=100103type%3D7%26q%3D{0}%26topids%3D3846804812165441%2C3846900455810225%2C3847133662958521%26title%3D%E7%B2%BE%E9%80%89%E5%BE%AE%E5%8D%9A%26weibo_type%3Dhot%26t%3D&uicode=10000011&page=4'.format(topic)
+    print url
+    response = requests.get(url)
+    contents = response.content
+    # print "content,%s" %content
+    try:
+        dict_obj=json.loads(contents)
+        cards=dict_obj["cards"]
+        for card in cards:
+            card_group = card["card_group"][0]
+            url = card_group["scheme"]
+            mblog = card_group["mblog"]
+            like_count = mblog["like_count"]
+            comments_count = mblog["comments_count"]
+            reposts_count = mblog["reposts_count"]
+
+            content = mblog["text"]
+            content = trim_bracket(content)
+            print "content,%s"%content
+            updateTime = mblog["created_at"]
+            if "pics" in mblog.keys():
+                pics = mblog["pics"]
+            else:
+                pics = []
+            img_urls=[]
+            for pic in pics:
+                img_urls.append(pic["url"])
+            if img_urls:
+                img_url = img_urls[0]
+            else:
+                img_url = ""
+            user = mblog["user"]
+            source_name = user["screen_name"]
+            profile_image_url = user["profile_image_url"]
+            elem_dict={}
+            elem_dict['img_url'] = img_url
+            elem_dict['content'] = content
+            elem_dict['source_name'] = source_name
+            elem_dict['url'] = url
+            elem_dict['updateTime'] = updateTime
+            elem_dict['img_urls'] = img_urls
+            elem_dict['profile_image_url'] = profile_image_url
+            elem_dict['like_count'] = like_count
+            elem_dict['comments_count'] = comments_count
+            elem_dict['reposts_count'] = reposts_count
+            result.append(elem_dict)
+    except Exception as e:
+        print e
+        return result
+    return result
 
 
 
 if __name__ == '__main__':
     # print search_relate_docs("柴静","1")
-    # baidusearch_relate_docs("孙楠","1")
+    baidusearch_relate_docs("刘翔","1")
+    baidusearch_relate_docs_1("刘强东","1")
     # source_name=re.compile('<span class=\'wa-weibo-author\'>(.*?)</span>')
     convertsecondtoTimestr(1429845960.0)
 
