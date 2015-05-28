@@ -731,9 +731,11 @@ def do_ner_task(params):
     print "==================ner task start================"
     url = params["url"]
     title = params["title"]
-    title_after_cut = jieba.cut(title)
+    '''title_after_cut = jieba.cut(title, False)
     title_after_cut = [x.strip(':') and x.strip('：') and x.strip('-') for x in title_after_cut]
     title_after_cut = filter(None, title_after_cut)
+    title_after_cut = " ".join(title_after_cut)'''
+    title_after_cut = extract_tags_helper(title)
     title_after_cut = " ".join(title_after_cut)
 
     ne = getNe(title_after_cut)
@@ -1093,7 +1095,9 @@ if __name__ == '__main__':
     print " ".join(extract_tags_helper("印度总理莫迪晒与李克强自拍照"))
     print " ".join(extract_tags_helper("【原油收盘】美油微跌0.6美元破60关口，供应过剩阴魂不散"))
     print " ".join(extract_tags_helper("《何以笙箫默》武汉校园之旅黄晓明险被女粉丝'胸咚'"))
-    print " ".join(extract_tags_helper("杨幂否认拍不雅视频公公:很多人照她的样子整形"))'''
+    print " ".join(extract_tags_helper("杨幂否认拍不雅视频公公:很多人照她的样子整形"))
+    print " ".join(extract_tags_helper("刘强东与奶茶妹妹的婚纱照冲淡了翻新手机的丑闻?"))
+    do_ner_task({'url':'', 'title':'刘强东与奶茶妹妹的婚纱照冲淡了翻新手机的丑闻?'})'''
     # is_exist_mongodb('http://ent.people.com.cn/NMediaFile/2015/0430/MAIN201504301328396563201369173.jpg')
     # isDoubanTag('战机')
     # isDoubanTag('首次')
