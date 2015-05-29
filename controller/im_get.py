@@ -36,7 +36,7 @@ def imUserFetch(options):
 def imContentFetch(options):
     DBStore = dbConn.GetDateStore()
     # "$or":[{"googleSearchOk": 0}, {"googleSearchOk": {"$exists": 0}}]
-    if "jpushId" in options.keys() and options["jpushId"]:
+    if "jpushId" in options.keys():
         conn = DBStore._connect_news
         docs = conn['news_ver2']['imItem'].find({"$or":[{'senderId': options['jpushId']}, {'receiverId': options['jpushId']}]})
 

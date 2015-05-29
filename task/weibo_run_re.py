@@ -866,9 +866,14 @@ def GetWeibo(title):
         weibo_temp["user"] = weibo["source_name"]
         weibo_temp["title"] = weibo["content"]
         weibo_temp["url"] = weibo["url"]
-        weibo_temp["profileImageUrl"] = ''
+        weibo_temp["profileImageUrl"] = weibo["profile_image_url"]
         weibo_temp["sourceSitename"] = "weibo"
         weibo_temp["img"] = weibo["img_url"]
+        weibo_temp["imgs"] = weibo["img_urls"]
+
+        weibo_temp['like_count'] = weibo["like_count"]
+        weibo_temp['comments_count'] = weibo["comments_count"]
+        weibo_temp['reposts_count'] = weibo["reposts_count"]
         weibos_of_return.append(weibo_temp)
 
     # weibo = weibos[0]
