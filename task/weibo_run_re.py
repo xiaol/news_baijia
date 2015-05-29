@@ -784,7 +784,7 @@ def do_event_task(params, start_time, end_time):
         tags = extract_tags_helper(title)
         re_tags = [re.compile(x) for x in tags]
         events = conn["news_ver2"]["googleNewsItem"].find({"title": {'$in': re_tags},
-                            "createTime": {"$gte": start_time, '$lte': end_time}, "eventId": {'$exists': False}}).sort([("createTime", pymongo.DESCENDING)])
+                            "createTime": {"$gte": start_time, '$lte': end_time}}).sort([("createTime", pymongo.DESCENDING)])
 
         for story in events:
             #if story.get("eventId", None):  //TODO
@@ -1092,12 +1092,13 @@ if __name__ == '__main__':
     '''print " ".join(extract_tags_helper("网易网络受攻击影响巨大损失或超1500万"))
     print " ".join(extract_tags_helper("工信部:多措并举挖掘宽带\"提速降费\"潜力"))
     print " ".join(extract_tags_helper("爆料称Apple Watch迎重磅更新：大量新功能"))
+    print " ".join(extract_tags_helper("携程遭超长宕机：内部数据管理恐存严重漏洞"))
+    print " ".join(extract_tags_helper("携程系统大规模崩溃或源自内部管理失控"))
     print " ".join(extract_tags_helper("印度总理莫迪晒与李克强自拍照"))
     print " ".join(extract_tags_helper("【原油收盘】美油微跌0.6美元破60关口，供应过剩阴魂不散"))
     print " ".join(extract_tags_helper("《何以笙箫默》武汉校园之旅黄晓明险被女粉丝'胸咚'"))
     print " ".join(extract_tags_helper("杨幂否认拍不雅视频公公:很多人照她的样子整形"))
-    print " ".join(extract_tags_helper("刘强东与奶茶妹妹的婚纱照冲淡了翻新手机的丑闻?"))
-    do_ner_task({'url':'', 'title':'刘强东与奶茶妹妹的婚纱照冲淡了翻新手机的丑闻?'})'''
+    print " ".join(extract_tags_helper("刘强东与奶茶妹妹的婚纱照冲淡了翻新手机的丑闻?"))'''
     # is_exist_mongodb('http://ent.people.com.cn/NMediaFile/2015/0430/MAIN201504301328396563201369173.jpg')
     # isDoubanTag('战机')
     # isDoubanTag('首次')
