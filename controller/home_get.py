@@ -116,14 +116,17 @@ def homeContentFetch(options):
         # db.googleNewsItem.find({'isOnline':{"$exists": 0},'createTime':{"$gte": '2015-05-15 18:00:00',"$lt": '2015-05-16 06:00:00'}, "eventId": {"$exists": 1} }).sort( { createTime: -1 } ).count()
 
 
-
-
     special_list=[]
     nospecial_list=[]
 
     results_docs = reorganize_news(docs, not channelId)
 
     for doc in results_docs:
+        isWeiboFlag = 0
+        isBaikeFlag = 0
+        isZhihuFlag = 0
+        isImgWallFlag = 0
+        isCommentsFlag = 0
 
         sublist = []
         reorganize_num = 0
@@ -174,6 +177,9 @@ def homeContentFetch(options):
 
         if "weibo" in doc.keys():
             weibo = doc["weibo"]
+            if weibo:
+                isWeiboFlag = 1
+
             if isinstance(weibo, dict):
                 if "sourceName" in weibo:
                     weibo["sourceSitename"] = weibo["sourceName"]
@@ -191,8 +197,11 @@ def homeContentFetch(options):
 
                 del doc["weibo"]
 
+
         if "zhihu" in doc.keys():
             zhihu = doc["zhihu"]
+            if zhihu:
+                isZhihuFlag = 1
 
             if isinstance(zhihu, dict):
                 zhihu["sourceSitename"] = "zhihu"
@@ -222,12 +231,16 @@ def homeContentFetch(options):
             del doc["douban"]
 
         if "baike" in doc.keys():
+            isBaikeFlag = 1
             del doc["baike"]
 
         if "baiduSearch" in doc.keys():
             del doc["baiduSearch"]
 
         if "imgWall" in doc.keys():
+            if doc["imgWall"]:
+                isImgWallFlag = 1
+
             del doc["imgWall"]
 
         #相关新闻每一个来源 选一条
@@ -250,10 +263,20 @@ def homeContentFetch(options):
                 else:
                     continue
 
+        doc_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
+        if doc_comment:
+            if doc_comment["comments"] is not None:
+                isCommentsFlag = 1
+
         doc["sublist"] = sublist
         doc["otherNum"] = otherNum + baidu_news_num + reorganize_num
         doc["urls_response"] = distinct_response_urls  #返回的urls，用于获取其他相关新闻时过滤掉 这几条已经有的新闻
 
+        doc["isWeiboFlag"] = isWeiboFlag
+        doc["isBaikeFlag"] = isBaikeFlag
+        doc["isZhihuFlag"] = isZhihuFlag
+        doc["isImgWallFlag"] = isImgWallFlag
+        doc["isCommentsFlag"] = isCommentsFlag
 
         # if timefeedback:
         #     doc["timefeedback"]=timefeedback_dict
