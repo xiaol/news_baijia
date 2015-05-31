@@ -52,16 +52,17 @@ not_need_copy_content_news = ["网易新闻图片", "观察者网"]
 
 
 g_time_filter = ["今天","明天","后天"]
-g_gpes_filter = ["中国"]
+g_gpes_filter = ["中国","全国"]
+g_keyword_filter = ["小时", "原谅", "标题"]
 
 def extract_tags_helper(sentence, topK=20, withWeight=False):
     tags = []
     for eng in re.findall(r'[A-Za-z ]+',sentence):
         if len(eng) > 2:
             tags.append(eng)
-    tags.extend(extract_tags(sentence, topK, withWeight, allowPOS=('ns', 'n', 'nr')))
+    tags.extend(extract_tags(sentence, topK, withWeight, allowPOS=('ns', 'n', 'nr', 'nt','nz')))
     tags = [x for x in tags if not is_number(x)]
-    tags = [x for x in tags if not x in g_gpes_filter and not x in g_time_filter]
+    tags = [x for x in tags if not x in g_gpes_filter and not x in g_time_filter and not x in g_keyword_filter]
     return tags
 
 
@@ -784,7 +785,7 @@ def do_event_task(params, start_time, end_time):
         tags = extract_tags_helper(title)
         re_tags = [re.compile(x) for x in tags]
         events = conn["news_ver2"]["googleNewsItem"].find({"title": {'$in': re_tags},
-                            "createTime": {"$gte": start_time, '$lte': end_time}, "eventId": {'$exists': False}}).sort([("createTime", pymongo.DESCENDING)])
+                            "createTime": {"$gte": start_time, '$lte': end_time}}).sort([("createTime", pymongo.DESCENDING)])
 
         for story in events:
             #if story.get("eventId", None):  //TODO
@@ -1085,6 +1086,24 @@ def recovery_old_event():
         #do_ner_task(params)
         do_event_task(params, start_time, end_time)
 
+
+def test_extract_tags():
+    print " ".join(extract_tags_helper("网易网络受攻击影响巨大损失或超1500万"))
+    print " ".join(extract_tags_helper("工信部:多措并举挖掘宽带\"提速降费\"潜力"))
+    print " ".join(extract_tags_helper("爆料称Apple Watch迎重磅更新：大量新功能"))
+    print " ".join(extract_tags_helper("携程遭超长宕机：内部数据管理恐存严重漏洞"))
+    print " ".join(extract_tags_helper("携程系统大规模崩溃或源自内部管理失控"))
+    print " ".join(extract_tags_helper("印度总理莫迪晒与李克强自拍照"))
+    print " ".join(extract_tags_helper("【原油收盘】美油微跌0.6美元破60关口，供应过剩阴魂不散"))
+    print " ".join(extract_tags_helper("《何以笙箫默》武汉校园之旅黄晓明险被女粉丝'胸咚'"))
+    print " ".join(extract_tags_helper("杨幂否认拍不雅视频公公:很多人照她的样子整形"))
+    print " ".join(extract_tags_helper("刘强东与奶茶妹妹的婚纱照冲淡了翻新手机的丑闻?"))
+    print " ".join(extract_tags_helper("港媒:复旦校庆宣传片被指抄东大校友称不可原谅"))
+    print " ".join(extract_tags_helper("复旦宣传片事件暴露大学危机应对机制缺失"))
+    print " ".join(extract_tags_helper("10人候选全国道德模范"))
+    print " ".join(extract_tags_helper("原标题：北京朝阳一铲车撞上绿化带司机当场死亡"))
+
+
 if __name__ == '__main__':
 
     # if False != width_height_ratio_meet_condition(100, 900, 4):
@@ -1094,15 +1113,7 @@ if __name__ == '__main__':
 
     # find_first_img_meet_condition(["http://i3.sinaimg.cn/dy/main/other/qrcode_news.jpg"])
     #recovery_old_event()
-    '''print " ".join(extract_tags_helper("网易网络受攻击影响巨大损失或超1500万"))
-    print " ".join(extract_tags_helper("工信部:多措并举挖掘宽带\"提速降费\"潜力"))
-    print " ".join(extract_tags_helper("爆料称Apple Watch迎重磅更新：大量新功能"))
-    print " ".join(extract_tags_helper("印度总理莫迪晒与李克强自拍照"))
-    print " ".join(extract_tags_helper("【原油收盘】美油微跌0.6美元破60关口，供应过剩阴魂不散"))
-    print " ".join(extract_tags_helper("《何以笙箫默》武汉校园之旅黄晓明险被女粉丝'胸咚'"))
-    print " ".join(extract_tags_helper("杨幂否认拍不雅视频公公:很多人照她的样子整形"))
-    print " ".join(extract_tags_helper("刘强东与奶茶妹妹的婚纱照冲淡了翻新手机的丑闻?"))
-    do_ner_task({'url':'', 'title':'刘强东与奶茶妹妹的婚纱照冲淡了翻新手机的丑闻?'})'''
+
     # is_exist_mongodb('http://ent.people.com.cn/NMediaFile/2015/0430/MAIN201504301328396563201369173.jpg')
     # isDoubanTag('战机')
     # isDoubanTag('首次')
