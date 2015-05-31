@@ -810,7 +810,7 @@ def do_weibo_task(params):
     else:
         print "when get weibo, the  ner is None, the url, title==>", url, "|| ", title
         keywords = extract_tags_helper(title)
-        keyword = " ".join(keywords)
+        keyword = "+".join(keywords)
 
     weibo_ready = GetWeibo(keyword)
 
