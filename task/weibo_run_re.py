@@ -60,10 +60,36 @@ def extract_tags_helper(sentence, topK=20, withWeight=False):
     for eng in re.findall(r'[A-Za-z ]+',sentence):
         if len(eng) > 2:
             tags.append(eng)
+    tagRule = get_tag_from_group(sentence)
+    tagRule2 = get_tag_from_group2(sentence)
+
     tags.extend(extract_tags(sentence, topK, withWeight, allowPOS=('ns', 'n', 'nr', 'nt','nz')))
     tags = [x for x in tags if not is_number(x)]
     tags = [x for x in tags if not x in g_gpes_filter and not x in g_time_filter and not x in g_keyword_filter]
+    tags = [x for x in tags if not x in tagRule and not x in tagRule2]
+    if len(tagRule2) > 1:
+        tags.append(tagRule2)
+    if len(tagRule) > 1:
+        tags.append(tagRule)
     return tags
+
+
+def get_tag_from_group(text):
+    p_tag = re.compile(r'.*《(?P<tag>.*)》.*')
+    tagSearch = p_tag.search(text)
+    tag = ''
+    if tagSearch:
+        tag = tagSearch.group('tag')
+    return tag
+
+
+def get_tag_from_group2(text):
+    p_tag = re.compile(r'.*"(?P<tag>.*)".*')
+    tagSearch = p_tag.search(text)
+    tag = ''
+    if tagSearch:
+        tag = tagSearch.group('tag')
+    return tag
 
 
 def total_task():
@@ -1096,12 +1122,16 @@ def test_extract_tags():
     print " ".join(extract_tags_helper("印度总理莫迪晒与李克强自拍照"))
     print " ".join(extract_tags_helper("【原油收盘】美油微跌0.6美元破60关口，供应过剩阴魂不散"))
     print " ".join(extract_tags_helper("《何以笙箫默》武汉校园之旅黄晓明险被女粉丝'胸咚'"))
+    print " ".join(extract_tags_helper("《何以笙箫默》《何以笙箫默2》武汉校园之旅黄晓明险被女粉丝'胸咚'"))
     print " ".join(extract_tags_helper("杨幂否认拍不雅视频公公:很多人照她的样子整形"))
     print " ".join(extract_tags_helper("刘强东与奶茶妹妹的婚纱照冲淡了翻新手机的丑闻?"))
     print " ".join(extract_tags_helper("港媒:复旦校庆宣传片被指抄东大校友称不可原谅"))
     print " ".join(extract_tags_helper("复旦宣传片事件暴露大学危机应对机制缺失"))
     print " ".join(extract_tags_helper("10人候选全国道德模范"))
     print " ".join(extract_tags_helper("原标题：北京朝阳一铲车撞上绿化带司机当场死亡"))
+    print " ".join(extract_tags_helper("俄外交部：俄期望能按期就伊朗核计划达成协议"))
+    print " ".join(extract_tags_helper("媒体盘点：李克强出访拉美带来的签证便利"))
+    print " ".join(extract_tags_helper("《哆啦A梦》四天揣走2.37亿影迷为'蓝胖子'舍钞票"))
 
 
 if __name__ == '__main__':
@@ -1121,6 +1151,7 @@ if __name__ == '__main__':
     # do_douban_task({'url':'http://sports.dbw.cn/system/2015/05/10/056499871.shtml','title':"亚冠16强对阵出炉东亚“三国杀”韩国围中日"})
 
     #parseBaike('安培晋三')
+    #test_extract_tags()
 
     while True:
         doc_num = total_task()
