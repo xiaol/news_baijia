@@ -120,9 +120,9 @@ def fetchContent(url, filterurls, updateTime=None):
     result["relate"] = allrelate
     result["rc"] = 200
 
-    if doc_comment:
+    '''if doc_comment:
         if doc_comment["comments"] is not None:
-            points = project_comments_to_paragraph(doc, doc_comment["comments"])
+            points = project_comments_to_paragraph(doc, doc_comment["comments"])'''
 
     pointsCursor = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).sort([("type", -1)])
     points = get_points(pointsCursor)
