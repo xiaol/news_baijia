@@ -37,10 +37,12 @@ sys.path.append(path_add)
 try:
     from weibo import weibo_relate_docs_get, user_info_get
     from controller.utils import get_start_end_time, is_number
+    from weibo import Comments
 except ImportError:
     import user_info_get
     import weibo_relate_docs_get
     from utils import get_start_end_time, is_number
+    import Comments
     print "import error"
 
 from abstract import KeywordExtraction
@@ -877,7 +879,7 @@ def do_weibo_task(params):
         set_googlenews_by_url_with_field_and_value(url, "weibo", weibo_ready)
         set_task_ok_by_url_and_field(url, "weiboOk")
         print "weiboTaskRun success, the doc url is:" + url
-        from weibo import Comments
+
         # Update the comments by weibourl[str] or weibo_ready[{"url":url},]
         # Comments.get_comments_by_weibo_url(url, weiboUrl)
         Comments.get_comments_by_weibo_ready(url, weibo_ready)
