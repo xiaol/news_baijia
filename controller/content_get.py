@@ -158,17 +158,20 @@ def project_comments_to_paragraph(doc, comments):
             textList.append(comment_result['comment_part'])
         #sims = cal_sim(textblock['text_part'], textList)
             sim = 0.0
+            userName = comment_result['author_name'].replace('网易','')
+            if 'author_img_url' in comment_result:
+                userIcon = comment_result['author_img_url']
+            else:
+                userIcon = ""
             if sim != 0.0:
-                userName = comment_result['author_name'].replace('网易','')
                 point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
-                         'paragraphIndex': paragraphIndex, 'type': "text_paragraph", 'uuid': "", 'userIcon': "",
+                         'paragraphIndex': paragraphIndex, 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon,
                          'userName': userName, 'createTime': comment_result["created_at"],
                          "up": comment_result["up"], "down": comment_result["down"], "comments_count":1}
                 points.append(point)
             elif paragraphIndex == 0:
-                userName = comment_result['author_name'].replace('网易','')
                 point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
-                         'paragraphIndex': paragraphIndex, 'type': "text_paragraph", 'uuid': "", 'userIcon': "",
+                         'paragraphIndex': paragraphIndex, 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon ,
                          'userName': userName, 'createTime': comment_result["created_at"],
                          "up": comment_result["up"], "down": comment_result["down"], "comments_count":len(comments)}
                 points.append(point)
