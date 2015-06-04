@@ -175,8 +175,14 @@ class PointHandler(tornado.web.RequestHandler):
         if len(args) < 8:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
+            if 'userId' not in args.keys():
+                args['userId'] = ['']
+            if 'platformType' not in args.keys():
+                args['platformType'] = ['']
+
+
             result = point_post.AddPoint(args['sourceUrl'][0], args['srcText'][0], args['desText'][0], args['paragraphIndex'][0],
-                                     args['type'][0], args['uuid'][0], args['userIcon'][0], args['userName'][0])
+                                     args['type'][0], args['uuid'][0], args['userIcon'][0], args['userName'][0], args['userId'][0], args['platformType'][0])
         print result
 
 
@@ -241,6 +247,8 @@ class FetchChannel(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+
+
 class Application(tornado.web.Application):
 
     def __init__(self):
@@ -256,6 +264,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchImList", FetchImListHandler),
             (r"/news/baijia/fetchChannel", FetchChannel),
             (r"/news/baijia/fetchImContent", FetchImContentHandler)
+
+
 
 
 

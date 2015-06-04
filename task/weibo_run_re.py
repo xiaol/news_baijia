@@ -18,6 +18,7 @@ import os
 from PIL import Image
 import datetime
 from requests.exceptions import Timeout, ConnectionError
+from text_classifier import get_category_by_hack
 try:
     import zbar
 except ImportError:
@@ -812,14 +813,38 @@ def do_event_task(params, start_time, end_time):
         re_tags = [re.compile(x) for x in tags]
         events = conn["news_ver2"]["googleNewsItem"].find({"title": {'$in': re_tags},
                             "createTime": {"$gte": start_time, '$lte': end_time}}).sort([("createTime", pymongo.DESCENDING)])
+        domain_dict = {}
+        for e in events:
+            if "classes" not in e.keys():
+                classes = get_category_by_hack(e['title'])
+                if classes:
+                    e['classes'] = classes
+                    set_googlenews_by_url_with_field_and_value(e["sourceUrl"], "classes", classes)
+            isCertain = False
+            for class_elem in e['classes']:
+                if class_elem['conf'] > 0.55:
+                    if class_elem['class_num'] in domain_dict:
+                        domain_dict[class_elem['class_num']].append(e)
+                    else:
+                        domain_dict[class_elem['class_num']] = [e]
+                    isCertain = True
+                    break
+            if not isCertain:
+                if -1 in domain_dict:
+                    domain_dict[-1].append(e)
+                else:
+                    domain_dict[-1] = [e]
 
-        for story in events:
-            #if story.get("eventId", None):  //TODO
-            if eventCount is 0:
-                set_googlenews_by_url_with_field_and_value(url, "eventId", story["_id"])
-                topStory = story["_id"]
-            set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", topStory)
-            eventCount += 1
+        for k, domain_events in domain_dict.iteritems():
+            if len(domain_events) < 2:
+                continue
+            for story in domain_events:
+                #if story.get("eventId", None):  //TODO
+                if eventCount is 0:
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", story["_id"])
+                    topStory = story["_id"]
+                set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", topStory)
+                eventCount += 1
         print 'found topic events count ===>' , eventCount
 
 
@@ -1136,6 +1161,13 @@ def test_extract_tags():
     print " ".join(extract_tags_helper("俄外交部：俄期望能按期就伊朗核计划达成协议"))
     print " ".join(extract_tags_helper("媒体盘点：李克强出访拉美带来的签证便利"))
     print " ".join(extract_tags_helper("《哆啦A梦》四天揣走2.37亿影迷为'蓝胖子'舍钞票"))
+    print " ".join(extract_tags_helper("河南将整治人员密集场所消防安全重查彩钢板建筑"))
+    print " ".join(extract_tags_helper("国产厂商转战799元价位手机或将迎来降价潮"))
+    print " ".join(extract_tags_helper("美媒曝FBI正在调查布拉特被捕人员将提供线索"))
+    print " ".join(extract_tags_helper("重庆应急避难场所达2500万平米拥有400余支应急队伍"))
+    print " ".join(extract_tags_helper("广州市越秀区一养老院违规用彩钢板"))
+    print " ".join(extract_tags_helper("南阳开展消防安全大检查拆除违规彩钢板建筑22处"))
+    print " ".join(extract_tags_helper("重庆应急避难所可容1200万人高空救援设备不足"))
 
 
 if __name__ == '__main__':

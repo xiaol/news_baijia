@@ -1,14 +1,17 @@
-#coding=utf-8
+# coding=utf-8
 from PIL import Image
 
 from config import dbConn
 import requests
 from home_get import del_dup_relatedoc
 
+import jieba
+from gensim import corpora, models, similarities
+
 DBStore = dbConn.GetDateStore()
 
-def fetchContent(url, filterurls, updateTime=None):
 
+def fetchContent(url, filterurls, updateTime=None):
     conn = DBStore._connect_news
 
     doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
@@ -19,7 +22,7 @@ def fetchContent(url, filterurls, updateTime=None):
     if updateTime is None:
         updateTime = ''
 
-    docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime",-1)]).limit(10)
+    docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime", -1)]).limit(10)
 
     doc_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
 
@@ -59,7 +62,7 @@ def fetchContent(url, filterurls, updateTime=None):
                 result['weibo'] = []
             comments_list = doc_comment["comments"]
             for comments_elem in comments_list:
-                comments_elem_dict={}
+                comments_elem_dict = {}
                 dict_len = len(comments_elem)
                 comment_result = comments_elem[str(dict_len)]
                 comments_elem_dict["user"] = comment_result["author_name"]
@@ -73,13 +76,10 @@ def fetchContent(url, filterurls, updateTime=None):
                 comments_elem_dict["down"] = comment_result["down"]
                 result['weibo'].append(comments_elem_dict)
 
-
-
     if 'douban' in doc.keys():
         douban = doc['douban']
         if isinstance(douban, list) and len(douban) > 0:
             result['douban'] = douban
-
 
     if 'baike' in doc.keys():
         baike = doc['baike']
@@ -96,9 +96,8 @@ def fetchContent(url, filterurls, updateTime=None):
 
     if 'imgUrls' in doc.keys():
         imgs = doc['imgUrls']
-        if isinstance(imgs, list) and len(imgs) >0:
+        if isinstance(imgs, list) and len(imgs) > 0:
             result['imgUrl'] = imgs[-1]
-
 
     if "root_class" in doc.keys():
         result["root_class"] = doc["root_class"]
@@ -110,16 +109,22 @@ def fetchContent(url, filterurls, updateTime=None):
     if "imgWall" in doc.keys():
         result["imgWall"] = doc["imgWall"]
 
-
     result["updateTime"] = doc["updateTime"]
     result["title"] = doc["title"]
 
     result["relate"] = allrelate
     result["rc"] = 200
 
+    result_points = []
+    if doc_comment and 'content' in doc:
+        if doc_comment["comments"] is not None:
+            points = project_comments_to_paragraph(doc, doc_comment["comments"])
+            result_points.extend(points)
+
     pointsCursor = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).sort([("type", -1)])
-    points = get_points(pointsCursor)
-    result["point"] = points
+    points_fromdb = get_points(pointsCursor)
+    result_points.extend(points_fromdb)
+    result["point"] = result_points
 
     return result
 
@@ -135,8 +140,82 @@ def get_points(points):
     return result_points
 
 
-def Get_Relate_docs(doc, docs_relate, filterurls):
+def project_comments_to_paragraph(doc, comments):
+    points = []
+    textblocks = []
+    for content in doc['content'].split('\n'):
+        textblocks.append({'content':content})
+    for textblock in textblocks:
+        paragraphIndex = 0
+        if 'text_part' not in textblock:
+            textblock['text_part'] = list(jieba.cut(textblock['content']))
+        for comments_elem in comments:
+            dict_len = len(comments_elem)
+            comment_result = comments_elem[str(dict_len)]
+            if 'comment_part' not in comment_result:
+                comment_result['comment_part'] = list(jieba.cut(comment_result["message"]))
+            textList = []
+            textList.append(textblock['text_part'])
+            textList.append(comment_result['comment_part'])
+            k, sim = cal_sim(textList)
+            if sim != 0.0:
+                userName = comment_result['author_name'].replace('网易','')
+                point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
+                         'paragraphIndex': paragraphIndex, 'type': "text_paragraph", 'uuid': "", 'userIcon': "",
+                         'userName': userName, 'createTime': comment_result["created_at"],
+                         "up": comment_result["up"], "down": comment_result["down"]}
+                points.append(point)
+            elif paragraphIndex == 0:
+                userName = comment_result['author_name'].replace('网易','')
+                point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
+                         'paragraphIndex': paragraphIndex, 'type': "text_paragraph", 'uuid': "", 'userIcon': "",
+                         'userName': userName, 'createTime': comment_result["created_at"],
+                         "up": comment_result["up"], "down": comment_result["down"]}
+                points.append(point)
+            paragraphIndex += 1
 
+    return points
+
+
+def cal_sim(textList):
+    dictionary = corpora.Dictionary(textList)
+    corpus = [dictionary.doc2bow(text) for text in textList]
+    tfidf = models.TfidfModel(corpus)  # step 1 -- initialize a model
+    corpus_tfidf = tfidf[corpus]
+    lsi = models.LsiModel(corpus_tfidf, id2word=dictionary, num_topics=2)  # initialize an LSI transformation
+    index = similarities.MatrixSimilarity(lsi[corpus])  # transform corpus to LSI space and index it
+    sims_list = []
+    for x in range(len(textList)):
+        vec_lsi = lsi[corpus[x]]
+        sims = index[vec_lsi]
+        sims_list.append(list(enumerate(sims)))
+    r = {}
+    w = []
+    for sl in sims_list:
+        for v, k in sl:
+            r[v] = k
+        w.append(r)
+    dl = [dict(t) for t in sims_list]
+    # for m in dl:
+    #     if min()
+    mdl = []
+    # min_val = min(u.iteritems())
+    # min_val_d = {k:v for k, v in u.iteritems() if v == min_val}
+
+    for x in dl:
+        min_v = min(x.itervalues())
+        mdlo = {k: v for k, v in x.iteritems() if v == min_v}
+        # mdl.append(min_v)
+        mdl.append(mdlo)
+    smdl = sorted(mdl, key=lambda k: k)
+    # fr = sorted(dl)
+
+    print smdl
+    print sims_list
+    return sims_list[0][1]
+
+
+def Get_Relate_docs(doc, docs_relate, filterurls):
     allrelate = []
 
     if "reorganize" in doc.keys() and doc["reorganize"]:
@@ -212,112 +291,9 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
     return allrelate
 
 
-# def Get_by_url(url):
-#
-#     apiUrl_img = "http://121.41.75.213:8080/extractors_mvc_war/api/getImg?url="
-#     apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url="
-#
-#     apiUrl_img += url
-#     apiUrl_text += url
-#
-#     r_img = requests_with_sleep.get(apiUrl_img)
-#     r_text = requests_with_sleep.get(apiUrl_text)
-#
-#     img = (r_img.json())["imgs"]
-#     print(type(img))
-#     text = (r_text.json())["text"]
-#
-#     result = {}
-#     img_result = []
-#     if not img or not len(img)>0:
-#         return None
-#
-#     # result['img'] = img[-1]
-#     '''
-#     for i in img:
-#         if i.endswith('.gif'):
-#             img.remove(i)
-#         if 'weima' in i:
-#             img.remove(i)
-#         if ImgMeetCondition(i) == False:
-#             img.remove(i)
-#     result['img'] = img[0]
-#     # result['img'] = img[3]
-#
-#
-#     if result['img'].startswith('/'):
-#         print('!!!!!!!!!!!')
-#         print(result['img'])
-#         aa = url.find('/', 7)
-#         print(url[:aa])
-#         result['img'] = url[:aa] + result['img']
-#     elif result['img'].startswith('..'):
-#         count = 0
-#         while result['img'].startswith('..'):
-#             count += 1
-#             result['img'] = result['img'][3:]
-#         print(result['img'])
-#         get_list = url.split('/')
-#         last_list = get_list[2:-1-count]
-#         result['img'] = get_list[0] + '//' + '/'.join(last_list) + '/' + result['img']
-#         print(result['img'])
-#     elif result['img'].startswith('.'):
-#         get_list = url.split('/')
-#         print(get_list)
-#         last_list = get_list[2:-1]
-#         print(last_list)
-#         result['img'] = get_list[0] + '//' + '/'.join(last_list) + result['img'][1:]
-#         print(result['img'])
-#     '''
-#     for i in img:
-#         # result['img'] = i
-#         result_i = i
-#         if result_i.startswith('/'):
-#             print('!!!!!!!!!!!')
-#             print(result_i)
-#             aa = url.find('/', 7)
-#             print(url[:aa])
-#             result_i = url[:aa] + result_i
-#             print(result_i)
-#             # img.remove(i)
-#             # img.append(result_i)
-#             img_result.append(result_i)
-#         elif result_i.startswith('..'):
-#             count = 0
-#             while result_i.startswith('..'):
-#                 count += 1
-#                 result_i = result_i[3:]
-#             print(result_i)
-#             get_list = url.split('/')
-#             last_list = get_list[2:-1-count]
-#             result_i = get_list[0] + '//' + '/'.join(last_list) + '/' + result_i
-#             print(result_i)
-#             # img.remove(i)
-#             # img.append(result_i)
-#             img_result.append(result_i)
-#
-#         elif result_i.startswith('.'):
-#             get_list = url.split('/')
-#             print(get_list)
-#             last_list = get_list[2:-1]
-#             print(last_list)
-#             result_i = get_list[0] + '//' + '/'.join(last_list) + result_i[1:]
-#             print(result_i)
-#             # img.remove(i)
-#             # img.append(resuolt_i)
-#             img_result.append(result_i)
-#         if result_i.endswith('.gif'):
-#             # img.remove(result_i)
-#             img_result.remove(result_i)
-#         if 'weima' in result_i:
-#             img_result.remove(result_i)
-#         if ImgMeetCondition(result_i) == True:
-#             img_result.remove(result_i)
-#     result['img'] = img_result[0]
-#     return result
-
-
 import urllib, cStringIO
+
+
 def ImgMeetCondition(url):
     img_url = url
     # img_url = 'http://www.01happy.com/wp-content/uploads/2012/09/bg.png'
@@ -335,11 +311,11 @@ def ImgMeetCondition(url):
     return False
 
 
-
 if __name__ == '__main__':
-
     # print(Get_by_url("http://xinmin.news365.com.cn/tyxw/201503/t20150323_1779650.html"))
     # print(Get_by_url("http://www.jfdaily.com/guonei/new/201503/t20150323_1348362.html"))
     # print(Get_by_url("http://sports.sina.com.cn/l/s/2015-03-24/10287553303.shtml"))
     # print(ImgMeetCondition("http://xinmin.news365.com.cn/images/index_3.jpg"))
+    textList = []
+    cal_sim(textList)
     print (ImgMeetCondition("http://img6.cutv.com/forum/201406/04/150731hffegglg1es9bufa.jpg"))

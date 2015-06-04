@@ -11,7 +11,7 @@ DBStore = dbConn.GetDateStore()
 
 
 
-def AddPoint(sourceUrl, srcText, desText, paragraphIndex, type, uuid, userIcon, userName): #type title abstract content
+def AddPoint(sourceUrl, srcText, desText, paragraphIndex, type, uuid, userIcon, userName, userId, platformType): #type title abstract content
     conn = DBStore._connect_news
     point = {}
     point['sourceUrl'] = sourceUrl
@@ -24,6 +24,8 @@ def AddPoint(sourceUrl, srcText, desText, paragraphIndex, type, uuid, userIcon, 
     point['userName'] = userName
     now = datetime.datetime.now()
     point['createTime'] = now
+    point['userId'] = userId
+    point['platformType'] = platformType
 
     conn['news_ver2']['pointItem'].insert(point)
     result = {'response': 200}
