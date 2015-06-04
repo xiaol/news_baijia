@@ -801,7 +801,6 @@ def do_event_task(params, start_time, end_time):
 
     if doc:
 
-        eventCount = 0
         topStory = ''
         '''
         if "ne" in doc.keys() and not is_ne_empty(doc['ne']):
@@ -838,6 +837,7 @@ def do_event_task(params, start_time, end_time):
                     domain_dict[-1] = [e]
 
         for k, domain_events in domain_dict.iteritems():
+            eventCount = 0
             if len(domain_events) < 2:
                 continue
             for story in domain_events:
@@ -847,7 +847,7 @@ def do_event_task(params, start_time, end_time):
                     topStory = story["_id"]
                 set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", topStory)
                 eventCount += 1
-        print 'found topic events count ===>' , eventCount
+            print 'found topic events count ===>' , eventCount
 
 
 def do_weibo_task(params):

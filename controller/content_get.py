@@ -163,14 +163,14 @@ def project_comments_to_paragraph(doc, comments):
                 point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
                          'paragraphIndex': paragraphIndex, 'type': "text_paragraph", 'uuid': "", 'userIcon': "",
                          'userName': userName, 'createTime': comment_result["created_at"],
-                         "up": comment_result["up"], "down": comment_result["down"]}
+                         "up": comment_result["up"], "down": comment_result["down"], "comments_count":1}
                 points.append(point)
             elif paragraphIndex == 0:
                 userName = comment_result['author_name'].replace('网易','')
                 point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
                          'paragraphIndex': paragraphIndex, 'type': "text_paragraph", 'uuid': "", 'userIcon': "",
                          'userName': userName, 'createTime': comment_result["created_at"],
-                         "up": comment_result["up"], "down": comment_result["down"]}
+                         "up": comment_result["up"], "down": comment_result["down"], "comments_count":1}
                 points.append(point)
             paragraphIndex += 1
 
