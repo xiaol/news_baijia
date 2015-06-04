@@ -155,9 +155,9 @@ def project_comments_to_paragraph(doc, comments):
             if 'comment_part' not in comment_result:
                 comment_result['comment_part'] = list(jieba.cut(comment_result["message"]))
             textList = []
-            textList.append(textblock['text_part'])
             textList.append(comment_result['comment_part'])
-            k, sim = cal_sim(textList)
+        #sims = cal_sim(textblock['text_part'], textList)
+            sim = 0.0
             if sim != 0.0:
                 userName = comment_result['author_name'].replace('网易','')
                 point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
@@ -170,49 +170,23 @@ def project_comments_to_paragraph(doc, comments):
                 point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
                          'paragraphIndex': paragraphIndex, 'type': "text_paragraph", 'uuid': "", 'userIcon': "",
                          'userName': userName, 'createTime': comment_result["created_at"],
-                         "up": comment_result["up"], "down": comment_result["down"], "comments_count":1}
+                         "up": comment_result["up"], "down": comment_result["down"], "comments_count":len(comments)}
                 points.append(point)
-            paragraphIndex += 1
+        #paragraphIndex += 1
 
     return points
 
 
-def cal_sim(textList):
+def cal_sim(query, textList):
     dictionary = corpora.Dictionary(textList)
     corpus = [dictionary.doc2bow(text) for text in textList]
-    tfidf = models.TfidfModel(corpus)  # step 1 -- initialize a model
-    corpus_tfidf = tfidf[corpus]
-    lsi = models.LsiModel(corpus_tfidf, id2word=dictionary, num_topics=2)  # initialize an LSI transformation
-    index = similarities.MatrixSimilarity(lsi[corpus])  # transform corpus to LSI space and index it
-    sims_list = []
-    for x in range(len(textList)):
-        vec_lsi = lsi[corpus[x]]
-        sims = index[vec_lsi]
-        sims_list.append(list(enumerate(sims)))
-    r = {}
-    w = []
-    for sl in sims_list:
-        for v, k in sl:
-            r[v] = k
-        w.append(r)
-    dl = [dict(t) for t in sims_list]
-    # for m in dl:
-    #     if min()
-    mdl = []
-    # min_val = min(u.iteritems())
-    # min_val_d = {k:v for k, v in u.iteritems() if v == min_val}
-
-    for x in dl:
-        min_v = min(x.itervalues())
-        mdlo = {k: v for k, v in x.iteritems() if v == min_v}
-        # mdl.append(min_v)
-        mdl.append(mdlo)
-    smdl = sorted(mdl, key=lambda k: k)
-    # fr = sorted(dl)
-
-    print smdl
-    print sims_list
-    return sims_list[0][1]
+    lsi = models.LsiModel(corpus, id2word=dictionary, num_topics=2) # initialize an LSI transformation
+    query_bow = dictionary.doc2bow(query)
+    query_lsi = lsi[query_bow]
+    index = similarities.MatrixSimilarity(lsi[corpus]) # transform corpus to LSI space and index it
+    sims = index[query_lsi]
+    print sims
+    return sims
 
 
 def Get_Relate_docs(doc, docs_relate, filterurls):
