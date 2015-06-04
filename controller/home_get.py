@@ -175,44 +175,7 @@ def homeContentFetch(options):
         # if not relate:
         #     continue
 
-        if "weibo" in doc.keys():
-            weibo = doc["weibo"]
-            if weibo:
-                isWeiboFlag = 1
 
-            if isinstance(weibo, dict):
-                if "sourceName" in weibo:
-                    weibo["sourceSitename"] = weibo["sourceName"]
-                    del weibo["sourceName"]
-                    sublist.append(weibo)
-
-                del doc["weibo"]
-
-            elif isinstance(weibo, list) and len(weibo) > 0:
-                weibo = weibo[0]
-                if "sourceName" in weibo:
-                    weibo["sourceSitename"] = weibo["sourceName"]
-                    del weibo["sourceName"]
-                sublist.append(weibo)
-
-                del doc["weibo"]
-
-
-        if "zhihu" in doc.keys():
-            zhihu = doc["zhihu"]
-            if zhihu:
-                isZhihuFlag = 1
-
-            if isinstance(zhihu, dict):
-                zhihu["sourceSitename"] = "zhihu"
-                sublist.append(zhihu)
-                del doc["zhihu"]
-
-            elif isinstance(doc["zhihu"], list) and len(doc["zhihu"]) > 0 :
-                zhihu = doc["zhihu"][0]
-                zhihu["sourceSitename"] = "zhihu"
-                sublist.append(zhihu)
-                del doc["zhihu"]
 
         if "imgUrls" in doc.keys():
             if not doc["imgUrls"]:
@@ -262,6 +225,47 @@ def homeContentFetch(options):
                     sublist.append(undocs_elem)
                 else:
                     continue
+
+        if "weibo" in doc.keys():
+            weibo = doc["weibo"]
+            if weibo:
+                isWeiboFlag = 1
+
+            if isinstance(weibo, dict):
+                if "sourceName" in weibo:
+                    weibo["sourceSitename"] = weibo["sourceName"]
+                    del weibo["sourceName"]
+                    sublist.append(weibo)
+
+                del doc["weibo"]
+
+            elif isinstance(weibo, list) and len(weibo) > 0:
+                weibo = weibo[0]
+                if "sourceName" in weibo:
+                    weibo["sourceSitename"] = weibo["sourceName"]
+                    del weibo["sourceName"]
+                sublist.append(weibo)
+
+                del doc["weibo"]
+
+
+        if "zhihu" in doc.keys():
+            zhihu = doc["zhihu"]
+            if zhihu:
+                isZhihuFlag = 1
+
+            if isinstance(zhihu, dict):
+                zhihu["sourceSitename"] = "zhihu"
+                sublist.append(zhihu)
+                del doc["zhihu"]
+
+            elif isinstance(doc["zhihu"], list) and len(doc["zhihu"]) > 0 :
+                zhihu = doc["zhihu"][0]
+                zhihu["sourceSitename"] = "zhihu"
+                sublist.append(zhihu)
+                del doc["zhihu"]
+
+
 
         doc_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
         if doc_comment:

@@ -1095,6 +1095,7 @@ def googleNewsTaskRun():
 
     for url_title_pair in url_title_pairs:
 
+
         url_here = url_title_pair[0]
         title_here = url_title_pair[1]
 
@@ -1102,6 +1103,7 @@ def googleNewsTaskRun():
         if not topic:
             topic = extract_tags_helper(title_here)
             topic = 's'.join(topic)
+
 
         # cmd = 'scrapy crawl google.com.hk -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
         cmd = '/root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
