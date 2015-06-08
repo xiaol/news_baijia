@@ -6,7 +6,12 @@ import requests
 from home_get import del_dup_relatedoc
 
 import jieba
-from gensim import corpora, models, similarities
+import gensim
+from sklearn.svm import SVC
+from math import sqrt
+import numpy as np
+import math
+
 
 DBStore = dbConn.GetDateStore()
 
@@ -145,51 +150,147 @@ def project_comments_to_paragraph(doc, comments):
     textblocks = []
     for content in doc['content'].split('\n'):
         textblocks.append({'content':content})
+    textblock_dict = {}
+    paragraphIndex = 0
     for textblock in textblocks:
-        paragraphIndex = 0
-        if 'text_part' not in textblock:
-            textblock['text_part'] = list(jieba.cut(textblock['content']))
-        for comments_elem in comments:
-            dict_len = len(comments_elem)
-            comment_result = comments_elem[str(dict_len)]
-            if 'comment_part' not in comment_result:
-                comment_result['comment_part'] = list(jieba.cut(comment_result["message"]))
-            textList = []
-            textList.append(comment_result['comment_part'])
-        #sims = cal_sim(textblock['text_part'], textList)
-            sim = 0.0
-            userName = comment_result['author_name'].replace('网易','')
-            if 'author_img_url' in comment_result:
-                userIcon = comment_result['author_img_url']
-            else:
-                userIcon = ""
-            if sim != 0.0:
-                point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
-                         'paragraphIndex': paragraphIndex, 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon,
-                         'userName': userName, 'createTime': comment_result["created_at"],
-                         "up": comment_result["up"], "down": comment_result["down"], "comments_count":1}
-                points.append(point)
-            elif paragraphIndex == 0:
-                point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
-                         'paragraphIndex': paragraphIndex, 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon ,
-                         'userName': userName, 'createTime': comment_result["created_at"],
-                         "up": comment_result["up"], "down": comment_result["down"], "comments_count":len(comments)}
-                points.append(point)
-        #paragraphIndex += 1
+        if not textblock['content']:
+            continue
+        textblock_dict[paragraphIndex] = textblock['content']
+        paragraphIndex += 1
+
+    comments_dict = {}
+    comments_index = 0
+    for comments_elem in comments:
+        dict_len = len(comments_elem)
+        comment_result = comments_elem[str(dict_len)]
+        comments_dict[comments_index] = comment_result["message"]
+        comments_index += 1
+
+
+    sims = doc_classify(textblock_dict, comments_dict)
+    comments_index = 0
+    for comments_elem in comments:
+        dict_len = len(comments_elem)
+        comment_result = comments_elem[str(dict_len)]
+        userName = comment_result['author_name'].replace('网易','')
+        if 'author_img_url' in comment_result:
+            userIcon = comment_result['author_img_url']
+        else:
+            userIcon = ""
+
+        point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
+                 'paragraphIndex': sims[comments_index], 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon ,
+                 'userName': userName, 'createTime': comment_result["created_at"],
+                 "up": comment_result["up"], "down": comment_result["down"], "comments_count":len(comments)}
+        points.append(point)
+        comments_index += 1
 
     return points
 
 
-def cal_sim(query, textList):
-    dictionary = corpora.Dictionary(textList)
-    corpus = [dictionary.doc2bow(text) for text in textList]
-    lsi = models.LsiModel(corpus, id2word=dictionary, num_topics=2) # initialize an LSI transformation
-    query_bow = dictionary.doc2bow(query)
-    query_lsi = lsi[query_bow]
-    index = similarities.MatrixSimilarity(lsi[corpus]) # transform corpus to LSI space and index it
-    sims = index[query_lsi]
-    print sims
-    return sims
+
+def vec2dense(vec, num_terms):
+
+    '''Convert from sparse gensim format to dense list of numbers'''
+    return list(gensim.matutils.corpus2dense([vec], num_terms=num_terms).T[0])
+
+#training_data can be a a dictionary of different paragraphs,data_to_classify can be a
+# a dictionary of different commnents to be classified to those paragraphs.
+def doc_classify(training_data, data_to_classify):
+    #Load in corpus, remove newlines, make strings lower-case
+    docs = {}
+    docs.update(training_data)
+    docs.update(data_to_classify)
+    names = docs.keys()
+
+    preprocessed_docs = {}
+    for name in names:
+        preprocessed_docs[name] = list(jieba.cut(docs[name]))
+
+    #Build the dictionary and filter out rare terms
+    #Perform Chinese words segmentation.
+    dct = gensim.corpora.Dictionary(preprocessed_docs.values())
+    unfiltered = dct.token2id.keys()
+    dct.filter_extremes(no_below=2)
+    filtered = dct.token2id.keys()
+    filtered_out = set(unfiltered) - set(filtered)
+
+
+    #Build Bag of Words Vectors out of preprocessed corpus
+    bow_docs = {}
+    for name in names:
+
+        sparse = dct.doc2bow(preprocessed_docs[name])
+        bow_docs[name] = sparse
+        dense = vec2dense(sparse, num_terms=len(dct))
+
+    #Dimensionality reduction using LSI. Go from 6D to 2D.
+    print "\n---LSI Model---"
+
+    lsi_docs = {}
+    num_topics = 2
+    lsi_model = gensim.models.LsiModel(bow_docs.values(),
+                                       num_topics=num_topics)
+    for name in names:
+        vec = bow_docs[name]
+        sparse = lsi_model[vec]
+        dense = vec2dense(sparse, num_topics)
+        lsi_docs[name] = sparse
+
+    #Normalize LSI vectors by setting each vector to unit length
+    print "\n---Unit Vectorization---"
+
+    unit_vecs = {}
+
+    for name in names:
+
+        vec = vec2dense(lsi_docs[name], num_topics)
+        norm = sqrt(sum(num ** 2 for num in vec))
+        with np.errstate(invalid='ignore'):
+            unit_vec = [num / norm for num in vec]
+        if math.isnan(unit_vec[0]) | math.isnan(unit_vec[1]):
+            unit_vec = [0.0,0.0]
+
+        unit_vecs[name] = unit_vec
+    #Take cosine distances between docs and show best matches
+    print "\n---Document Similarities---"
+
+    index = gensim.similarities.MatrixSimilarity(lsi_docs.values())
+    for i, name in enumerate(names):
+
+        vec = lsi_docs[name]
+        sims = index[vec]
+        sims = sorted(enumerate(sims), key=lambda item: -item[1])
+
+        #Similarities are a list of tuples of the form (doc #, score)
+        #In order to extract the doc # we take first value in the tuple
+        #Doc # is stored in tuple as numpy format, must cast to int
+
+        if int(sims[0][0]) != i:
+            match = int(sims[0][0])
+        else:
+            match = int(sims[1][0])
+
+        match = names[match]
+
+    print "\n---Classification---"
+
+    train = [unit_vecs[key] for key in training_data.keys()]
+
+
+    labels = [(num+1) for num in range(len(training_data.keys()))]
+    label_to_name = dict(zip(labels, training_data.keys()))
+    classifier = SVC()
+    classifier.fit(train, labels)
+    result = {}
+    for name in names:
+
+        vec = unit_vecs[name]
+        label = classifier.predict([vec])[0]
+        cls = label_to_name[label]
+        if name in data_to_classify.keys():
+            result[name]= cls
+    return result
 
 
 def Get_Relate_docs(doc, docs_relate, filterurls):
@@ -294,5 +395,4 @@ if __name__ == '__main__':
     # print(Get_by_url("http://sports.sina.com.cn/l/s/2015-03-24/10287553303.shtml"))
     # print(ImgMeetCondition("http://xinmin.news365.com.cn/images/index_3.jpg"))
     textList = []
-    cal_sim(textList)
     print (ImgMeetCondition("http://img6.cutv.com/forum/201406/04/150731hffegglg1es9bufa.jpg"))
