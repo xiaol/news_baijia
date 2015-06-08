@@ -129,6 +129,15 @@ def fetchContent(url, filterurls, updateTime=None):
     pointsCursor = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).sort([("type", -1)])
     points_fromdb = get_points(pointsCursor)
     result_points.extend(points_fromdb)
+
+    paragraph_comment_count = {}
+    for point_ele in result_points:
+        if point_ele['paragraphIndex'] in paragraph_comment_count:
+            paragraph_comment_count[point_ele['paragraphIndex']] += 1
+        else:
+            paragraph_comment_count[point_ele['paragraphIndex']] = 1
+    for point_ele in result_points:
+        point_ele['comments_count'] = paragraph_comment_count[point_ele['paragraphIndex']]
     result["point"] = result_points
 
     return result
@@ -185,12 +194,7 @@ def project_comments_to_paragraph(doc, comments):
 
 
     sims = doc_classify(textblock_dict, comments_dict)
-    sims_count_dict = {}
-    for sim_k, sim_v in sims.iteritems():
-        if sim_v in sims_count_dict:
-            sims_count_dict[sim_v] += 1
-        else:
-            sims_count_dict[sim_v] = 1
+
     comments_index = 0
     for comments_elem in comments:
         dict_len = len(comments_elem)
@@ -204,7 +208,7 @@ def project_comments_to_paragraph(doc, comments):
         point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
                  'paragraphIndex': sims[comments_index], 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon ,
                  'userName': userName, 'createTime': comment_result["created_at"],
-                 "up": comment_result["up"], "down": comment_result["down"], "comments_count": sims_count_dict[sims[comments_index]]}
+                 "up": comment_result["up"], "down": comment_result["down"], "comments_count": 1}
         points.append(point)
         comments_index += 1
 
