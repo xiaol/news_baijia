@@ -185,6 +185,12 @@ def project_comments_to_paragraph(doc, comments):
 
 
     sims = doc_classify(textblock_dict, comments_dict)
+    sims_count_dict = {}
+    for sim_k, sim_v in sims.iteritems():
+        if sim_v in sims_count_dict:
+            sims_count_dict[sim_v] += 1
+        else:
+            sims_count_dict[sim_v] = 1
     comments_index = 0
     for comments_elem in comments:
         dict_len = len(comments_elem)
@@ -198,7 +204,7 @@ def project_comments_to_paragraph(doc, comments):
         point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
                  'paragraphIndex': sims[comments_index], 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon ,
                  'userName': userName, 'createTime': comment_result["created_at"],
-                 "up": comment_result["up"], "down": comment_result["down"], "comments_count":len(comments)}
+                 "up": comment_result["up"], "down": comment_result["down"], "comments_count": sims_count_dict[sims[comments_index]]}
         points.append(point)
         comments_index += 1
 
