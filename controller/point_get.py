@@ -21,6 +21,8 @@ def pointFetch(options): #type title abstract content
             point['userIcon'] = comment['userIcon']
             point['srcText'] = comment['srcText']
             point['type'] = comment['type']
+            if 'srcTextTime' in comment.keys():
+                point['srcTextTime'] = comment['srcTextTime']
             result.append(point)
 
     return result

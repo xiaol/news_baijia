@@ -183,10 +183,13 @@ class PointHandler(tornado.web.RequestHandler):
                 args['userId'] = ['']
             if 'platformType' not in args.keys():
                 args['platformType'] = ['']
+            if 'srcTextTime' not in args.keys():
+                args['srcTextTime'] = int(-1)
+
 
 
             result = point_post.AddPoint(args['sourceUrl'][0], args['srcText'][0], args['desText'][0], args['paragraphIndex'][0],
-                                     args['type'][0], args['uuid'][0], args['userIcon'][0], args['userName'][0], args['userId'][0], args['platformType'][0])
+                                     args['type'][0], args['uuid'][0], args['userIcon'][0], args['userName'][0], args['userId'][0], args['platformType'][0], int(args['srcTextTime'][0]))
         print result
 
 
