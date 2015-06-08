@@ -1096,13 +1096,14 @@ def googleNewsTaskRun():
         url_here = url_title_pair[0]
         title_here = url_title_pair[1]
 
-        topic = Getner(title_here)
-        if not topic:
-            topic = extract_tags_helper(title_here)
-            topic = 's'.join(topic)
+        # topic = Getner(title_here)
+        # if not topic:
+        #     topic = extract_tags_helper(title_here)
+        #     topic = 's'.join(topic)
 
+        topic = title_here
         # cmd = 'scrapy crawl google.com.hk -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
-        cmd = '. /root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
+        cmd = '/root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
         # cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
 
