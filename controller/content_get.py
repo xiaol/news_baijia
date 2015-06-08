@@ -150,6 +150,23 @@ def project_comments_to_paragraph(doc, comments):
     textblocks = []
     for content in doc['content'].split('\n'):
         textblocks.append({'content':content})
+    if len(textblocks) == 1:
+       for comments_elem in comments:
+        dict_len = len(comments_elem)
+        comment_result = comments_elem[str(dict_len)]
+        userName = comment_result['author_name'].replace('网易','')
+        if 'author_img_url' in comment_result:
+            userIcon = comment_result['author_img_url']
+        else:
+            userIcon = ""
+
+        point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
+                 'paragraphIndex': 0, 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon ,
+                 'userName': userName, 'createTime': comment_result["created_at"],
+                 "up": comment_result["up"], "down": comment_result["down"], "comments_count":len(comments)}
+        points.append(point)
+        return points
+
     textblock_dict = {}
     paragraphIndex = 0
     for textblock in textblocks:
