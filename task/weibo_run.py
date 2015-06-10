@@ -1107,6 +1107,8 @@ def googleNewsTaskRun():
         # cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
 
+
+
         child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
         print "complete url===>", url_here,
 
@@ -1169,7 +1171,7 @@ if __name__ == '__main__':
 
         elif arg == 'googleNews':
             while True:
-                time.sleep(50)
+                time.sleep(7200)
                 googleNewsTaskRun()
                 logging.warn("===============this round of googleNews complete====================")
 
