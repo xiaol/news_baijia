@@ -1171,10 +1171,9 @@ if __name__ == '__main__':
 
         elif arg == 'googleNews':
             while True:
-                time.sleep(7200)
                 googleNewsTaskRun()
                 logging.warn("===============this round of googleNews complete====================")
-
+                time.sleep(7200)
         elif arg == 'relateimg':
             while True:
                 time.sleep(40)
