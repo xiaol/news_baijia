@@ -129,6 +129,7 @@ def total_task():
                 is_content_ok = do_content_img_task(params)
                 if is_content_ok:
                     do_relateimg_task(params)
+
                 else:
                     logging.warn("content or img not ok, continue to copy next doc")
                     continue
@@ -234,6 +235,11 @@ def doImgGetAndSave(k, relate, url):
             continue
 
         e["img"] = img
+
+        apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + url_here
+        r_text = requests.get(apiUrl_text)
+        text = (r_text.json())["text"]
+        e["text"] = text
 
     try:
         set_googlenews_by_url_with_field_and_value(url, "relate."+k, sub_relate)
@@ -558,6 +564,12 @@ def do_content_img_task(params):
     url = params["url"]
     title = params["title"]
     lefturl = params["lefturl"]
+
+    apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + url
+    r_text = requests.get(apiUrl_text)
+    text = (r_text.json())["text"]
+    if text:
+        conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
 
     if lefturl:
         url_use_to_fetch_content_img = lefturl

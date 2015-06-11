@@ -9,6 +9,9 @@ import pymongo
 from utils import get_start_end_time
 from pymongo.read_preferences import ReadPreference
 from channel_get import fetch_channel
+from para_sim.TextRank4ZH.gist import Gist
+
+
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                                              read_preference=ReadPreference.SECONDARY)
 
@@ -218,6 +221,9 @@ def homeContentFetch(options):
 
         sublist.extend(distinctList)
 
+
+
+
         if 'eventId' in doc.keys():
             eventId = doc["eventId"]
             for undocs_elem in undocs_list:
@@ -225,6 +231,9 @@ def homeContentFetch(options):
                     sublist.append(undocs_elem)
                 else:
                     continue
+
+
+
 
         if "weibo" in doc.keys():
             weibo = doc["weibo"]
@@ -254,16 +263,17 @@ def homeContentFetch(options):
             if zhihu:
                 isZhihuFlag = 1
 
-            if isinstance(zhihu, dict):
-                zhihu["sourceSitename"] = "zhihu"
-                sublist.append(zhihu)
-                del doc["zhihu"]
-
-            elif isinstance(doc["zhihu"], list) and len(doc["zhihu"]) > 0 :
-                zhihu = doc["zhihu"][0]
-                zhihu["sourceSitename"] = "zhihu"
-                sublist.append(zhihu)
-                del doc["zhihu"]
+            # if isinstance(zhihu, dict):
+            #     zhihu["sourceSitename"] = "zhihu"
+            #     sublist.append(zhihu)
+            #     del doc["zhihu"]
+            #
+            # elif isinstance(doc["zhihu"], list) and len(doc["zhihu"]) > 0 :
+            #     zhihu = doc["zhihu"][0]
+            #     zhihu["sourceSitename"] = "zhihu"
+            #     sublist.append(zhihu)
+            #     del doc["zhihu"]
+            del doc["zhihu"]
 
 
 
@@ -272,6 +282,7 @@ def homeContentFetch(options):
             if doc_comment["comments"] is not None:
                 isCommentsFlag = 1
 
+        sublist = add_abs_to_sublist(sublist)
         doc["sublist"] = sublist
         doc["otherNum"] = otherNum + baidu_news_num + reorganize_num
         doc["urls_response"] = distinct_response_urls  #返回的urls，用于获取其他相关新闻时过滤掉 这几条已经有的新闻
@@ -308,6 +319,7 @@ def count_relate_baidu_news(url):
     return num
 
 
+
 #TODO android has a bug to list the channel item ,so just don't do sort for channel items.
 def reorganize_news(docs, is_channel=False):
     results_docs = []
@@ -342,7 +354,11 @@ def constructEvent(eventList):
 
         else:
             subElement={}
-            subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls']}
+            if 'text' not in eventElement.keys():
+                subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls']}
+            else:
+                subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'text': eventElement['text']}
+
             sublist.append(subElement)
             result_doc["special"] = 9
             imgUrl_ex.append(eventElement['imgUrls'])
@@ -583,11 +599,24 @@ def extratInfoInUndocs(undocs):
             img = ""
         title = doc["title"]
         eventId = doc["eventId"]
-
-        undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId})
+        if 'text' not in doc.keys():
+            undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId})
+        else:
+            undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId, "text": doc["text"]})
     return undocs_list
 
 
+def add_abs_to_sublist(sublist):
+    result_list = []
+    for sublist_elem in sublist:
+        if sublist_elem['sourceSitename'] ==  'weibo' or 'text' not in sublist_elem.keys():
+            result_list.append(sublist_elem)
+            continue
+        else:
+            text = sublist_elem['text']
+            sublist_elem['title'] = Gist().get_gist_str(text)
+            result_list.append(sublist_elem)
+    return result_list
 
 
 
