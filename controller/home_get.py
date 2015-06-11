@@ -10,6 +10,7 @@ from utils import get_start_end_time
 from pymongo.read_preferences import ReadPreference
 from channel_get import fetch_channel
 from para_sim.TextRank4ZH.gist import Gist
+# from content_get import Get_Relate_docs
 
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
@@ -150,7 +151,7 @@ def homeContentFetch(options):
         title = doc["title"]
         sourceSiteName = doc["sourceSiteName"]
 
-        baidu_news_num = count_relate_baidu_news(url)
+        # baidu_news_num = count_relate_baidu_news(url)
 
         relate = []
         special_flag=True
@@ -284,7 +285,11 @@ def homeContentFetch(options):
 
         sublist = add_abs_to_sublist(sublist)
         doc["sublist"] = sublist
-        doc["otherNum"] = otherNum + baidu_news_num + reorganize_num
+        # doc["otherNum"] = otherNum + baidu_news_num + reorganize_num
+        docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime", -1)]).limit(10)
+        allrelate = Get_Relate_docs(doc, docs_relate, filterurls=None)
+        doc["otherNum"] = len(allrelate)
+
         doc["urls_response"] = distinct_response_urls  #返回的urls，用于获取其他相关新闻时过滤掉 这几条已经有的新闻
 
         doc["isWeiboFlag"] = isWeiboFlag
@@ -619,5 +624,79 @@ def add_abs_to_sublist(sublist):
     return result_list
 
 
+def Get_Relate_docs(doc, docs_relate, filterurls):
+    allrelate = []
+
+    if "reorganize" in doc.keys() and doc["reorganize"]:
+        allrelate.extend(doc["reorganize"])
+
+    if "relate" in doc.keys() and doc["relate"]:
+        relate = doc["relate"]
+        if "reorganize" in doc.keys() and doc["reorganize"]:
+            relate = del_dup_relatedoc(relate, doc["reorganize"])
+        left_relate = relate["left"]
+        mid_relate = relate["middle"]
+        bottom_relate = relate["bottom"]
+        opinion = relate["opinion"]
+        deep_relate = relate["deep_report"]
+
+        allList = [left_relate, mid_relate, bottom_relate, opinion, deep_relate]
+
+        for ones in allList:
+
+            for e in ones:
+
+                relate_url = e["url"]
+                #title 为空 跳过
+                if 'title' in e.keys():
+                    if not e['title']:
+                        continue
+
+                if relate_url in filterurls:
+                    continue
+
+                # ct_img = Get_by_url(relate_url)
+                # #
+                # e["img"] = ct_img['img']
+                if not "img" in e.keys():
+                    e["img"] = ""
+
+                allrelate.append(e)
+
+    for one in docs_relate:
+        ls = {}
+        url_here = one["sourceUrl"]
+        title_here = one["title"]
+        sourceSiteName = one["sourceSiteName"]
+        updatetime = one["updateTime"]
+
+        imgUrl = ''
+
+        if "imgUrl" in one.keys():
+            imgUrls = one["imgUrl"]
+            if isinstance(imgUrls, list) and len(imgUrls) > 0:
+                imgUrl = imgUrls[-1]
+            elif isinstance(imgUrls, dict):
+                imgUrl = imgUrls['img']
+            elif isinstance(imgUrls, str):
+                imgUrl = imgUrls
+            elif isinstance(imgUrls, unicode):
+                imgUrl = imgUrls.encode('utf-8')
+
+
+        # if not imgUrl:
+        #     continue
+
+        ls["title"] = title_here
+        ls["url"] = url_here
+        ls["img"] = imgUrl
+        ls["sourceSitename"] = sourceSiteName
+        ls["updateTime"] = updatetime
+        ls['height'] = 75
+        ls['width'] = 121
+
+        allrelate.append(ls)
+
+    return allrelate
 
 
