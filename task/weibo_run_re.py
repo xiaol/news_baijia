@@ -55,7 +55,7 @@ not_need_copy_content_news = ["网易新闻图片", "观察者网"]
 
 
 g_time_filter = ["今天","明天","后天"]
-g_gpes_filter = ["中国","全国"]
+g_gpes_filter = ["中国","全国","美国"]
 g_keyword_filter = ["小时", "原谅", "标题"]
 
 def extract_tags_helper(sentence, topK=20, withWeight=False):
@@ -129,6 +129,7 @@ def total_task():
                 is_content_ok = do_content_img_task(params)
                 if is_content_ok:
                     do_relateimg_task(params)
+
                 else:
                     logging.warn("content or img not ok, continue to copy next doc")
                     continue
@@ -234,6 +235,11 @@ def doImgGetAndSave(k, relate, url):
             continue
 
         e["img"] = img
+
+        apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + url_here
+        r_text = requests.get(apiUrl_text)
+        text = (r_text.json())["text"]
+        e["text"] = text
 
     try:
         set_googlenews_by_url_with_field_and_value(url, "relate."+k, sub_relate)
@@ -559,6 +565,12 @@ def do_content_img_task(params):
     title = params["title"]
     lefturl = params["lefturl"]
 
+    apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + url
+    r_text = requests.get(apiUrl_text)
+    text = (r_text.json())["text"]
+    if text:
+        conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
+
     if lefturl:
         url_use_to_fetch_content_img = lefturl
     else:
@@ -801,8 +813,6 @@ def do_event_task(params, start_time, end_time):
 
     if doc:
 
-        eventCount = 0
-        topStory = ''
         '''
         if "ne" in doc.keys() and not is_ne_empty(doc['ne']):
             events = conn["news_ver2"]["googleNewsItem"].find({'$or': [{"ne.gpe": {'$in': doc['ne']['gpe']}},
@@ -812,6 +822,7 @@ def do_event_task(params, start_time, end_time):
 
         #TODO may cause flipping , as tags contain ner
         tags = extract_tags_helper(title)
+        set_googlenews_by_url_with_field_and_value(doc["sourceUrl"], "auto_tags", tags)
         re_tags = [re.compile(x) for x in tags]
         events = conn["news_ver2"]["googleNewsItem"].find({"title": {'$in': re_tags},
                             "createTime": {"$gte": start_time, '$lte': end_time}}).sort([("createTime", pymongo.DESCENDING)])
@@ -838,16 +849,20 @@ def do_event_task(params, start_time, end_time):
                     domain_dict[-1] = [e]
 
         for k, domain_events in domain_dict.iteritems():
+            eventCount = 0
+            top_story = ''
             if len(domain_events) < 2:
                 continue
             for story in domain_events:
                 #if story.get("eventId", None):  //TODO
                 if eventCount is 0:
                     set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", story["_id"])
-                    topStory = story["_id"]
-                set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", topStory)
+                    top_story = story["_id"]
+                    eventCount += 1
+                    continue
+                set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", top_story)
                 eventCount += 1
-        print 'found topic events count ===>' , eventCount
+            print 'found topic events count ===>' , eventCount
 
 
 def do_weibo_task(params):
@@ -1170,6 +1185,7 @@ def test_extract_tags():
     print " ".join(extract_tags_helper("广州市越秀区一养老院违规用彩钢板"))
     print " ".join(extract_tags_helper("南阳开展消防安全大检查拆除违规彩钢板建筑22处"))
     print " ".join(extract_tags_helper("重庆应急避难所可容1200万人高空救援设备不足"))
+    print " ".join(extract_tags_helper("阿里在中国最美公路旁边建了一个数据中心"))
 
 
 if __name__ == '__main__':
@@ -1190,6 +1206,12 @@ if __name__ == '__main__':
 
     #parseBaike('安培晋三')
     #test_extract_tags()
+    '''start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+    now = datetime.datetime.now()
+    now_time = now.strftime('%Y-%m-%d %H:%M:%S')
+    do_event_task({'url':"http://tech.caijing.com.cn/20150608/3900634.shtml", 'title':"阿里在中国最美公路旁边建了一个数据中心"}, start_time, end_time)'''
 
     while True:
         doc_num = total_task()
