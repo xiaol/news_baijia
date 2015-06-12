@@ -164,11 +164,6 @@ def homeContentFetch(options):
             doc["special"] = 400
             special_flag = False
 
-        if "relate" in doc.keys():
-            if doc["relate"]:
-                relate = doc["relate"]
-                relate = del_dup_relatedoc(relate, sublist)
-            del doc["relate"]
 
         if "sourceSiteName" in doc.keys():
             sourceSitename  = doc["sourceSiteName"]
@@ -287,8 +282,14 @@ def homeContentFetch(options):
         doc["sublist"] = sublist
         # doc["otherNum"] = otherNum + baidu_news_num + reorganize_num
         docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime", -1)]).limit(10)
-        allrelate = Get_Relate_docs(doc, docs_relate, filterurls=None)
+        allrelate = Get_Relate_docs(doc, docs_relate, filterurls=[])
         doc["otherNum"] = len(allrelate)
+
+        if "relate" in doc.keys():
+            if doc["relate"]:
+                relate = doc["relate"]
+                relate = del_dup_relatedoc(relate, sublist)
+            del doc["relate"]
 
         doc["urls_response"] = distinct_response_urls  #返回的urls，用于获取其他相关新闻时过滤掉 这几条已经有的新闻
 
