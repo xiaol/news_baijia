@@ -122,7 +122,7 @@ def fetchContent(url, filterurls, updateTime=None):
 
     result_points = []
     if doc_comment and 'content' in doc:
-        if doc_comment["comments"] is not None:
+        if  doc_comment["comments"]:
             points = project_comments_to_paragraph(doc, doc_comment["comments"])
             result_points.extend(points)
 
