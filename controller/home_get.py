@@ -362,9 +362,10 @@ def constructEvent(eventList):
             subElement={}
             if 'text' not in eventElement.keys():
                 subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls']}
-            else:
+            elif 'gist' not in eventElement.keys():
                 subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'text': eventElement['text']}
-
+            else:
+                subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'text': eventElement['text'], 'gist': eventElement['gist']}
             sublist.append(subElement)
             result_doc["special"] = 9
             imgUrl_ex.append(eventElement['imgUrls'])
@@ -607,20 +608,25 @@ def extratInfoInUndocs(undocs):
         eventId = doc["eventId"]
         if 'text' not in doc.keys():
             undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId})
-        else:
+        elif 'gist' not in doc.keys():
             undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId, "text": doc["text"]})
+        else:
+            undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId, "text": doc["text"], "gist": doc["gist"]})
+
+
     return undocs_list
 
 
 def add_abs_to_sublist(sublist):
     result_list = []
     for sublist_elem in sublist:
-        if sublist_elem['sourceSitename'] ==  'weibo' or 'text' not in sublist_elem.keys():
+        if sublist_elem['sourceSitename'] ==  'weibo' or 'text' not in sublist_elem.keys() or 'gist' not in sublist_elem.keys():
             result_list.append(sublist_elem)
             continue
         else:
             text = sublist_elem['text']
             # sublist_elem['title'] = Gist().get_gist_str(text)
+            sublist_elem['title'] = sublist_elem['gist']
             result_list.append(sublist_elem)
     return result_list
 

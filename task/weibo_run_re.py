@@ -46,6 +46,9 @@ except ImportError:
     print "import error"
 
 from abstract import KeywordExtraction
+from para_sim.TextRank4ZH.gist import Gist
+
+
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                                              read_preference=ReadPreference.SECONDARY)
@@ -240,6 +243,8 @@ def doImgGetAndSave(k, relate, url):
         r_text = requests.get(apiUrl_text)
         text = (r_text.json())["text"]
         e["text"] = text
+        gist = Gist().get_gist_str(text)
+        e["gist"] = gist
 
     try:
         set_googlenews_by_url_with_field_and_value(url, "relate."+k, sub_relate)
@@ -471,16 +476,20 @@ def do_abs_task(params):
     url = params["url"]
     title = params["title"]
 
-    content = fetch_content_by_url(url)
+    # content = fetch_content_by_url(url)
 
-    if not content:
+    # if not content:
+    #     return False
+
+    gist = fetch_gist_by_url(url)
+    if not gist:
         return False
 
     try:
-        abstract_here = KeywordExtraction.abstract(content)
-        print ">>>>>>>>abstract:", abstract_here
-
-        set_googlenews_by_url_with_field_and_value(url, "abstract", abstract_here)
+        # abstract_here = KeywordExtraction.abstract(content)
+        # print ">>>>>>>>abstract:", abstract_here
+        # set_googlenews_by_url_with_field_and_value(url, "abstract", abstract_here)
+        set_googlenews_by_url_with_field_and_value(url, "abstract", gist)
     except:
         return False
 
@@ -556,6 +565,17 @@ def fetch_content_by_url(url):
 
     return content
 
+def fetch_gist_by_url(url):
+
+    doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
+
+    gist = ''
+    if doc:
+        if "gist" in doc.keys():
+            gist = doc["gist"]
+
+    return gist
+
 
 
 def do_content_img_task(params):
@@ -570,6 +590,8 @@ def do_content_img_task(params):
     text = (r_text.json())["text"]
     if text:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
+        gist = Gist().get_gist_str(text)
+        conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"gist": gist}})
 
     if lefturl:
         url_use_to_fetch_content_img = lefturl
