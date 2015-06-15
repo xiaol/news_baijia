@@ -620,7 +620,7 @@ def add_abs_to_sublist(sublist):
             continue
         else:
             text = sublist_elem['text']
-            sublist_elem['title'] = Gist().get_gist_str(text)
+            # sublist_elem['title'] = Gist().get_gist_str(text)
             result_list.append(sublist_elem)
     return result_list
 
