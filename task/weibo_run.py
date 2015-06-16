@@ -1068,9 +1068,6 @@ def ImgMeetCondition_ver2(url, getSize=False):
         print width, "+", height, " url=======>", img_url
         return False
 
-
-
-
 def googleNewsTaskRun():
     start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -1095,26 +1092,28 @@ def googleNewsTaskRun():
 
     for url_title_pair in url_title_pairs:
 
-
         url_here = url_title_pair[0]
         title_here = url_title_pair[1]
 
-        topic = Getner(title_here)
-        if not topic:
-            topic = extract_tags_helper(title_here)
-            topic = 's'.join(topic)
+        # topic = Getner(title_here)
+        # if not topic:
+        #     topic = extract_tags_helper(title_here)
+        #     topic = 's'.join(topic)
 
-
+        topic = title_here
         # cmd = 'scrapy crawl google.com.hk -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
         cmd = '/root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
         # cmd = 'sh script.sh ' + url_here + ' ' + topic
         print cmd
+
+
 
         child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
         print "complete url===>", url_here,
 
         conn["news_ver2"]["Task"].update({"url": url_here}, {"$set": {"googleSearchOk": 1}})
         time.sleep(30)
+
 
 if __name__ == '__main__':
 
@@ -1172,9 +1171,10 @@ if __name__ == '__main__':
 
         elif arg == 'googleNews':
             while True:
-                time.sleep(50)
                 googleNewsTaskRun()
                 logging.warn("===============this round of googleNews complete====================")
+                time.sleep(7200)
+
 
         elif arg == 'relateimg':
             while True:
