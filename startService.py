@@ -93,7 +93,7 @@ class FetchContentHandler(tornado.web.RequestHandler):
 
         self.set_header("Content-Type", "Application/json")
         url = self.get_argument("url", None)
-        filter_urls = self.get_arguments("filterurls", None)
+        filter_urls = self.get_arguments("filterurls")
 
         result = {}
 
@@ -271,12 +271,6 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchImList", FetchImListHandler),
             (r"/news/baijia/fetchChannel", FetchChannel),
             (r"/news/baijia/fetchImContent", FetchImContentHandler)
-
-
-
-
-
-
         ]
 
         settings = {
@@ -293,6 +287,7 @@ if __name__ == "__main__":
     # sched = SchedulerAll()
     # sched.start()
   
+    tornado.options.parse_command_line()
     tornado.options.parse_command_line()
     # sockets = tornado.netutil.bind_sockets(options.port)
     # tornado.process.fork_processes(0)

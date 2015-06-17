@@ -33,6 +33,7 @@ def fetchContent(url, filterurls, updateTime=None):
 
     result = {}
 
+
     allrelate = Get_Relate_docs(doc, docs_relate, filterurls)
 
     if "imgUrls" in doc.keys():
@@ -131,6 +132,7 @@ def fetchContent(url, filterurls, updateTime=None):
     result_points.extend(points_fromdb)
 
     paragraph_comment_count = {}
+    flag = False
     for point_ele in result_points:
         if point_ele['paragraphIndex'] in paragraph_comment_count:
             paragraph_comment_count[point_ele['paragraphIndex']] += 1
@@ -138,7 +140,16 @@ def fetchContent(url, filterurls, updateTime=None):
             paragraph_comment_count[point_ele['paragraphIndex']] = 1
     for point_ele in result_points:
         point_ele['comments_count'] = paragraph_comment_count[point_ele['paragraphIndex']]
+
+        #ariesy 2015-6-17 提取语音弹幕
+        if(flag == False and "speech_paragraph" == point_ele["type"] or "speech_doc" == point_ele["type"]) :
+            flag = True
+            result["isdoc"] = True
+            result["docUrl"] = point_ele["srcText"]
+            result["docTime"] = point_ele["srcTextTime"]
     result["point"] = result_points
+    if(flag == False) :
+        result["isdoc"] = False
 
     return result
 
