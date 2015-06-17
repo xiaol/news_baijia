@@ -6,9 +6,6 @@ import pymongo
 from pymongo.read_preferences import ReadPreference
 from controller.config import dbConn
 
-
-
-
 def imContentFetch(options):
     DBStore = dbConn.GetDateStore()
 
