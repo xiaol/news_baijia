@@ -610,6 +610,17 @@ def do_content_img_task(params):
     return False
 
 
+def trim_new_line_character(text):
+    text_list = text.split('\n')
+    result_list = []
+    for text_elem in text_list:
+        if not text_elem.strip():
+            continue
+        else:
+            result_list.append(text_elem)
+
+    return '\n'.join(result_list)+'\n'
+
 
 
 def fetch_and_save_content(url, url_use_to_fetch_content_img):
@@ -617,7 +628,7 @@ def fetch_and_save_content(url, url_use_to_fetch_content_img):
     apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + url
     r_text = requests.get(apiUrl_text)
     text = (r_text.json())["text"]
-
+    text = trim_new_line_character(text)
     if url_use_to_fetch_content_img:
         img = GetImgByUrl(url_use_to_fetch_content_img)['img']
     else:
@@ -1234,13 +1245,15 @@ if __name__ == '__main__':
     now = datetime.datetime.now()
     now_time = now.strftime('%Y-%m-%d %H:%M:%S')
     do_event_task({'url':"http://tech.caijing.com.cn/20150608/3900634.shtml", 'title':"阿里在中国最美公路旁边建了一个数据中心"}, start_time, end_time)'''
-
+    # fetch_and_save_content('http://news.southcn.com/international/content/2015-06/14/content_126321942.htm','http://news.southcn.com/international/content/2015-06/14/content_126321942.htm')
     while True:
         doc_num = total_task()
         if doc_num == "no_doc":
             time.sleep(60)
 
     # GetWeibo("孙楠 歌手")
+
+
 
 
 
