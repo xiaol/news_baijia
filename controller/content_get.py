@@ -147,6 +147,7 @@ def fetchContent(url, filterurls, updateTime=None):
             result["isdoc"] = True
             result["docUrl"] = point_ele["srcText"]
             result["docTime"] = point_ele["srcTextTime"]
+            result["docUserIcon"] = point_ele["userIcon"]
     result["point"] = result_points
     if(flag == False) :
         result["isdoc"] = False
