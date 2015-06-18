@@ -233,7 +233,7 @@ def project_comments_to_paragraph(doc, comments):
                 userIcon = ""
 
             point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
-                     'paragraphIndex': sims[str(comments_index)+'_c'], 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon ,
+                     'paragraphIndex': int(sims[str(comments_index)+'_c'].split('_')[0]), 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon ,
                      'userName': userName, 'createTime': comment_result["created_at"],
                      "up": comment_result["up"], "down": comment_result["down"], "comments_count": 1}
             points.append(point)
