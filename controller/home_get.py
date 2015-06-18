@@ -147,6 +147,7 @@ def homeContentFetch(options):
             print "error"
             continue
 
+
         url = doc['sourceUrl']
         title = doc["title"]
         sourceSiteName = doc["sourceSiteName"]
@@ -275,7 +276,7 @@ def homeContentFetch(options):
 
         doc_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
         if doc_comment:
-            if doc_comment["comments"] is not None:
+            if doc_comment["comments"]:
                 isCommentsFlag = 1
 
         sublist = add_abs_to_sublist(sublist)

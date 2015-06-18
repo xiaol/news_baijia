@@ -293,6 +293,7 @@ if __name__ == "__main__":
     # sched.start()
   
     tornado.options.parse_command_line()
+    tornado.options.parse_command_line()
     # sockets = tornado.netutil.bind_sockets(options.port)
     # tornado.process.fork_processes(0)
     # server = tornado.httpserver.HTTPServer(Application())

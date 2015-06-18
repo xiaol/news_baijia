@@ -15,6 +15,10 @@ import requests
 from collections import defaultdict
 from pymongo.read_preferences import ReadPreference
 
+import time
+import random
+import socket
+import hashlib
 
 class Comments(object):
 
@@ -130,10 +134,30 @@ class Comments(object):
             cm['1']['post_id'] = '1'
             message = comment.get('text')
             cm['1']['message'] = cls.format_message(message) if message else None
+            cm['1']['comment_id'] = cls.guid('weibo')
             if cm['1']['author_name'] and cm['1']['message']:
                 cm['1'] = dict(cm['1'])
                 comments_result.append(dict(cm))
         return comments_result
+
+    @staticmethod
+    def guid( *args):
+        """
+        Generates a universally unique ID.
+        Any arguments only create more randomness.
+        """
+        t = long( time.time() * 1000 )
+        r = long( random.random()*100000000000000000L )
+        try:
+            a = socket.gethostbyname( socket.gethostname() )
+        except:
+            # if we can't get a network address, just imagine one
+            a = random.random()*100000000000000000L
+        data = str(t)+' '+str(r)+' '+str(a)+' '+str(args)
+        data = hashlib.md5(data).hexdigest()
+
+        return data
+
 
     def get_comments_by_weibo_url_hots(self):
         news_id = self.check_url(self.url)
