@@ -4,7 +4,6 @@
 
 __author__ = 'jianghao'
 
-
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
@@ -28,7 +27,6 @@ define("host", default="127.0.0.1", help="run on the given host", type=str)
 
 class FetchHomeHandler(tornado.web.RequestHandler):
     def get(self):
-
         # updateTime = self.get_argument("updateTime", None)
         limit = self.get_argument("limit", 10)
         page = self.get_argument("page", 1)
@@ -38,9 +36,7 @@ class FetchHomeHandler(tornado.web.RequestHandler):
         type = self.get_argument("type",None)
         channelId = self.get_argument("channelId",None)
 
-
         options = {}
-
         options["page"] = int(page)
         options["limit"] = int(limit)
 
@@ -94,7 +90,6 @@ class FetchContentHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         url = self.get_argument("url", None)
         filter_urls = self.get_arguments("filterurls")
-
         result = {}
 
         if not url:
@@ -254,7 +249,12 @@ class FetchChannel(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
-
+class FetchChannelListHandler(tornado.web.RequestHandler):
+    def get(self):
+        result = im_get.searchChannelList()
+        print result
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
 
 class Application(tornado.web.Application):
 
@@ -270,7 +270,12 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchImUser", FetchImUserHandler),
             (r"/news/baijia/fetchImList", FetchImListHandler),
             (r"/news/baijia/fetchChannel", FetchChannel),
-            (r"/news/baijia/fetchImContent", FetchImContentHandler)
+            (r"/news/baijia/fetchImContent", FetchImContentHandler),
+            (r"/news/baijia/FetchChannelList", FetchChannelListHandler)
+
+
+
+
         ]
 
         settings = {
