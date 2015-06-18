@@ -179,7 +179,7 @@ def searchUserNameIconByUserid(userId, platformType):
 def searchChannelList():
     DBStore = dbConn.GetDateStore()
     conn = DBStore._connect_news
-    docs = conn['news_ver2']['newsTypeList'].find().sort("index",pymongo.ASCENDING)
+    docs = conn['news_ver2']['ChannelItems'].find().sort("channel_id",pymongo.ASCENDING)
     results_docs = []
     for doc in docs:
         doc.pop('_id')
