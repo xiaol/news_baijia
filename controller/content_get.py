@@ -139,8 +139,8 @@ def fetchContent(url, filterurls, uuid, updateTime=None):
 
                     # praise_num = praise.find({'commentId': comment_result["comment_id"]}).count()
                     praise_num = count_praise({'commentId': comment_result["comment_id"]}, praise_list)
-
-                    comment_result['up'] = comment_result['up'] + praise_num
+                    up = int(comment_result['up'])
+                    comment_result['up'] = up + praise_num
                 if uuid and 'comment_id' in comment_result.keys():
                     isPraiseFlag = count_praise({'uuid': uuid, 'commentId': comment_result["comment_id"]}, praise_list)
                     if isPraiseFlag:
