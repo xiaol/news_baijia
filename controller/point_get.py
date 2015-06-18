@@ -8,6 +8,8 @@ import pymongo
 from pymongo.read_preferences import ReadPreference
 
 
+
+
 def pointFetch(options): #type title abstract content
     DBStore = dbConn.GetDateStore()
     conn = DBStore._connect_news

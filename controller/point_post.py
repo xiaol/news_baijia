@@ -6,6 +6,8 @@ import datetime,time
 import operator
 import pymongo
 from pymongo.read_preferences import ReadPreference
+from weibo.Comments import guid
+
 
 DBStore = dbConn.GetDateStore()
 
@@ -27,7 +29,8 @@ def AddPoint(sourceUrl, srcText, desText, paragraphIndex, type, uuid, userIcon, 
     point['userId'] = userId
     point['platformType'] = platformType
     point['srcTextTime'] = srcTextTime
-
+    point['commentId'] = guid('news_baijia')
     conn['news_ver2']['pointItem'].insert(point)
+
     result = {'response': 200}
     return result

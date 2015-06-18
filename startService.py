@@ -11,7 +11,7 @@ import tornado.httpclient
 
 import tornado.netutil
 import json
-from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get, point_get
+from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get, point_get, praise_post
 from controller.push import push_message
 
 import abstract
@@ -90,6 +90,7 @@ class FetchContentHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         url = self.get_argument("url", None)
         filter_urls = self.get_arguments("filterurls")
+        uuid = self.get_argument("uuid", None)
         result = {}
 
         if not url:
@@ -98,7 +99,7 @@ class FetchContentHandler(tornado.web.RequestHandler):
             self.write(json.dumps(result))
             return
 
-        result = content_get.fetchContent(url, filter_urls)
+        result = content_get.fetchContent(url, filter_urls, uuid)
 
         self.write(json.dumps(result))
 
@@ -179,7 +180,7 @@ class PointHandler(tornado.web.RequestHandler):
             if 'platformType' not in args.keys():
                 args['platformType'] = ['']
             if 'srcTextTime' not in args.keys():
-                args['srcTextTime'] = int(-1)
+                args['srcTextTime'] = [int(-1)]
 
 
 
@@ -256,6 +257,25 @@ class FetchChannelListHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
+
+
+class PraiseHandler(tornado.web.RequestHandler):
+
+
+    def post(self):
+        args = self.request.arguments
+        if len(args) < 5:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+
+            result = praise_post.AddPraise(args['userId'][0], args['platformType'][0], args['uuid'][0], args['sourceUrl'][0], args['commentId'][0])
+        print result
+
+
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
 class Application(tornado.web.Application):
 
     def __init__(self):
@@ -271,7 +291,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchImList", FetchImListHandler),
             (r"/news/baijia/fetchChannel", FetchChannel),
             (r"/news/baijia/fetchImContent", FetchImContentHandler),
-            (r"/news/baijia/FetchChannelList", FetchChannelListHandler)
+            (r"/news/baijia/FetchChannelList", FetchChannelListHandler),
+            (r"/news/baijia/praise", PraiseHandler)
 
 
 

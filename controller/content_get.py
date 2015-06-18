@@ -16,7 +16,7 @@ import math
 DBStore = dbConn.GetDateStore()
 
 
-def fetchContent(url, filterurls, updateTime=None):
+def fetchContent(url, filterurls, uuid, updateTime=None):
     conn = DBStore._connect_news
 
     doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
@@ -122,13 +122,40 @@ def fetchContent(url, filterurls, updateTime=None):
     result["rc"] = 200
 
     result_points = []
+
+    praise = conn['news_ver2']['praiseItem'].find({'sourceUrl': url})   #({'uuid': uuid, 'commentId': commentId})
+    praise_list = []
+    for praise_elem in praise:
+        praise_list.append(praise_elem)
+
+
+
     if doc_comment and 'content' in doc:
         if  doc_comment["comments"]:
+            for doc_comment_elem in doc_comment["comments"]:
+                dict_len = len(doc_comment_elem)
+                comment_result = doc_comment_elem[str(dict_len)]
+                if 'comment_id' in comment_result.keys():
+
+                    # praise_num = praise.find({'commentId': comment_result["comment_id"]}).count()
+                    praise_num = count_praise({'commentId': comment_result["comment_id"]}, praise_list)
+
+                    comment_result['up'] = comment_result['up'] + praise_num
+                if uuid and 'comment_id' in comment_result.keys():
+                    isPraiseFlag = count_praise({'uuid': uuid, 'commentId': comment_result["comment_id"]}, praise_list)
+                    if isPraiseFlag:
+                        comment_result['isPraiseFlag'] = 1
+                    else:
+                        comment_result['isPraiseFlag'] = 0
+                else:
+                    comment_result['isPraiseFlag'] = 0
+
+
             points = project_comments_to_paragraph(doc, doc_comment["comments"])
             result_points.extend(points)
 
     pointsCursor = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).sort([("type", -1)])
-    points_fromdb = get_points(pointsCursor)
+    points_fromdb = get_points(pointsCursor, praise_list, uuid)
     result_points.extend(points_fromdb)
 
     paragraph_comment_count = {}
@@ -155,10 +182,27 @@ def fetchContent(url, filterurls, updateTime=None):
     return result
 
 
-def get_points(points):
+def get_points(points, praise_list, uuid):
     result_points = []
     for point in points:
         point.pop('_id', None)
+
+        if 'commentId' in point.keys():
+            praise_num = count_praise({'commentId': point["commentId"]}, praise_list)
+            point['up'] = praise_num
+        else:
+            point['up'] = 0
+        if uuid and 'commentId' in point.keys():
+            isPraiseFlag = count_praise({'uuid': uuid, 'commentId': point["commentId"]}, praise_list)
+            if isPraiseFlag:
+                point['isPraiseFlag'] = 1
+            else:
+                point['isPraiseFlag'] = 0
+        else:
+            point['isPraiseFlag'] = 0
+
+        if 'commentId' not in point:
+            point['commentId'] = ''
         createTime = point.pop('createTime', None)
         point['createTime_str'] = createTime.strftime("%Y-%m-%d %H:%M:%S")
         result_points.append(point)
@@ -181,10 +225,13 @@ def project_comments_to_paragraph(doc, comments):
            else:
                userIcon = ""
 
+           if 'comment_id' not in comment_result:
+               comment_result["comment_id"] = ""
+
            point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
                     'paragraphIndex': 0, 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon,
                     'userName': userName, 'createTime': comment_result["created_at"],
-                    "up": comment_result["up"], "down": comment_result["down"], "comments_count": len(comments)}
+                    "up": comment_result["up"], "down": comment_result["down"], "comments_count": len(comments), "commentId": comment_result["comment_id"], "isPraiseFlag": comment_result["isPraiseFlag"]}
            points.append(point)
        return points
 
@@ -216,10 +263,15 @@ def project_comments_to_paragraph(doc, comments):
                 userIcon = comment_result['author_img_url']
             else:
                 userIcon = ""
+
+            if 'comment_id' not in comment_result:
+                comment_result["comment_id"] = ""
+
+
             point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
                      'paragraphIndex': 0, 'type': "text_doc", 'uuid': "", 'userIcon': userIcon ,
                      'userName': userName, 'createTime': comment_result["created_at"],
-                     "up": comment_result["up"], "down": comment_result["down"], "comments_count": 1}
+                     "up": comment_result["up"], "down": comment_result["down"], "comments_count": 1, "commentId": comment_result["comment_id"], "isPraiseFlag": comment_result["isPraiseFlag"]}
             points.append(point)
     else:
         comments_index = 0
@@ -231,11 +283,13 @@ def project_comments_to_paragraph(doc, comments):
                 userIcon = comment_result['author_img_url']
             else:
                 userIcon = ""
+            if 'comment_id' not in comment_result:
+                comment_result["comment_id"] = ""
 
             point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
                      'paragraphIndex': int(sims[str(comments_index)+'_c'].split('_')[0]), 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon ,
                      'userName': userName, 'createTime': comment_result["created_at"],
-                     "up": comment_result["up"], "down": comment_result["down"], "comments_count": 1}
+                     "up": comment_result["up"], "down": comment_result["down"], "comments_count": 1, "commentId": comment_result["comment_id"], "isPraiseFlag": comment_result["isPraiseFlag"]}
             points.append(point)
             comments_index += 1
 
@@ -445,6 +499,19 @@ def ImgMeetCondition(url):
         return True
     print width, "+", height, " url=======>", img_url
     return False
+
+def count_praise(find_condition_dict, praise_list):
+    parse_num = 0
+    for prase_elem in praise_list:
+        names = find_condition_dict.keys()
+        same_num = 0
+        for name in names:
+            if find_condition_dict[name] == prase_elem[name]:
+                same_num =same_num+1
+        if same_num == len(names):
+            parse_num = parse_num + 1
+
+    return parse_num
 
 
 if __name__ == '__main__':
