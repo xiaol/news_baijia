@@ -193,7 +193,7 @@ def project_comments_to_paragraph(doc, comments):
     for textblock in textblocks:
         if not textblock['content']:
             continue
-        textblock_dict[paragraphIndex] = textblock['content']
+        textblock_dict[str(paragraphIndex)+'_p'] = textblock['content']
         paragraphIndex += 1
 
     comments_dict = {}
@@ -201,28 +201,43 @@ def project_comments_to_paragraph(doc, comments):
     for comments_elem in comments:
         dict_len = len(comments_elem)
         comment_result = comments_elem[str(dict_len)]
-        comments_dict[comments_index] = comment_result["message"]
+        comments_dict[str(comments_index)+'_c'] = comment_result["message"]
         comments_index += 1
 
 
     sims = doc_classify(textblock_dict, comments_dict)
 
-    comments_index = 0
-    for comments_elem in comments:
-        dict_len = len(comments_elem)
-        comment_result = comments_elem[str(dict_len)]
-        userName = comment_result['author_name'].replace('网易','')
-        if 'author_img_url' in comment_result:
-            userIcon = comment_result['author_img_url']
-        else:
-            userIcon = ""
+    if not sims:
+        for comments_elem in comments:
+            dict_len = len(comments_elem)
+            comment_result = comments_elem[str(dict_len)]
+            userName = comment_result['author_name'].replace('网易','')
+            if 'author_img_url' in comment_result:
+                userIcon = comment_result['author_img_url']
+            else:
+                userIcon = ""
+            point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
+                     'paragraphIndex': 0, 'type': "text_doc", 'uuid': "", 'userIcon': userIcon ,
+                     'userName': userName, 'createTime': comment_result["created_at"],
+                     "up": comment_result["up"], "down": comment_result["down"], "comments_count": 1}
+            points.append(point)
+    else:
+        comments_index = 0
+        for comments_elem in comments:
+            dict_len = len(comments_elem)
+            comment_result = comments_elem[str(dict_len)]
+            userName = comment_result['author_name'].replace('网易','')
+            if 'author_img_url' in comment_result:
+                userIcon = comment_result['author_img_url']
+            else:
+                userIcon = ""
 
-        point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
-                 'paragraphIndex': sims[comments_index], 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon ,
-                 'userName': userName, 'createTime': comment_result["created_at"],
-                 "up": comment_result["up"], "down": comment_result["down"], "comments_count": 1}
-        points.append(point)
-        comments_index += 1
+            point = {'sourceUrl': doc['sourceUrl'], 'srcText': comment_result["message"], 'desText': "",
+                     'paragraphIndex': sims[str(comments_index)+'_c'], 'type': "text_paragraph", 'uuid': "", 'userIcon': userIcon ,
+                     'userName': userName, 'createTime': comment_result["created_at"],
+                     "up": comment_result["up"], "down": comment_result["down"], "comments_count": 1}
+            points.append(point)
+            comments_index += 1
 
     return points
 
@@ -237,6 +252,10 @@ def vec2dense(vec, num_terms):
 # a dictionary of different commnents to be classified to those paragraphs.
 def doc_classify(training_data, data_to_classify):
     #Load in corpus, remove newlines, make strings lower-case
+    if len(training_data) == 1 or not training_data:
+        message = "The number of classes has to be greater than one; got 1 or 0."
+        print message
+        return
     docs = {}
     docs.update(training_data)
     docs.update(data_to_classify)
