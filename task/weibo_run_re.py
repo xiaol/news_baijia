@@ -638,7 +638,8 @@ def fetch_and_save_content(url, url_use_to_fetch_content_img):
     apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + url
     r_text = requests.get(apiUrl_text)
     text = (r_text.json())["text"]
-    text = trim_new_line_character(text)
+    if text:
+        text = trim_new_line_character(text)
     if url_use_to_fetch_content_img:
         img = GetImgByUrl(url_use_to_fetch_content_img)['img']
     else:
