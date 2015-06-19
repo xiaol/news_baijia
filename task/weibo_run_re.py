@@ -918,13 +918,14 @@ def do_weibo_task(params):
 
 
     ner = None#fetch_ne_by_url(url)
-    if ner:
-        keyword = ner
-    else:
-        print "when get weibo, the  ner is None, the url, title==>", url, "|| ", title
-        keywords = extract_tags_helper(title)
-        keyword = "+".join(keywords)
+    # if ner:
+    #     keyword = ner
+    # else:
+    #     print "when get weibo, the  ner is None, the url, title==>", url, "|| ", title
+    #     keywords = extract_tags_helper(title)
+    #     keyword = "+".join(keywords)
 
+    keyword = title
     weibo_ready = GetWeibo(keyword)
 
     if weibo_ready is None and ner:
