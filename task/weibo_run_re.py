@@ -110,6 +110,7 @@ def total_task():
     url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
+
         doc_num += 1
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
         start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
@@ -139,7 +140,7 @@ def total_task():
             else:
                 is_content_ok = True
 
-            if is_content_ok:
+            if  is_content_ok:
                 is_abs_ok = do_abs_task(params)
                 if not is_abs_ok:
                     continue
@@ -475,25 +476,34 @@ def GetZhihu(keyword):
 def do_abs_task(params):
     url = params["url"]
     title = params["title"]
+    sourceSiteName = params["sourceSiteName"]
+    if sourceSiteName in not_need_copy_content_news:
+        content = fetch_content_by_url(url)
+        if not content:
+            return False
+        try:
+            abstract_here = KeywordExtraction.abstract(content)
+            print ">>>>>>>>abstract:", abstract_here
+            set_googlenews_by_url_with_field_and_value(url, "abstract", abstract_here)
+        except:
+            return False
 
-    # content = fetch_content_by_url(url)
+        set_task_ok_by_url_and_field(url, "abstractOk")
+    else:
 
-    # if not content:
-    #     return False
+        gist = fetch_gist_by_url(url)
+        if not gist:
+            return False
 
-    gist = fetch_gist_by_url(url)
-    if not gist:
-        return False
+        try:
+            # abstract_here = KeywordExtraction.abstract(content)
+            # print ">>>>>>>>abstract:", abstract_here
+            # set_googlenews_by_url_with_field_and_value(url, "abstract", abstract_here)
+            set_googlenews_by_url_with_field_and_value(url, "abstract", gist)
+        except:
+            return False
 
-    try:
-        # abstract_here = KeywordExtraction.abstract(content)
-        # print ">>>>>>>>abstract:", abstract_here
-        # set_googlenews_by_url_with_field_and_value(url, "abstract", abstract_here)
-        set_googlenews_by_url_with_field_and_value(url, "abstract", gist)
-    except:
-        return False
-
-    set_task_ok_by_url_and_field(url, "abstractOk")
+        set_task_ok_by_url_and_field(url, "abstractOk")
 
     return True
 
@@ -628,7 +638,8 @@ def fetch_and_save_content(url, url_use_to_fetch_content_img):
     apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + url
     r_text = requests.get(apiUrl_text)
     text = (r_text.json())["text"]
-    text = trim_new_line_character(text)
+    if text:
+        text = trim_new_line_character(text)
     if url_use_to_fetch_content_img:
         img = GetImgByUrl(url_use_to_fetch_content_img)['img']
     else:
@@ -907,13 +918,14 @@ def do_weibo_task(params):
 
 
     ner = None#fetch_ne_by_url(url)
-    if ner:
-        keyword = ner
-    else:
-        print "when get weibo, the  ner is None, the url, title==>", url, "|| ", title
-        keywords = extract_tags_helper(title)
-        keyword = "+".join(keywords)
+    # if ner:
+    #     keyword = ner
+    # else:
+    #     print "when get weibo, the  ner is None, the url, title==>", url, "|| ", title
+    #     keywords = extract_tags_helper(title)
+    #     keyword = "+".join(keywords)
 
+    keyword = title
     weibo_ready = GetWeibo(keyword)
 
     if weibo_ready is None and ner:

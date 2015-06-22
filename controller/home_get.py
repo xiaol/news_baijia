@@ -111,8 +111,10 @@ def homeContentFetch(options):
         start_time_yes = start_time_yes.strftime('%Y-%m-%d %H:%M:%S')
 
 
-        docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1, "createTime": {"$gte": start_time,
-                                                                                       "$lt": end_time}}).sort([("createTime", -1)])
+        # docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1, "createTime": {"$gte": start_time,
+        #                                                                                "$lt": end_time}}).sort([("createTime", -1)])
+
+        docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1}).sort([("createTime", -1)]).limit(50)
 
         undocs = conn["news_ver2"]["googleNewsItem"].find({"$or":[{"isOnline": 0}, {"isOnline": {"$exists": 0}}],"createTime":{"$gte": start_time_yes, "$lt": end_time}, "eventId": {"$exists": 1}}).sort([("createTime", -1)])
         undocs_list = extratInfoInUndocs(undocs)
