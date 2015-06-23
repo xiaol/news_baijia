@@ -1115,6 +1115,48 @@ def googleNewsTaskRun():
         time.sleep(30)
 
 
+def clusterTaskRun():
+    start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
+    start_time = start_time + datetime.timedelta(days=-3)
+    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+    doc = conn["news_ver2"]["googleNewsItem"].find({"createTime": {"$gte": start_time,
+                                                                    "$lt": end_time}}).sort([("createTime", -1)])
+    param_list = []
+    for doc in docs:
+        param_elem = {}
+        url = doc["url"]
+        content = doc["content"]
+        param_elem["url"] = url
+        param_elem["content"] = content
+        param_list.append(param_elem)
+
+    param_cluster_list = param_list
+    domain_dict = {}
+    for param_cluster_elem in param_cluster_list:
+        if param_cluster_elem['cluster'] in domain_dict:
+            domain_dict[param_cluster_elem['cluster']].append(param_cluster_elem)
+        else:
+            domain_dict[param_cluster_elem['cluster']] = [param_cluster_elem]
+
+    for k, domain_events in domain_dict.iteritems():
+        eventCount = 0
+        top_story = ''
+        if len(domain_events) < 2:
+            continue
+        for story in domain_events:
+            #if story.get("eventId", None):  //TODO
+            if eventCount is 0:
+                set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", story["sourceUrl"])
+                top_story = story["sourceUrl"]
+                eventCount += 1
+                continue
+            set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", top_story)
+            eventCount += 1
+        print 'found topic events count ===>' , eventCount
+
+
+
 if __name__ == '__main__':
 
     # ImgMeetCondition_ver2("111")
