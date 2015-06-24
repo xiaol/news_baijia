@@ -16,7 +16,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 import math
 from sklearn.metrics.pairwise import cosine_similarity
-
+import copy
 
 
 
@@ -45,13 +45,17 @@ def doc_cluster(list_of_dicts=[]):
     #convert from numpy array to python list format.
     predict_result = list(model.fit_predict(tfidf))
     print predict_result
-    # print cosine_similarity(tfidf)
+    print cosine_similarity(tfidf)
 
 
-    outcome = [{'cluster_index': cluster_index} for cluster_index in predict_result]
-
-    print outcome
-    return outcome
+    result = []
+    for i in range(n):
+        result_dict = {}
+        result_dict["url"]=list_of_dicts[i]["url"]
+        result_dict["cluster_index"]=predict_result[i]
+        result.append(result_dict)
+    print result
+    return result
 #list_of_dicts ==> [{'url':'url_str', 'cluster': cluster_index, 'sim_val': cos-sim}...]
 
 if __name__ == "__main__":
