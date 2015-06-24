@@ -26,7 +26,7 @@ def doc_cluster(list_of_dicts=[]):
     result = []
     for element in list_of_dicts:
         for key, value in element.iteritems():
-            if key == 'text':
+            if key == 'content':
                 seg_list = jieba.cut(element[key], cut_all=False)
                 for seg in seg_list:
                     seg = ''.join(seg.split())
@@ -47,15 +47,50 @@ def doc_cluster(list_of_dicts=[]):
     print predict_result
     print cosine_similarity(tfidf)
 
-
     result = []
     for i in range(n):
         result_dict = {}
         result_dict["url"]=list_of_dicts[i]["url"]
-        result_dict["cluster_index"]=predict_result[i]
+        result_dict["content"]=list_of_dicts[i]["content"]
+        result_dict["cluster"]=predict_result[i]
         result.append(result_dict)
-    print result
+    # print result
     return result
+
+
+def doc_similarity(list_of_dicts=[]):
+    corpus = []
+    result = []
+    for element in list_of_dicts:
+        for key, value in element.iteritems():
+            if key == 'content':
+                seg_list = jieba.cut(element[key], cut_all=False)
+                for seg in seg_list:
+                    seg = ''.join(seg.split())
+                    if seg != '' and seg != "\n" and seg != "\n\n":
+                        result.append(seg)
+                corpus.append(' '.join(result))
+    vectorizer = CountVectorizer()
+    transformer = TfidfTransformer()
+    tfidf = transformer.fit_transform(vectorizer.fit_transform(corpus))
+
+    n = len(corpus)
+    cosine_array=cosine_similarity(tfidf)
+    result = []
+    for i in range(n):
+        result_dict = {}
+        result_dict["url"]=list_of_dicts[i]["url"]
+        result_dict["content"]=list_of_dicts[i]["content"]
+        result_dict["cluster"]=list_of_dicts[i]["cluster"]
+        result_dict["similarity"]=cosine_array[0][i]
+        result.append(result_dict)
+    # print result
+    return result
+
+
+
+
+
 #list_of_dicts ==> [{'url':'url_str', 'cluster': cluster_index, 'sim_val': cos-sim}...]
 
 if __name__ == "__main__":
