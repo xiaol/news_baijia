@@ -124,7 +124,7 @@ def total_task():
                   "*****************************" % (url, sourceSiteName)
             do_ner_task(params)
             do_weibo_task(params)
-            # do_event_task(params, end_time, now_time)
+            do_event_task(params, end_time, now_time)
             do_zhihu_task(params)
             do_baike_task(params)
             do_douban_task(params)

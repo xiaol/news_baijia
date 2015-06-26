@@ -1124,7 +1124,7 @@ def clusterTaskRun():
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
     docs = conn["news_ver2"]["googleNewsItem"].find({"createTime": {"$gte": start_time,
                                                                     "$lt": end_time}}).sort([("createTime", -1)])
-    param_list = []  
+    param_list = []
     for doc in docs:
         param_elem = {}
         url = doc["sourceUrl"]
@@ -1247,7 +1247,7 @@ if __name__ == '__main__':
         elif arg == "cluster":
             while True:
                 # time.sleep(30)
-                clusterTaskRun()
+                # clusterTaskRun()
                 logging.warn("===============this round of content complete====================")
                 time.sleep(3600*24)
 
