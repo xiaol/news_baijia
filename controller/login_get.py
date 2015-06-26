@@ -57,7 +57,8 @@ def set_login_by_userId_platformType_with_field_and_value(options):
                                                     "userName": options["userName"],
                                                     "expiresIn": options["expiresIn"],
                                                     "expiresTime": options["expiresTime"],
-                                                    "lastLoginTime": options["lastLoginTime"]
+                                                    "lastLoginTime": options["lastLoginTime"],
+                                                    "deviceType": options["deviceType"]
 
                                                     }
 

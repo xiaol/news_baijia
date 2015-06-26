@@ -118,6 +118,7 @@ class FetchLoginHandler(tornado.web.RequestHandler):
         expiresIn = self.get_argument("expiresIn", None)
         expiresTime = self.get_argument("expiresTime", None)
         platformType = self.get_argument("platformType", None)
+        deviceType = self.get_argument("deviceType", "android")
 
         options = {}
         options["uuid"] = uuid
@@ -129,6 +130,7 @@ class FetchLoginHandler(tornado.web.RequestHandler):
         options["expiresIn"] = expiresIn
         options["expiresTime"] = expiresTime
         options["platformType"] = platformType
+        options["deviceType"] = deviceType
 
         result = login_get.loginContentFetch(options)
         print result
