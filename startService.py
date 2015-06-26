@@ -115,8 +115,8 @@ class FetchLoginHandler(tornado.web.RequestHandler):
         userIcon = self.get_argument("userIcon", None)
         userGender = self.get_argument("userGender", None)
         userName = self.get_argument("userName", None)
-        expiresIn = self.get_argument("expiresIn", None)
-        expiresTime = self.get_argument("expiresTime", None)
+        expiresIn = self.get_argument("expiresIn", -1)
+        expiresTime = self.get_argument("expiresTime", -1)
         platformType = self.get_argument("platformType", None)
         deviceType = self.get_argument("deviceType", "android")
 
