@@ -12,7 +12,8 @@ channelDict = {0: ['内地', '社会', '国内'], 1: ['娱乐'], 2: ['科技'], 
 def fetch_channel(channelId, page=1, limit=50):
     conn = DBStore._connect_news
     channelTags = [re.compile(x) for x in channelDict[channelId]]
-    docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1, "sourceSiteName": {"$in": channelTags}}).sort("createTime", pymongo.DESCENDING).limit(50)
+    docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1, "sourceSiteName": {"$in": channelTags}}).sort(
+    "createTime", pymongo.DESCENDING).limit(50)
     results_docs = []
     for doc in docs:
         results_docs.append(doc)
@@ -20,3 +21,19 @@ def fetch_channel(channelId, page=1, limit=50):
 
     return results_docs
 
+def newsFetch_channel(channelId, page=1, limit=50):
+    conn = DBStore._connect_news
+    if channelId>0:
+        docs=conn['news_ver2']['NewsItems'].find({"channel_id": str(channelId),"imgnum":{'$gt':0}})
+    else:
+        channel_doc= conn['news_ver2']['ChannelItems'].find_one({"channel_id": str(channelId)})
+        channel_name= channel_doc["channel_name"][0:2]
+        docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1, "sourceSiteName":{'$regex':channel_name}}).sort(
+        "createTime", pymongo.DESCENDING).limit(50)
+    results_docs = []
+    for doc in docs:
+        doc.pop('_id')
+        results_docs.append(doc)
+        print doc
+
+    return results_docs

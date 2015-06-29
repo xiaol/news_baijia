@@ -8,7 +8,7 @@ import operator
 import pymongo
 from utils import get_start_end_time
 from pymongo.read_preferences import ReadPreference
-from channel_get import fetch_channel
+from channel_get import fetch_channel,newsFetch_channel
 from para_sim.TextRank4ZH.gist import Gist
 # from content_get import Get_Relate_docs
 
@@ -119,6 +119,300 @@ def homeContentFetch(options):
 
         # db.googleNewsItem.find({'isOnline':{"$exists": 0},'createTime':{"$gte": '2015-05-15 18:00:00',"$lt": '2015-05-16 06:00:00'}, "eventId": {"$exists": 1} }).sort( { createTime: -1 } ).count()
 
+
+    special_list=[]
+    nospecial_list=[]
+
+    results_docs = reorganize_news(docs, not channelId)
+
+    for doc in results_docs:
+        isWeiboFlag = 0
+        isBaikeFlag = 0
+        isZhihuFlag = 0
+        isImgWallFlag = 0
+        isCommentsFlag = 0
+
+        sublist = []
+        reorganize_num = 0
+        filter_url=[]
+        if "sublist" in doc.keys():
+            sublist = doc["sublist"]
+            reorganize_num = reorganize_num + len(sublist)
+            set_googlenews_by_url_with_field_and_value(doc['sourceUrl'], "reorganize", sublist)
+            for subelem in sublist:
+                filter_url.append(subelem["url"])
+            del doc["sublist"]
+
+        if "sourceUrl" not in doc.keys():
+            print "error"
+            continue
+
+
+        url = doc['sourceUrl']
+        title = doc["title"]
+        sourceSiteName = doc["sourceSiteName"]
+
+        # baidu_news_num = count_relate_baidu_news(url)
+
+        relate = []
+        special_flag=True
+        # 标记放到前边的新闻
+        if sourceSiteName[:2] in special_source:
+            doc["special"] = 1
+        elif "special" in doc.keys():
+            special_flag = False
+        else:
+            doc["special"] = 400
+            special_flag = False
+
+
+        if "sourceSiteName" in doc.keys():
+            sourceSitename  = doc["sourceSiteName"]
+            doc["category"] = sourceSitename[2:4]
+        else:
+            continue
+        #不取没有相关的
+        # if not relate:
+        #     continue
+
+
+
+        if "imgUrls" in doc.keys():
+            if not doc["imgUrls"]:
+                continue
+            if len(doc["imgUrls"]) > 0:
+                doc["imgUrl"] = doc["imgUrls"]
+                del doc["imgUrls"]
+
+        if "content" in doc.keys():
+            del doc["content"]
+
+        if "abstract" in doc.keys():
+            del doc["abstract"]
+
+        if "douban" in doc.keys():
+            del doc["douban"]
+
+        if "baike" in doc.keys():
+            isBaikeFlag = 1
+            del doc["baike"]
+
+        if "baiduSearch" in doc.keys():
+            del doc["baiduSearch"]
+
+        if "imgWall" in doc.keys():
+            if doc["imgWall"]:
+                isImgWallFlag = 1
+
+            del doc["imgWall"]
+
+        #相关新闻每一个来源 选一条
+        if relate:
+            distinctList, distinctNum, distinct_response_urls, otherNum = GetRelateNews(relate, filter_url)
+
+        else:
+            distinctList = []
+            distinctNum = 0
+            distinct_response_urls = []
+            otherNum = 0
+
+        sublist.extend(distinctList)
+
+
+
+
+        if 'eventId' in doc.keys():
+            eventId = doc["eventId"]
+            for undocs_elem in undocs_list:
+                if eventId == undocs_elem["eventId"] and undocs_elem["url"] not in distinct_response_urls and undocs_elem["url"] not in filter_url:
+                    sublist.append(undocs_elem)
+                else:
+                    continue
+
+
+
+
+        if "weibo" in doc.keys():
+            weibo = doc["weibo"]
+            if weibo:
+                isWeiboFlag = 1
+
+            if isinstance(weibo, dict):
+                if "sourceName" in weibo:
+                    weibo["sourceSitename"] = weibo["sourceName"]
+                    del weibo["sourceName"]
+                    sublist.append(weibo)
+
+                del doc["weibo"]
+
+            elif isinstance(weibo, list) and len(weibo) > 0:
+                weibo = weibo[0]
+                if "sourceName" in weibo:
+                    weibo["sourceSitename"] = weibo["sourceName"]
+                    del weibo["sourceName"]
+                sublist.append(weibo)
+
+                del doc["weibo"]
+
+
+        if "zhihu" in doc.keys():
+            zhihu = doc["zhihu"]
+            if zhihu:
+                isZhihuFlag = 1
+
+            # if isinstance(zhihu, dict):
+            #     zhihu["sourceSitename"] = "zhihu"
+            #     sublist.append(zhihu)
+            #     del doc["zhihu"]
+            #
+            # elif isinstance(doc["zhihu"], list) and len(doc["zhihu"]) > 0 :
+            #     zhihu = doc["zhihu"][0]
+            #     zhihu["sourceSitename"] = "zhihu"
+            #     sublist.append(zhihu)
+            #     del doc["zhihu"]
+            del doc["zhihu"]
+
+
+
+        doc_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
+        if doc_comment:
+            if doc_comment["comments"]:
+                isCommentsFlag = 1
+
+        sublist = add_abs_to_sublist(sublist)
+        doc["sublist"] = sublist
+        # doc["otherNum"] = otherNum + baidu_news_num + reorganize_num
+        docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime", -1)]).limit(10)
+        allrelate = Get_Relate_docs(doc, docs_relate, filterurls=[])
+        doc["otherNum"] = len(allrelate)
+
+        if "relate" in doc.keys():
+            if doc["relate"]:
+                relate = doc["relate"]
+                relate = del_dup_relatedoc(relate, sublist)
+            del doc["relate"]
+
+        doc["urls_response"] = distinct_response_urls  #返回的urls，用于获取其他相关新闻时过滤掉 这几条已经有的新闻
+
+        doc["isWeiboFlag"] = isWeiboFlag
+        doc["isBaikeFlag"] = isBaikeFlag
+        doc["isZhihuFlag"] = isZhihuFlag
+        doc["isImgWallFlag"] = isImgWallFlag
+        doc["isCommentsFlag"] = isCommentsFlag
+
+        # if timefeedback:
+        #     doc["timefeedback"]=timefeedback_dict
+
+        # docs_return.append(doc)
+        if special_flag:
+            special_list.append(doc)
+        else:
+            nospecial_list.append(doc)
+
+
+    special_list= sorted(special_list,key=operator.itemgetter("createTime"))
+    docs_return=special_list+nospecial_list
+    # if timing:
+    # docs_return = sorted(docs_return, key=operator.itemgetter("special"))
+
+    # print docs_return
+    return docs_return
+
+
+
+def newsHomeContentFetch(options):
+
+    """
+
+    :rtype :
+    """
+    # updateTime = ''
+    page = 1
+    limit = 10
+    # if "updateTime" in options.keys():
+    #     updateTime = options["updateTime"]
+    if "page" in options.keys():
+        page = options["page"]
+    if 'limit' in options.keys():
+        limit = options["limit"]
+    if 'timing' in options.keys():
+        timing = options['timing']
+    else:
+        timing = None
+
+    if 'date' in options.keys():
+        date = options["date"]
+    else:
+        date = None
+
+    if 'type' in options.keys():
+        type = options["type"]
+    else:
+        type = None
+
+    if 'timefeedback' in options.keys():
+        timefeedback=options['timefeedback']
+    else:
+        timefeedback = None
+
+    channelId = options.get("channelId", None)
+
+
+    conn = DBStore._connect_news
+
+    if not timing and not date and not type and not channelId:
+
+        docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1}).sort([("createTime",-1)]).skip((page-1)*limit).limit(limit)
+        undocs_list = []
+
+    # elif not timing:
+
+        # request_time, next_update_time, next_update_type, history_date, upate_frequency = get_time_type_date_freq()
+
+    elif date and type:
+
+        day_night=get_day_night_time(date, type)
+        docs=[]
+        for day_night_elem in day_night:
+            start_time = day_night_elem[0]
+            start_time_yes = start_time + datetime.timedelta(days=-1)
+            end_time = day_night_elem[1]
+            start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+            end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+            start_time_yes = start_time_yes.strftime('%Y-%m-%d %H:%M:%S')
+
+            doc = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1, "createTime": {"$gte": start_time,
+                                                                                            "$lt": end_time}}).sort([("createTime", -1)])
+
+            for doc_elem in doc:
+                docs.append(doc_elem)
+            undocs = conn["news_ver2"]["googleNewsItem"].find({"$or":[{"isOnline": 0}, {"isOnline": {"$exists": 0}}],"createTime":{"$gte": start_time_yes, "$lt": end_time}, "eventId": {"$exists": 1}}).sort([("createTime", -1)])
+            undocs_list = extratInfoInUndocs(undocs)
+
+
+        docs= sorted(docs, key=operator.itemgetter("createTime"), reverse=True)
+
+    elif channelId:
+        docs = newsFetch_channel(int(channelId), page, limit)
+        undocs_list =[]
+        if channelId>0:
+            return docs
+    else:
+        # start_time, end_time = get_start_end_time()
+        start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
+        start_time_yes = start_time + datetime.timedelta(days=-1)
+        start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+        end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+        start_time_yes = start_time_yes.strftime('%Y-%m-%d %H:%M:%S')
+
+
+        docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1, "createTime": {"$gte": start_time,
+                                                                                       "$lt": end_time}}).sort([("createTime", -1)])
+
+        undocs = conn["news_ver2"]["googleNewsItem"].find({"$or":[{"isOnline": 0}, {"isOnline": {"$exists": 0}}],"createTime":{"$gte": start_time_yes, "$lt": end_time}, "eventId": {"$exists": 1}}).sort([("createTime", -1)])
+        undocs_list = extratInfoInUndocs(undocs)
+
+        # db.googleNewsItem.find({'isOnline':{"$exists": 0},'createTime':{"$gte": '2015-05-15 18:00:00',"$lt": '2015-05-16 06:00:00'}, "eventId": {"$exists": 1} }).sort( { createTime: -1 } ).count()
 
     special_list=[]
     nospecial_list=[]
