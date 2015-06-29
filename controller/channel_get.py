@@ -24,7 +24,7 @@ def fetch_channel(channelId, page=1, limit=50):
 def newsFetch_channel(channelId, page=1, limit=50):
     conn = DBStore._connect_news
     if channelId>0:
-        docs=conn['news_ver2']['NewsItems'].find({"channel_id": str(channelId),"imgnum":{'$gt':0}})
+        docs=conn['news_ver2']['NewsItems'].find({"channel_id": str(channelId),"imgnum":{'$gt':0}}).limit(50)
     else:
         channel_doc= conn['news_ver2']['ChannelItems'].find_one({"channel_id": str(channelId)})
         channel_name= channel_doc["channel_name"][0:2]
@@ -33,6 +33,26 @@ def newsFetch_channel(channelId, page=1, limit=50):
     results_docs = []
     for doc in docs:
         doc.pop('_id')
+        if "text" in doc.keys():
+            doc.pop('text')
+        if "abstract" in doc.keys():
+            doc.pop('abstract')
+        if "gist" in doc.keys():
+            doc.pop('gist')
+        if "start_title" in doc.keys():
+            doc['sourceSiteName'] = doc['start_title']
+        if "update_time" in doc.keys():
+            doc['updateTime'] = doc['update_time']
+        if "source_url" in doc.keys():
+            doc['sourceUrl'] = doc['source_url']
+        if "content" in doc.keys():
+            for _doc in doc['content']:
+                for k, item_doc in _doc.iteritems():
+                    if "img" in item_doc.keys():
+                        doc['imgUrls'] = item_doc['img']
+                        break
+        if "content" in doc.keys():
+            doc.pop('content')
         results_docs.append(doc)
         print doc
 

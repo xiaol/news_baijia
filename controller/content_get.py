@@ -224,13 +224,11 @@ def newsFetchContent(url, filterurls, uuid, updateTime=None):
     allrelate = Get_Relate_docs(doc, docs_relate, filterurls)
 
     if "content" in doc.keys():
-        i = 0
         for _doc in doc['content']:
-            i += 1
-            print _doc[str(i - 1)].keys()
-            if "img" in _doc[str(i - 1)].keys():
-                result['imgUrl'] = _doc[str(i - 1)]['img']
-                break
+            for k, item_doc in _doc.iteritems():
+                if "img" in item_doc.keys():
+                    doc['imgUrls'] = item_doc['img']
+                    break
 
     if 'abstract' in doc.keys():
         result['abs'] = doc['abstract']
