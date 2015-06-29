@@ -16,6 +16,7 @@ import os
 from PIL import Image
 import datetime
 from requests.exceptions import Timeout
+from weibo_run_re import set_googlenews_by_url_with_field_and_value
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -36,6 +37,7 @@ except ImportError:
     from utils import get_start_end_time, is_number
 
 from abstract import KeywordExtraction
+from AI_funcs.Doc_Clustering.doc_clustering import doc_cluster, doc_similarity
 
 g_time_filter = ["今天","明天","后天"]
 g_gpes_filter = ["中国"]
@@ -1115,6 +1117,56 @@ def googleNewsTaskRun():
         time.sleep(30)
 
 
+def clusterTaskRun():
+    start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
+    start_time = start_time + datetime.timedelta(days=-3)
+    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+    docs = conn["news_ver2"]["googleNewsItem"].find({"createTime": {"$gte": start_time,
+                                                                    "$lt": end_time}}).sort([("createTime", -1)])
+    param_list = []
+    for doc in docs:
+        param_elem = {}
+        url = doc["sourceUrl"]
+        if "text" in doc.keys():
+            content = doc["text"]
+        else:
+            continue
+        param_elem["url"] = url
+        param_elem["content"] = content
+        param_list.append(param_elem)
+
+    param_cluster_list = doc_cluster(param_list)
+    domain_dict = {}
+    for param_cluster_elem in param_cluster_list:
+        if param_cluster_elem['cluster'] in domain_dict:
+            domain_dict[param_cluster_elem['cluster']].append(param_cluster_elem)
+        else:
+            domain_dict[param_cluster_elem['cluster']] = [param_cluster_elem]
+
+    for k, domain_events in domain_dict.iteritems():
+        domain_events = doc_similarity(domain_events)
+        eventCount = 0
+        top_story = ''
+        if len(domain_events) < 2:
+            continue
+        for story in domain_events:
+            #if story.get("eventId", None):  //TODO
+            if eventCount is 0:
+                set_googlenews_by_url_with_field_and_value_ex(story["url"], "eventId", story["url"], "similarity", story["similarity"])
+                top_story = story["url"]
+                eventCount += 1
+                continue
+
+            set_googlenews_by_url_with_field_and_value_ex(story["url"], "eventId", top_story, "similarity", story["similarity"])
+            eventCount += 1
+        print 'found topic events count ===>' , eventCount
+
+
+
+def set_googlenews_by_url_with_field_and_value_ex(url, field1, value1, field2, value2):
+    conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {field1: value1, field2: value2}})
+
 if __name__ == '__main__':
 
     # ImgMeetCondition_ver2("111")
@@ -1191,6 +1243,13 @@ if __name__ == '__main__':
                 time.sleep(30)
                 cont_pic_titleTaskRun()
                 logging.warn("===============this round of content complete====================")
+
+        elif arg == "cluster":
+            while True:
+                # time.sleep(30)
+                # clusterTaskRun()
+                logging.warn("===============this round of content complete====================")
+                time.sleep(3600*24)
 
         elif arg=='help':
             print "need one or more argument of: weibo, ner, abs, zhihu, baike, douban, baiduNews, relateimg"
