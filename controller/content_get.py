@@ -228,7 +228,7 @@ def newsFetchContent(url, filterurls, uuid, updateTime=None):
         for _doc in doc['content']:
             for k, item_doc in _doc.iteritems():
                 if "img" in item_doc.keys():
-                    doc['imgUrl'] = item_doc['img']
+                    result['imgUrl'] = item_doc['img']
                     break
 
     if 'abstract' in doc.keys():
