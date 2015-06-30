@@ -207,7 +207,8 @@ def get_points(points, praise_list, uuid):
 def newsFetchContent(url, filterurls, uuid, updateTime=None):
     conn = DBStore._connect_news
     doc = conn["news_ver2"]["NewsItems"].find_one({"source_url": url})
-    doc.pop('_id')
+    if "_id" in doc.keys():
+        doc.pop('_id')
 
     if not doc:
         return
@@ -219,7 +220,7 @@ def newsFetchContent(url, filterurls, uuid, updateTime=None):
 
     doc_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
 
-    result = {}
+    result = getContentJson()
 
     allrelate = Get_Relate_docs(doc, docs_relate, filterurls)
 
@@ -306,8 +307,8 @@ def newsFetchContent(url, filterurls, uuid, updateTime=None):
     if "imgWall" in doc.keys():
         result["imgWall"] = doc["imgWall"]
 
-    if "updateTime" in doc.keys():
-        result["updateTime"] = doc["updateTime"]
+    if "update_time" in doc.keys():
+        result["updateTime"] = doc["update_time"]
 
     if "title" in doc.keys():
         result["title"] = doc["title"]
@@ -640,6 +641,9 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
         allrelate.append(ls)
 
     return allrelate
+
+def getContentJson():
+    return {"abs":"","baike":[],"content":"","docTime":"","docUrl":"","docUserIcon":"","douban":[],"imgUrl":"","imgWall":[],"zhihu":[],"ne":{},"originsourceSiteName":"","point":[],"relate":[],"root_class":"","title":"","updateTime":"","weibo":[],"isdoc":False}
 
 
 import urllib, cStringIO
