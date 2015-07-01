@@ -227,23 +227,6 @@ def newsFetchContent(url, filterurls, uuid, updateTime=None):
     result['imgUrl'] = getImg(doc)
     result['abs'] = getText(doc)
 
-    # if "content" in doc.keys():
-    #     for _doc in doc['content']:
-    #         for k, item_doc in _doc.iteritems():
-    #             if "img" in item_doc.keys():
-    #                result['imgUrl'] = item_doc['img']
-    #                break
-    #         break
-    # if "content" in doc.keys():
-    #     for _doc in doc['content']:
-    #         for k, item_doc in _doc.iteritems():
-    #             if "txt" in item_doc.keys():
-    #                 result['abs'] = item_doc['txt']
-    #                 break
-    #         break
-    # if 'abstract' in doc.keys():
-    #     result['abs'] = doc['abstract']
-
     if 'content' in doc.keys():
         result['content'] = doc['content']
 
