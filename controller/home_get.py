@@ -276,9 +276,14 @@ def homeContentFetch(options):
 
 
 
-        doc_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
-        if doc_comment:
-            if doc_comment["comments"]:
+        doc_crawl_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
+        doc_point_comment = conn["news_ver2"]["pointItem"].find_one({"sourceUrl": url})
+        if doc_crawl_comment:
+            if doc_crawl_comment["comments"]:
+                isCommentsFlag = 1
+
+        if doc_point_comment:
+            if doc_point_comment["srcText"]:
                 isCommentsFlag = 1
 
         sublist = add_abs_to_sublist(sublist)
