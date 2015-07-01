@@ -149,6 +149,17 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         result = content_get.newsFetchContent(url, filter_urls, uuid)
 
         self.write(json.dumps(result))
+    def post(self):
+        args = self.request.arguments
+        filter_urls = self.get_arguments("filterurls")
+        uuid = self.get_argument("uuid", None)
+        if len(args) < 1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result =content_get.newsFetchContent(args['url'][0],filter_urls, uuid)
+
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
 
 
 class FetchLoginHandler(tornado.web.RequestHandler):
