@@ -199,6 +199,7 @@ def get_points(points, praise_list, uuid):
             point['commentId'] = ''
         createTime = point.pop('createTime', None)
         point['createTime_str'] = createTime.strftime("%Y-%m-%d %H:%M:%S")
+        point['createTime'] = createTime.strftime("%Y-%m-%d %H:%M:%S")
         result_points.append(point)
 
     return result_points
