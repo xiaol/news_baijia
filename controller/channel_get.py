@@ -24,12 +24,12 @@ def fetch_channel(channelId, page=1, limit=50):
 def newsFetch_channel(channelId, page=1, limit=50):
     conn = DBStore._connect_news
     if channelId>0:
-        docs=conn['news_ver2']['NewsItems'].find({"channel_id": str(channelId),"imgnum":{'$gt':0}}).limit(50)
+        docs=conn['news_ver2']['NewsItems'].find({"channel_id": str(channelId),"imgnum":{'$gt':0}}).skip((page-1)*limit).limit(limit)
     else:
         channel_doc= conn['news_ver2']['ChannelItems'].find_one({"channel_id": str(channelId)})
         channel_name= channel_doc["channel_name"][0:2]
         docs = conn['news_ver2']['googleNewsItem'].find({"isOnline": 1, "sourceSiteName":{'$regex':channel_name}}).sort(
-        "createTime", pymongo.DESCENDING).limit(50)
+        "createTime", pymongo.DESCENDING).skip((page-1)*limit).limit(limit)
     results_docs = []
     for doc in docs:
         doc.pop('_id')
