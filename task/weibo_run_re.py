@@ -898,6 +898,7 @@ def do_event_task(params, start_time, end_time):
             if len(domain_events) < 2:
                 continue
             for story in domain_events:
+                set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "in_tag", tags)
                 #if story.get("eventId", None):  //TODO
                 if eventCount is 0:
                     set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", story["_id"])
@@ -906,6 +907,7 @@ def do_event_task(params, start_time, end_time):
                     continue
                 set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", top_story)
                 eventCount += 1
+
             print 'found topic events count ===>' , eventCount
 
 
