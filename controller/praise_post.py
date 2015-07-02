@@ -9,7 +9,7 @@ from pymongo.read_preferences import ReadPreference
 
 
 
-def AddPraise(userId, platformType, uuid, sourceUrl, commentId):
+def AddPraise(userId, platformType, uuid, sourceUrl, commentId, deviceType):
     DBStore = dbConn.GetDateStore()
     conn = DBStore._connect_news
     praise = {}
@@ -20,7 +20,9 @@ def AddPraise(userId, platformType, uuid, sourceUrl, commentId):
     praise['commentId'] = commentId
     now = datetime.datetime.now()
     praise['createTime'] = now
-    is_praise = conn['news_ver2']['praiseItem'].find_one({'uuid': uuid, 'commentId': commentId})
+    praise['deviceType'] = deviceType
+    is_praise = conn['news_ver2']['praiseItem'].find_one({'userId': userId, 'platformType': platformType, 'commentId': commentId})
+
     if is_praise:
         result = {'response': 200}
     else:

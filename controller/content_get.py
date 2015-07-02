@@ -15,7 +15,7 @@ import math
 DBStore = dbConn.GetDateStore()
 
 
-def fetchContent(url, filterurls, uuid, updateTime=None):
+def fetchContent(url, filterurls, userId, platformType, updateTime=None):
     conn = DBStore._connect_news
 
     doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url})
@@ -136,8 +136,8 @@ def fetchContent(url, filterurls, uuid, updateTime=None):
                     praise_num = count_praise({'commentId': comment_result["comment_id"]}, praise_list)
                     up = int(comment_result['up'])
                     comment_result['up'] = up + praise_num
-                if uuid and 'comment_id' in comment_result.keys():
-                    isPraiseFlag = count_praise({'uuid': uuid, 'commentId': comment_result["comment_id"]}, praise_list)
+                if userId and platformType and 'comment_id' in comment_result.keys():
+                    isPraiseFlag = count_praise({'userId': userId, 'platformType': platformType, 'commentId': comment_result["comment_id"]}, praise_list)
                     if isPraiseFlag:
                         comment_result['isPraiseFlag'] = 1
                     else:
@@ -149,7 +149,7 @@ def fetchContent(url, filterurls, uuid, updateTime=None):
             result_points.extend(points)
 
     pointsCursor = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).sort([("type", -1)])
-    points_fromdb = get_points(pointsCursor, praise_list, uuid)
+    points_fromdb = get_points(pointsCursor, praise_list, userId, platformType)
     result_points.extend(points_fromdb)
 
     paragraph_comment_count = {}
@@ -176,7 +176,7 @@ def fetchContent(url, filterurls, uuid, updateTime=None):
     return result
 
 
-def get_points(points, praise_list, uuid):
+def get_points(points, praise_list, userId, platformType):
     result_points = []
     for point in points:
         point.pop('_id', None)
@@ -186,8 +186,8 @@ def get_points(points, praise_list, uuid):
             point['up'] = praise_num
         else:
             point['up'] = 0
-        if uuid and 'commentId' in point.keys():
-            isPraiseFlag = count_praise({'uuid': uuid, 'commentId': point["commentId"]}, praise_list)
+        if userId and platformType and 'commentId' in point.keys():
+            isPraiseFlag = count_praise({'userId': userId, 'platformType': platformType, 'commentId': point["commentId"]}, praise_list)
             if isPraiseFlag:
                 point['isPraiseFlag'] = 1
             else:

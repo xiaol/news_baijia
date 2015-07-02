@@ -121,6 +121,8 @@ class FetchContentHandler(tornado.web.RequestHandler):
         filter_urls = self.get_arguments("filterurls")
         uuid = self.get_argument("uuid", None)
         result = {}
+        userId = self.get_argument("userId", None)
+        platformType = self.get_argument("platformType", None)
 
         if not url:
             result["rc"] = 404
@@ -128,7 +130,7 @@ class FetchContentHandler(tornado.web.RequestHandler):
             self.write(json.dumps(result))
             return
 
-        result = content_get.fetchContent(url, filter_urls, uuid)
+        result = content_get.fetchContent(url, filter_urls, userId, platformType)
 
         self.write(json.dumps(result))
 
@@ -306,12 +308,12 @@ class FetchChannelListHandler(tornado.web.RequestHandler):
 class PraiseHandler(tornado.web.RequestHandler):
     def post(self):
         args = self.request.arguments
-        if len(args) < 5:
+        if len(args) < 6:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
 
             result = praise_post.AddPraise(args['userId'][0], args['platformType'][0], args['uuid'][0],
-                                           args['sourceUrl'][0], args['commentId'][0])
+                                           args['sourceUrl'][0], args['commentId'][0], args['deviceType'][0])
         print result
 
         self.set_header("Content-Type", "Application/json")
