@@ -140,7 +140,8 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         url = self.get_argument("url", None)
         filter_urls = self.get_arguments("filterurls")
-        uuid = self.get_argument("uuid", None)
+        userId = self.get_argument("userId", None)
+        platformType = self.get_argument("platformType", None)
         result = {}
         if not url:
             result["rc"] = 404
@@ -148,17 +149,18 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
             self.write(json.dumps(result))
             return
 
-        result = content_get.newsFetchContent(url, filter_urls, uuid)
+        result = content_get.newsFetchContent(url, filter_urls, userId, platformType)
 
         self.write(json.dumps(result))
     def post(self):
         args = self.request.arguments
         filter_urls = self.get_arguments("filterurls")
-        uuid = self.get_argument("uuid", None)
+        userId = self.get_argument("userId", None)
+        platformType = self.get_argument("platformType", None)
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
-            result =content_get.newsFetchContent(args['url'][0],filter_urls, uuid)
+            result =content_get.newsFetchContent(args['url'][0],filter_urls, userId, platformType)
 
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
@@ -250,6 +252,38 @@ class PointHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
+class NewsPointHandler(tornado.web.RequestHandler):
+    def get(self):
+        sourceUrl = self.get_argument("sourceUrl", None)
+        paragraphIndex = self.get_argument("paragraphIndex", None)
+        options = {}
+        options["sourceUrl"] = sourceUrl
+        options["paragraphIndex"] = paragraphIndex
+        result = point_get.pointFetch(options)
+        print result
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+    def post(self):
+        args = self.request.arguments
+        if len(args) < 8:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            if 'userId' not in args.keys():
+                args['userId'] = ['']
+            if 'platformType' not in args.keys():
+                args['platformType'] = ['']
+            if 'srcTextTime' not in args.keys():
+                args['srcTextTime'] = [int(-1)]
+
+            result = point_post.AddPoint(args['sourceUrl'][0], args['srcText'][0], args['desText'][0],
+                                         args['paragraphIndex'][0],
+                                         args['type'][0], args['uuid'][0], args['userIcon'][0], args['userName'][0],
+                                         args['userId'][0], args['platformType'][0], int(args['srcTextTime'][0]))
+        print result
+
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
 
 class FetchImUserHandler(tornado.web.RequestHandler):
     def get(self):
@@ -342,6 +376,7 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchLogin", FetchLoginHandler),
             (r"/news/baijia/fetchIm", FetchImHandler),
             (r"/news/baijia/point", PointHandler),
+            (r"/news/baijia/newsPoint", NewsPointHandler),
             (r"/news/baijia/fetchImUser", FetchImUserHandler),
             (r"/news/baijia/fetchImList", FetchImListHandler),
             (r"/news/baijia/fetchChannel", FetchChannel),

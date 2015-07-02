@@ -4,13 +4,14 @@ from PIL import Image
 from config import dbConn
 import requests
 from home_get import del_dup_relatedoc
-
+import datetime
 import jieba
 import gensim
 from sklearn.svm import SVC
 from math import sqrt
 import numpy as np
 import math
+from weibo.Comments import guid
 
 DBStore = dbConn.GetDateStore()
 
@@ -205,7 +206,7 @@ def get_points(points, praise_list, userId, platformType):
     return result_points
 
 
-def newsFetchContent(url, filterurls, uuid, updateTime=None):
+def newsFetchContent(url, filterurls, userId, platformType, updateTime=None):
     conn = DBStore._connect_news
     doc = conn["news_ver2"]["NewsItems"].find_one({"source_url": url})
     if "_id" in doc.keys():
@@ -327,8 +328,8 @@ def newsFetchContent(url, filterurls, uuid, updateTime=None):
                     praise_num = count_praise({'commentId': comment_result["comment_id"]}, praise_list)
                     up = int(comment_result['up'])
                     comment_result['up'] = up + praise_num
-                if uuid and 'comment_id' in comment_result.keys():
-                    isPraiseFlag = count_praise({'uuid': uuid, 'commentId': comment_result["comment_id"]}, praise_list)
+                if userId and platformType and 'comment_id' in comment_result.keys():
+                    isPraiseFlag = count_praise({'userId': userId, 'platformType': platformType, 'commentId': comment_result["comment_id"]}, praise_list)
                     if isPraiseFlag:
                         comment_result['isPraiseFlag'] = 1
                     else:
@@ -340,7 +341,7 @@ def newsFetchContent(url, filterurls, uuid, updateTime=None):
             result_points.extend(points)
 
     pointsCursor = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).sort([("type", -1)])
-    points_fromdb = get_points(pointsCursor, praise_list, uuid)
+    points_fromdb =get_points(pointsCursor, praise_list, userId, platformType)
     result_points.extend(points_fromdb)
 
     paragraph_comment_count = {}
@@ -379,6 +380,28 @@ def getText(doc):
             for k, item_doc in _doc.iteritems():
                 if "txt" in item_doc.keys():
                    return item_doc['txt']
+
+def AddPoint(sourceUrl, srcText, desText, paragraphIndex, type, uuid, userIcon, userName, userId, platformType, srcTextTime): #type title abstract content
+    conn = DBStore._connect_news
+    point = {}
+    point['sourceUrl'] = sourceUrl
+    point['srcText'] = srcText
+    point['desText'] = desText
+    point['paragraphIndex'] = paragraphIndex
+    point['type'] = type
+    point['uuid'] = uuid
+    point['userIcon'] = userIcon
+    point['userName'] = userName
+    now = datetime.datetime.now()
+    point['createTime'] = now
+    point['userId'] = userId
+    point['platformType'] = platformType
+    point['srcTextTime'] = srcTextTime
+    point['commentId'] = guid('news_baijia')
+    conn['news_ver2']['pointItem'].insert(point)
+
+    result = {'response': 200}
+    return result
 
 def project_comments_to_paragraph(doc, comments):
     points = []
