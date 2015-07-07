@@ -12,7 +12,7 @@ import tornado.httpclient
 import tornado.netutil
 import json
 from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get, point_get, \
-    praise_post
+    praise_post,start_page_post
 from controller.push import push_message
 
 import abstract
@@ -317,6 +317,12 @@ class FetchChannelListHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
+class StartPageHandler(tornado.web.RequestHandler):
+    def post(self):
+        result =start_page_post.getStartPageContent()
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
 
 class PraiseHandler(tornado.web.RequestHandler):
     def post(self):
@@ -341,6 +347,7 @@ class Application(tornado.web.Application):
             (r"/news/baijia/newsFetchHome", NewsFetchHomeHandler),
             (r"/news/baijia/fetchContent", FetchContentHandler),
             (r"/news/baijia/newsFetchContent", NewsFetchContentHandler),
+            (r"/news/baijia/startPage", StartPageHandler),
             (r"/news/baijia/fetchLogin", FetchLoginHandler),
             (r"/news/baijia/fetchIm", FetchImHandler),
             (r"/news/baijia/point", PointHandler),

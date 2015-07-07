@@ -44,6 +44,8 @@ def newsFetch_channel(channelId, page=1, limit=50):
             doc.pop('gist')
         if "start_title" in doc.keys():
             doc['sourceSiteName'] = doc['start_title']
+        if "zhihu" in doc.keys():
+            doc['sublist'] = doc['zhihu']
         if "update_time" in doc.keys():
             doc['updateTime'] = doc['update_time']
         if "source_url" in doc.keys():
@@ -56,6 +58,7 @@ def newsFetch_channel(channelId, page=1, limit=50):
                         break
         if "content" in doc.keys():
             doc.pop('content')
+
         results_docs.append(doc)
         print doc
 
