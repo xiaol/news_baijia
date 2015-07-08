@@ -19,6 +19,12 @@ from PIL import Image
 import datetime
 from requests.exceptions import Timeout, ConnectionError
 from text_classifier import get_category_by_hack
+
+import gensim
+from math import sqrt
+import numpy as np
+import math
+
 try:
     import zbar
 except ImportError:
@@ -871,6 +877,9 @@ def do_event_task(params, start_time, end_time):
         events = conn["news_ver2"]["googleNewsItem"].find({"title": {'$in': re_tags},
                             "createTime": {"$gte": start_time, '$lte': end_time}}).sort([("createTime", pymongo.DESCENDING)])
         domain_dict = {}
+
+        events=filter_unrelate_news(events, doc)
+
         for e in events:
             if "classes" not in e.keys():
                 classes = get_category_by_hack(e['title'])
@@ -934,6 +943,31 @@ def do_event_task(params, start_time, end_time):
                 eventCount += 1
 
             print 'found topic events count ===>' , eventCount
+
+def filter_unrelate_news(events, compare_news):
+    result = []
+    if "text" not in compare_news.keys():
+        return events
+    paragraphIndex = 0
+    content_dict = {}
+    events_result = []
+    for doc in events:
+        if "text" in doc.keys():
+            content = doc["text"]
+        else:
+            continue
+        content_dict[str(paragraphIndex)] = content
+        doc["paragraphIndex"] = str(paragraphIndex)
+        events_result.append(doc)
+        paragraphIndex += 1
+
+    paragraphIndex_list = find_Index_similar_with_compare_news(content_dict, {"doc":compare_news["text"]})
+
+    for doc in events_result:
+        if doc["paragraphIndex"] in paragraphIndex_list:
+            result.append(doc)
+    return result
+
 
 
 def do_weibo_task(params):
@@ -1230,6 +1264,134 @@ def recovery_old_event():
         #do_ner_task(params)
         do_event_task(params, start_time, end_time)
 
+
+
+def find_Index_similar_with_compare_news(training_data, data_to_classify):
+    # Load in corpus, remove newlines, make strings lower-case
+    # if len(training_data) == 1 or not training_data:
+    #     message = "The number of classes has to be greater than one; got 1 or 0."
+    #     print message
+    #     return
+    docs = {}
+    docs.update(training_data)
+    docs.update(data_to_classify)
+    names = docs.keys()
+    keyword = list(extract_tags_helper(data_to_classify['doc']))
+    preprocessed_docs = {}
+    for name in names:
+        preprocessed_docs[name] = list(jieba.cut(docs[name]))
+    # Build the dictionary and filter out rare terms
+    # Perform Chinese words segmentation.
+    # dct = gensim.corpora.Dictionary(preprocessed_docs.values())
+    dct = gensim.corpora.Dictionary([keyword])
+    unfiltered = dct.token2id.keys()
+    # no_below_num = 0.005*len(training_data)
+    # dct.filter_extremes(no_below=no_below_num)
+    filtered = dct.token2id.keys()
+    # filtered_out = set(unfiltered) - set(filtered)
+
+
+    # Build Bag of Words Vectors out of preprocessed corpus
+    bow_docs = {}
+    dense = {}
+    for name in names:
+        sparse = dct.doc2bow(preprocessed_docs[name])
+        bow_docs[name] = sparse
+        dense[name] = vec2dense(sparse, num_terms=len(dct))
+
+    # # Build tfidf
+    # tfidf = gensim.models.TfidfModel(bow_docs.values())
+    # bow_docs_tfidf = {}
+    # for name in names:
+    #     bow_docs_tfidf[name] = tfidf[bow_docs[name]]
+
+
+    # Dimensionality reduction using LSI. Go from 6D to 2D.
+    # print "\n---LSI Model---"
+    #
+    # lsi_docs = {}
+    # num_topics = 300
+    # lsi_model = gensim.models.LsiModel(bow_docs_tfidf.values(),id2word=dct,
+    #                                    num_topics=num_topics)
+    # lsi_model = gensim.models.LsiModel(bow_docs_tfidf.values(),id2word=dct,
+    #                                    num_topics=num_topics)
+
+
+    # for name in names:
+    #     vec = bow_docs[name]
+    #     vec_tfidf = bow_docs_tfidf[name]
+    #     sparse = lsi_model[vec_tfidf]
+    #     # dense = vec2dense(sparse, num_topics)
+    #     lsi_docs[name] = sparse
+
+    # Normalize LSI vectors by setting each vector to unit length
+    # print "\n---Unit Vectorization---"
+    #
+    unit_vec = {}
+    #
+    for name in names:
+
+        vec = dense[name]
+        norm = sqrt(sum(num ** 2 for num in vec))
+        if norm<0.000001:
+            norm = 1
+        with np.errstate(invalid='ignore'):
+            unit_vec[name] = [(num/norm) for num in vec]
+        # if norm<0.000001:
+        #     unit_vec[name] = [0.0] * len(vec)
+
+    #     unit_vecs[name] = unit_vec
+    # Take cosine distances between docs and show best matches
+    # print "\n---Document Similarities---"
+
+    # index = gensim.similarities.MatrixSimilarity(lsi_docs.values())
+    # index = gensim.similarities.MatrixSimilarity(bow_docs_tfidf.values())
+    # index = gensim.similarities.MatrixSimilarity(bow_docs.values())
+    # print type(index)
+
+
+
+    for i, name in enumerate(names):
+        if name=="doc":
+            paragraphIndex_list = []
+            print "article_title,%s"%docs[name]
+            # vec = lsi_docs[name]
+            # vec = bow_docs_tfidf[name]
+            vec = unit_vec[name]
+            sims = calculate_sim(vec, names, unit_vec)
+
+            # sims = index[vec]
+
+            sims = sorted(sims.iteritems(), key=lambda d:d[1], reverse = True)
+            # sims_names = sims.keys()
+
+            # index=0
+            for sims_elem in sims:
+                if sims_elem[0]=="doc":
+                    continue
+                elif sims_elem[1]>=0.6:
+                    paragraphIndex_list.append(sims_elem[0])
+                else:
+                    continue
+                    # print "sims,%s"%sims_elem[0]
+                    # print "title,%s,sims,%10.3f"%(docs[sims_elem[0]], sims_elem[1])
+                # index+=1
+            break
+        else:
+            continue
+
+    return  paragraphIndex_list
+
+def vec2dense(vec, num_terms):
+    '''Convert from sparse gensim format to dense list of numbers'''
+    return list(gensim.matutils.corpus2dense([vec], num_terms=num_terms).T[0])
+
+def calculate_sim(vec, names, unit_vec):
+    sims={}
+    for name in names:
+        sims_value = sum([vec[i]*unit_vec[name][i] for i in range(len(vec))])
+        sims[name] = sims_value
+    return sims
 
 def test_extract_tags():
     print " ".join(extract_tags_helper("网易网络受攻击影响巨大损失或超1500万"))
