@@ -185,7 +185,7 @@ def searchChannelList():
         doc.pop('_id')
         results_docs.append(doc)
         print doc
-
+    results_docs = sorted(results_docs, key=lambda channel: int(channel["channel_id"]))
     return results_docs
 
 

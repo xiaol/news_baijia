@@ -898,14 +898,41 @@ def do_event_task(params, start_time, end_time):
             if len(domain_events) < 2:
                 continue
             for story in domain_events:
+                if "eventId" in story.keys():
+                    if "eventId_detail" in story.keys():
+                        eventId_detail = story["eventId_detail"]
+                    else:
+                        eventId_detail = [story["eventId"]]
+                    eventId_detail.append(url)
+                    if "in_tag_detail" in story.keys():
+                        in_tag_detail = story["in_tag_detail"]
+                    else:
+                        in_tag_detail = story["in_tag"]
+                    in_tag_detail.append(",")
+                    in_tag_detail.extend(tags)
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "in_tag", tags)
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "in_tag_detail", in_tag_detail)
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", url)
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId_detail", eventId_detail)
+
+                else:
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "in_tag", tags)
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "in_tag_detail", tags)
+
                 #if story.get("eventId", None):  //TODO
-                if eventCount is 0:
-                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", story["_id"])
-                    top_story = story["_id"]
-                    eventCount += 1
-                    continue
-                set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", top_story)
+                # if eventCount is 0:
+                #     # set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", story["_id"])
+                #     set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", story["_id"])
+                #     # top_story = story["_id"]
+                #     eventCount += 1
+                #     continue
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", url)
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId_detail", [url])
+
+
+                # set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", top_story)
                 eventCount += 1
+
             print 'found topic events count ===>' , eventCount
 
 
