@@ -156,6 +156,8 @@ class Comments(object):
             comments = self.format_comments(comments, news_id)
             print 'Hot comments!'
             return comments
+        except ValueError:
+            return None
         except TypeError:
             return None
         except IndexError:
@@ -178,6 +180,8 @@ class Comments(object):
             comments = self.format_comments(comments, news_id)
             print 'Comm comments!'
             return comments
+        except ValueError:
+            return None
         except TypeError:
             return None
         except IndexError:
