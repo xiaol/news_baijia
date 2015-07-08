@@ -51,9 +51,15 @@ class Comments(object):
         :param url: weibo comments api within weibo id
         :return: weibo comments dumps by json
         """
+        headers = {
+            'user-agent': 'Mozilla/5.0 (Linux; U; Android 4.3; en-us; SM-N900T Build/JSS15J) '
+                          'AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30',
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Cookie': 'SUB=_2A254mOfXDeTxGeVG71oY9S7OyjuIHXVYYomfrDV6PUJbrdAKLU3TkW2JH8WdqYlO6inyt0zkpZ2lbK84cA..;',
+        }
         timeout = 20
         try:
-            r = requests.get(url, timeout=timeout)
+            r = requests.get(url, timeout=timeout, headers=headers)
             if r.status_code == 200:
                 return r.content
         except IOError:
@@ -140,9 +146,6 @@ class Comments(object):
                 comments_result.append(dict(cm))
         return comments_result
 
-
-
-
     def get_comments_by_weibo_url_hots(self):
         news_id = self.check_url(self.url)
         if not news_id:
@@ -150,6 +153,8 @@ class Comments(object):
         news_id = convert_news_id(news_id)
         comment_url = self.api_hot.replace('NewsID', news_id)
         comments = self.req(comment_url)
+        if not comments:
+            return None
         try:
             comments = json.loads(comments)
             comments = [c['card_group'] for c in comments if c.get('card_group')]
@@ -157,6 +162,8 @@ class Comments(object):
             comments = self.format_comments(comments, news_id)
             print 'Hot comments!'
             return comments
+        except ValueError:
+            return None
         except TypeError:
             return None
         except IndexError:
@@ -170,6 +177,8 @@ class Comments(object):
         user_id = [i for i in self.url.split('/') if i][-2]
         comment_url = self.api_comm.replace('NewsID', news_id).replace('UserID', user_id)
         comments = self.req(comment_url)
+        if not comments:
+            return None
         try:
             comments = json.loads(comments)
             comments = [c['card_group'] for c in comments if c.get('card_group')]
@@ -177,6 +186,8 @@ class Comments(object):
             comments = self.format_comments(comments, news_id)
             print 'Comm comments!'
             return comments
+        except ValueError:
+            return None
         except TypeError:
             return None
         except IndexError:
