@@ -43,6 +43,7 @@ import gensim
 from math import sqrt
 import numpy as np
 import math
+from config import dbConn
 
 g_time_filter = ["今天","明天","后天"]
 g_gpes_filter = ["中国"]
@@ -1488,6 +1489,49 @@ def vec2dense(vec, num_terms):
 def set_googlenews_by_url_with_field_and_value_ex(url, field1, value1, field2, value2):
     conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {field1: value1, field2: value2}})
 
+
+
+
+
+def getBaiduHotWord():
+    DBStore = dbConn.GetDateStore()
+    conn = DBStore._connect_news
+
+    map={'0': '全部', '1': '国际', '2':'国内', '3':'体育', '4':'娱乐', '5':'社会', '6':'财经', '8':'科技', '10':'汽车', '14':'军事' }
+    result = []
+    for i  in [0, 1, 2, 3, 4, 5, 6, 8, 10, 14]:
+        apiUrl = "http://news.baidu.com/n?m=rddata&v=hot_word&type=%d&date="%i
+        r = requests.get(apiUrl)
+        if r.status_code == 200:
+            print "content,%s"%r.content
+            dict_obj = json.loads(r.content)
+            data = dict_obj['data']
+            for data_elem in data:
+                result_elem = {}
+                result_elem["baiduHotWord"] = data_elem["query_word"].split(" ")
+                result_elem["title"] = data_elem["title"]
+                result_elem["type"] = map[str(i)]
+                result_elem["createTime"] = getDefaultTimeStr()
+                result_elem["chemicalBond"] = "baiduHotWord"
+                result.append(result_elem)
+
+
+    for result_elem in result:
+        is_exists_in_elementary = conn['news_ver2']['elementary'].find_one({'title': result_elem['title']})
+        if is_exists_in_elementary:
+            continue
+        else:
+            conn['news_ver2']['elementary'].insert(result_elem)
+
+
+
+def getDefaultTimeStr():
+    format='%Y-%m-%d %H:%M:%S'
+    defaultTime=(datetime.datetime.now())
+    defaultTimeStr=defaultTime.strftime(format)
+    return defaultTimeStr
+
+
 if __name__ == '__main__':
 
     # ImgMeetCondition_ver2("111")
@@ -1548,7 +1592,6 @@ if __name__ == '__main__':
                 logging.warn("===============this round of googleNews complete====================")
                 time.sleep(7200)
 
-
         elif arg == 'relateimg':
             while True:
                 time.sleep(40)
@@ -1571,6 +1614,13 @@ if __name__ == '__main__':
                 # clusterTaskRun()
                 logging.warn("===============this round of content complete====================")
                 # time.sleep(3600*24)
+        elif arg == "getBaiduHotWord":
+            while True:
+                # time.sleep(30)
+                getBaiduHotWord()
+                logging.warn("===============this round of content complete====================")
+                time.sleep(3600*2)
+
 
         elif arg=='help':
             print "need one or more argument of: weibo, ner, abs, zhihu, baike, douban, baiduNews, relateimg"
