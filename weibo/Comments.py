@@ -140,9 +140,6 @@ class Comments(object):
                 comments_result.append(dict(cm))
         return comments_result
 
-
-
-
     def get_comments_by_weibo_url_hots(self):
         news_id = self.check_url(self.url)
         if not news_id:
@@ -150,6 +147,8 @@ class Comments(object):
         news_id = convert_news_id(news_id)
         comment_url = self.api_hot.replace('NewsID', news_id)
         comments = self.req(comment_url)
+        if not comments:
+            return None
         try:
             comments = json.loads(comments)
             comments = [c['card_group'] for c in comments if c.get('card_group')]
@@ -170,6 +169,8 @@ class Comments(object):
         user_id = [i for i in self.url.split('/') if i][-2]
         comment_url = self.api_comm.replace('NewsID', news_id).replace('UserID', user_id)
         comments = self.req(comment_url)
+        if not comments:
+            return None
         try:
             comments = json.loads(comments)
             comments = [c['card_group'] for c in comments if c.get('card_group')]
