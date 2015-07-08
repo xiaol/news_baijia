@@ -51,9 +51,15 @@ class Comments(object):
         :param url: weibo comments api within weibo id
         :return: weibo comments dumps by json
         """
+        headers = {
+            'user-agent': 'Mozilla/5.0 (Linux; U; Android 4.3; en-us; SM-N900T Build/JSS15J) '
+                          'AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30',
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Cookie': 'SUB=_2A254mOfXDeTxGeVG71oY9S7OyjuIHXVYYomfrDV6PUJbrdAKLU3TkW2JH8WdqYlO6inyt0zkpZ2lbK84cA..;',
+        }
         timeout = 20
         try:
-            r = requests.get(url, timeout=timeout)
+            r = requests.get(url, timeout=timeout, headers=headers)
             if r.status_code == 200:
                 return r.content
         except IOError:

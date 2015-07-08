@@ -402,7 +402,7 @@ def newsHomeContentFetch(options):
     elif channelId:
         docs = newsFetch_channel(int(channelId), page, limit)
         undocs_list =[]
-        if channelId>0:
+        if channelId>=0:
             return docs
     else:
         # start_time, end_time = get_start_end_time()
