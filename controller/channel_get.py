@@ -44,8 +44,6 @@ def newsFetch_channel(channelId, page=1, limit=50):
             doc.pop('gist')
         if "start_title" in doc.keys():
             doc['sourceSiteName'] = doc['start_title']
-        if "zhihu" in doc.keys():
-            doc['sublist'] = doc['zhihu']
         if "update_time" in doc.keys():
             doc['updateTime'] = doc['update_time']
         if "source_url" in doc.keys():
@@ -58,7 +56,59 @@ def newsFetch_channel(channelId, page=1, limit=50):
                         break
         if "content" in doc.keys():
             doc.pop('content')
+        isWeiboFlag = 0
+        isBaikeFlag = 0
+        isZhihuFlag = 0
+        isImgWallFlag = 0
+        isCommentsFlag = 0
+        if "baike" in doc.keys():
+            isBaikeFlag = 1
+            del doc["baike"]
+        if "imgWall" in doc.keys():
+            if doc["imgWall"]:
+                isImgWallFlag = 1
 
+            del doc["imgWall"]
+        sublist = []
+        reorganize_num = 0
+        filter_url=[]
+        if "weibo" in doc.keys():
+            weibo = doc["weibo"]
+            if weibo:
+                isWeiboFlag = 1
+
+            if isinstance(weibo, dict):
+                if "sourceName" in weibo:
+                    weibo["sourceSitename"] = weibo["sourceName"]
+                    del weibo["sourceName"]
+                    sublist.append(weibo)
+
+                del doc["weibo"]
+
+            elif isinstance(weibo, list) and len(weibo) > 0:
+                weibo = weibo[0]
+                if "sourceName" in weibo:
+                    weibo["sourceSitename"] = weibo["sourceName"]
+                    del weibo["sourceName"]
+                sublist.append(weibo)
+
+                del doc["weibo"]
+
+
+        if "zhihu" in doc.keys():
+            zhihu = doc["zhihu"]
+            if zhihu:
+                isZhihuFlag = 1
+            del doc["zhihu"]
+        # doc_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": doc[]})
+        # if doc_comment:
+        #     if doc_comment["comments"]:
+        #         isCommentsFlag = 1
+        doc["isWeiboFlag"] = isWeiboFlag
+        doc["isBaikeFlag"] = isBaikeFlag
+        doc["isZhihuFlag"] = isZhihuFlag
+        doc["isImgWallFlag"] = isImgWallFlag
+        doc["isCommentsFlag"] = isCommentsFlag
         results_docs.append(doc)
         print doc
 

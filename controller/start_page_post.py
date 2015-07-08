@@ -10,7 +10,7 @@ DBStore = dbConn.GetDateStore()
 
 def getStartPageContent():
     conn = DBStore._connect_news
-    docs = conn['news_ver2']['googleNewsItem'].find({"originsourceSiteName": "观察者网"}).sort("updateTime", pymongo.DESCENDING).limit(1)
+    docs = conn['news_ver2']['googleNewsItem'].find({"originsourceSiteName": "观察者网","imgUrls":{"$ne":None}}).sort("updateTime", pymongo.DESCENDING).limit(1)
     results_docs = {}
     for doc in docs:
         if "imgUrls" in doc.keys():
