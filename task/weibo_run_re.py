@@ -879,6 +879,7 @@ def do_event_task(params, start_time, end_time):
         domain_dict = {}
 
         events=filter_unrelate_news(events, doc)
+        # domain_dict = {'1', events}
 
         for e in events:
             if "classes" not in e.keys():
@@ -924,9 +925,19 @@ def do_event_task(params, start_time, end_time):
                     set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", url)
                     set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId_detail", eventId_detail)
 
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "similarity", story["similarity"])
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "unit_vec", story["unit_vec"])
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "keyword", story["keyword"])
+
+
                 else:
                     set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "in_tag", tags)
                     set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "in_tag_detail", tags)
+
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "similarity", story["similarity"])
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "unit_vec", story["unit_vec"])
+                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "keyword", story["keyword"])
+
 
                 #if story.get("eventId", None):  //TODO
                 # if eventCount is 0:
@@ -961,10 +972,14 @@ def filter_unrelate_news(events, compare_news):
         events_result.append(doc)
         paragraphIndex += 1
 
-    paragraphIndex_list = find_Index_similar_with_compare_news(content_dict, {"doc":compare_news["text"]})
+    paragraphIndex_dict = find_Index_similar_with_compare_news(content_dict, {"doc":compare_news["text"]})
 
     for doc in events_result:
-        if doc["paragraphIndex"] in paragraphIndex_list:
+        if doc["paragraphIndex"] in paragraphIndex_dict.keys():
+            doc["similarity"] = paragraphIndex_dict[doc["paragraphIndex"]]["similarity"]
+            doc["unit_vec"] = paragraphIndex_dict[doc["paragraphIndex"]]["unit_vec"]
+            doc["keyword"] = paragraphIndex_dict[doc["paragraphIndex"]]["keyword"]
+
             result.append(doc)
     return result
 
@@ -1353,7 +1368,8 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
 
     for i, name in enumerate(names):
         if name=="doc":
-            paragraphIndex_list = []
+            paragraphIndex_dict = {}
+            # paragraphIndex_list = []
             print "article_title,%s"%docs[name]
             # vec = lsi_docs[name]
             # vec = bow_docs_tfidf[name]
@@ -1370,7 +1386,13 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
                 if sims_elem[0]=="doc":
                     continue
                 elif sims_elem[1]>=0.6:
-                    paragraphIndex_list.append(sims_elem[0])
+                    paragraphIndex_dict[sims_elem[0]] = { "similarity": sims_elem[1]
+                                                         , "unit_vec" : unit_vec[sims_elem[0]]
+                                                         , "keyword": filtered}
+
+                    # paragraphIndex_list.append(sims_elem[0])
+                    print "sims,%s"%sims_elem[0]
+                    print "title,%s,sims,%10.3f"%(docs[sims_elem[0]], sims_elem[1])
                 else:
                     continue
                     # print "sims,%s"%sims_elem[0]
@@ -1380,7 +1402,7 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
         else:
             continue
 
-    return  paragraphIndex_list
+    return paragraphIndex_dict
 
 def vec2dense(vec, num_terms):
     '''Convert from sparse gensim format to dense list of numbers'''
