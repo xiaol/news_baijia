@@ -879,7 +879,9 @@ def do_event_task(params, start_time, end_time):
         domain_dict = {}
 
         events=filter_unrelate_news(events, doc)
-
+        # domain_dict = {'1', events}
+        if "text" not in doc.keys():
+            return
         for e in events:
             if "classes" not in e.keys():
                 classes = get_category_by_hack(e['title'])
@@ -919,14 +921,27 @@ def do_event_task(params, start_time, end_time):
                         in_tag_detail = story["in_tag"]
                     in_tag_detail.append(",")
                     in_tag_detail.extend(tags)
-                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "in_tag", tags)
-                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "in_tag_detail", in_tag_detail)
-                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", url)
-                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId_detail", eventId_detail)
+                    # set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "in_tag", tags)
+                    # set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "in_tag_detail", in_tag_detail)
+                    # set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", url)
+                    # set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId_detail", eventId_detail)
+                    #
+                    # set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "similarity", story["similarity"])
+                    # set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "unit_vec", story["unit_vec"])
+                    # set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "keyword", story["keyword"])
+                    set_googlenews_by_url_with_field_and_value_dict(story["sourceUrl"],{"in_tag": tags
+                                                                            , "in_tag_detail": in_tag_detail
+                                                                            , "eventId": url
+                                                                            , "eventId_detail": eventId_detail
+                                                                            , "similarity": story["similarity"]
+                                                                            , "unit_vec": story["unit_vec"]
+                                                                            , "keyword": story["keyword"]
+
+                                                                              })
+
+
 
                 else:
-                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "in_tag", tags)
-                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "in_tag_detail", tags)
 
                 #if story.get("eventId", None):  //TODO
                 # if eventCount is 0:
@@ -935,9 +950,14 @@ def do_event_task(params, start_time, end_time):
                 #     # top_story = story["_id"]
                 #     eventCount += 1
                 #     continue
-                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", url)
-                    set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId_detail", [url])
-
+                    set_googlenews_by_url_with_field_and_value_dict(story["sourceUrl"],{"in_tag": tags
+                                                                            , "in_tag_detail": tags
+                                                                            , "eventId": url
+                                                                            , "eventId_detail": [url]
+                                                                            , "similarity": story["similarity"]
+                                                                            , "unit_vec": story["unit_vec"]
+                                                                            , "keyword": story["keyword"]
+                                                                              })
 
                 # set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", top_story)
                 eventCount += 1
@@ -961,10 +981,14 @@ def filter_unrelate_news(events, compare_news):
         events_result.append(doc)
         paragraphIndex += 1
 
-    paragraphIndex_list = find_Index_similar_with_compare_news(content_dict, {"doc":compare_news["text"]})
+    paragraphIndex_dict = find_Index_similar_with_compare_news(content_dict, {"doc":compare_news["text"]})
 
     for doc in events_result:
-        if doc["paragraphIndex"] in paragraphIndex_list:
+        if doc["paragraphIndex"] in paragraphIndex_dict.keys():
+            doc["similarity"] = paragraphIndex_dict[doc["paragraphIndex"]]["similarity"]
+            doc["unit_vec"] = paragraphIndex_dict[doc["paragraphIndex"]]["unit_vec"]
+            doc["keyword"] = paragraphIndex_dict[doc["paragraphIndex"]]["keyword"]
+
             result.append(doc)
     return result
 
@@ -1353,7 +1377,8 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
 
     for i, name in enumerate(names):
         if name=="doc":
-            paragraphIndex_list = []
+            paragraphIndex_dict = {}
+            # paragraphIndex_list = []
             print "article_title,%s"%docs[name]
             # vec = lsi_docs[name]
             # vec = bow_docs_tfidf[name]
@@ -1370,7 +1395,13 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
                 if sims_elem[0]=="doc":
                     continue
                 elif sims_elem[1]>=0.6:
-                    paragraphIndex_list.append(sims_elem[0])
+                    paragraphIndex_dict[sims_elem[0]] = { "similarity": sims_elem[1]
+                                                         , "unit_vec" : unit_vec[sims_elem[0]]
+                                                         , "keyword": filtered}
+
+                    # paragraphIndex_list.append(sims_elem[0])
+                    print "sims,%s"%sims_elem[0]
+                    print "title,%s,sims,%10.3f"%(docs[sims_elem[0]], sims_elem[1])
                 else:
                     continue
                     # print "sims,%s"%sims_elem[0]
@@ -1380,7 +1411,7 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
         else:
             continue
 
-    return  paragraphIndex_list
+    return paragraphIndex_dict
 
 def vec2dense(vec, num_terms):
     '''Convert from sparse gensim format to dense list of numbers'''
@@ -1392,6 +1423,20 @@ def calculate_sim(vec, names, unit_vec):
         sims_value = sum([vec[i]*unit_vec[name][i] for i in range(len(vec))])
         sims[name] = sims_value
     return sims
+
+def set_googlenews_by_url_with_field_and_value_dict(url, condition_dict):
+
+    conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set":
+                                                                        {"in_tag": condition_dict["in_tag"],
+                                                                         "in_tag_detail": condition_dict["in_tag_detail"],
+                                                                         "eventId": condition_dict["eventId"],
+                                                                         "eventId_detail": condition_dict["eventId_detail"],
+                                                                         "similarity": condition_dict["similarity"],
+                                                                         "unit_vec": condition_dict["unit_vec"],
+                                                                         "keyword": condition_dict["keyword"]
+                                                                         }
+                                                               })
+
 
 def test_extract_tags():
     print " ".join(extract_tags_helper("网易网络受攻击影响巨大损失或超1500万"))
