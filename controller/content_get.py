@@ -127,6 +127,9 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
     for praise_elem in praise:
         praise_list.append(praise_elem)
 
+    pointsCursor = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).sort([("type", -1)])
+    points_fromdb = get_points(pointsCursor, praise_list, userId, platformType)
+
     if doc_comment and 'content' in doc:
         if doc_comment["comments"]:
             for doc_comment_elem in doc_comment["comments"]:
@@ -148,19 +151,16 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
 
             points = project_comments_to_paragraph(doc, doc_comment["comments"])
             result_points.extend(points)
-
-    pointsCursor = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).sort([("type", -1)])
-    points_fromdb = get_points(pointsCursor, praise_list, userId, platformType)
-    result_points.extend(points_fromdb)
+    points_fromdb.extend(result_points)
 
     paragraph_comment_count = {}
     flag = False
-    for point_ele in result_points:
+    for point_ele in points_fromdb:
         if point_ele['paragraphIndex'] in paragraph_comment_count:
             paragraph_comment_count[point_ele['paragraphIndex']] += 1
         else:
             paragraph_comment_count[point_ele['paragraphIndex']] = 1
-    for point_ele in result_points:
+    for point_ele in points_fromdb:
         point_ele['comments_count'] = paragraph_comment_count[point_ele['paragraphIndex']]
 
         # ariesy 2015-6-17 提取语音弹幕
@@ -170,7 +170,7 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
             result["docUrl"] = point_ele["srcText"]
             result["docTime"] = point_ele["srcTextTime"]
             result["docUserIcon"] = point_ele["userIcon"]
-    result["point"] = result_points
+    result["point"] = points_fromdb
     if (flag == False):
         result["isdoc"] = False
 
