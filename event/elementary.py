@@ -22,6 +22,8 @@ def elementary(elements):
             results_elementary['elements'].append(element['elementName'])
         elif element['chemicalBond'] == 'ionic bond':
             results_elementary['elements'].append([element['atomName'], element['ionicName']])
+        elif element['chemicalBond'] == 'baiduHotWord':
+            results_elementary['elements'].append(element['baiduHotWord'])
 
     return results_elementary
 
