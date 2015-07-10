@@ -294,8 +294,8 @@ def task():
 if __name__ == '__main__':
     for arg in sys.argv[1:]:
         print arg
-        if arg == 'ClusterGogoleNews':
-            print "ClusterGogoleNews start"
+        if arg == 'ClusterGoogleNews':
+            print "ClusterGoogleNews start"
             while True:
                 baiduHotWord = load_baiduHotWord()
                 generate_googlenews_eventId_with_HotWord(baiduHotWord)
