@@ -27,7 +27,7 @@ def newsFetch_channel(channelId, page=1, limit=50):
     conn = DBStore._connect_news
     if channelId >= 0:
         docs = conn['news_ver2']['NewsItems'].find({"channel_id": str(channelId), "imgnum": {'$gt': 0}, 'create_time':{ '$exists': True}}).sort("create_time", pymongo.DESCENDING).skip(
-            (page - 1) * limit).limit(10)
+            (page - 1) * limit).limit(limit)
     else:
         channel_doc = conn['news_ver2']['ChannelItems'].find_one({"channel_id": str(channelId)})
         channel_name = channel_doc["channel_name"][0:2]
