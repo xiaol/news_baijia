@@ -150,7 +150,7 @@ def reorganize_news(docs):
     for doc in results_docs:
         doc['sublist']=(constructEvent(eventId_dict))
 
-    results_docs= sorted(results_docs,key=operator.itemgetter("create_time"))
+    results_docs= sorted(results_docs,key=operator.itemgetter("create_time"), reverse=True)
     return results_docs
 
 def constructEvent(eventId_dict):
