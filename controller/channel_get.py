@@ -37,6 +37,11 @@ def newsFetch_channel(channelId, page=1, limit=50):
     results_docs = []
     docs = reorganize_news(docs)
     for doc in docs:
+        isWeiboFlag = 0
+        isBaikeFlag = 0
+        isZhihuFlag = 0
+        isImgWallFlag = 0
+        isCommentsFlag = 0
         if "_id" in doc.keys():
             doc['id']= str(doc['_id'])
             del doc['_id']
@@ -55,14 +60,10 @@ def newsFetch_channel(channelId, page=1, limit=50):
         if "source_url" in doc.keys():
             url = doc['source_url']
             doc['sourceUrl'] = doc['source_url']
-        doc['imgUrl']=getImg(doc)
+        if "content" in doc.keys():
+            doc['imgUrl']=getImg(doc)
         if "content" in doc.keys():
             doc.pop('content')
-        isWeiboFlag = 0
-        isBaikeFlag = 0
-        isZhihuFlag = 0
-        isImgWallFlag = 0
-        isCommentsFlag = 0
         if "douban" in doc.keys():
             del doc["douban"]
         if "baike" in doc.keys():
@@ -76,11 +77,8 @@ def newsFetch_channel(channelId, page=1, limit=50):
         if "imgWall" in doc.keys():
             if doc["imgWall"]:
                 isImgWallFlag = 1
-
             del doc["imgWall"]
         sublist = []
-        filter_url=[]
-        undocs_list = []
 
         if "sublist" in doc.keys():
             sublist = doc["sublist"]
@@ -90,7 +88,6 @@ def newsFetch_channel(channelId, page=1, limit=50):
             weibo = doc["weibo"]
             if weibo:
                 isWeiboFlag = 1
-
             if isinstance(weibo, dict):
                 if "sourceName" in weibo:
                     weibo["sourceSitename"] = weibo["sourceName"]
@@ -124,17 +121,17 @@ def newsFetch_channel(channelId, page=1, limit=50):
         doc["isZhihuFlag"] = isZhihuFlag
         doc["isImgWallFlag"] = isImgWallFlag
         doc["isCommentsFlag"] = isCommentsFlag
+
         results_docs.append(doc)
         print doc
 
     return results_docs
 
 def getImg(doc):
-    if "content" in doc.keys():
-        for _doc in doc['content']:
-            for k, item_doc in _doc.iteritems():
-                if "img" in item_doc.keys():
-                   return item_doc['img']
+    for _doc in doc['content']:
+        for k, item_doc in _doc.iteritems():
+            if "img" in item_doc.keys():
+                return item_doc['img']
 
 def reorganize_news(docs):
     results_docs = []
@@ -148,26 +145,26 @@ def reorganize_news(docs):
                 eventId_dict[doc['eventId']] = [doc]
         else:
             results_docs.append(doc)
-
-    for (eventId, eventList) in eventId_dict.items():
-        results_docs.append(constructEvent(eventList))
+    print results_docs
+    print eventId_dict
+    for doc in results_docs:
+        doc['sublist']=(constructEvent(eventId_dict))
 
     results_docs= sorted(results_docs,key=operator.itemgetter("create_time"))
     return results_docs
 
-def constructEvent(eventList):
-    result_doc = {}
-    sublist = []
-    for eventElement in eventList:
-        if eventElement['eventId'] == eventElement["source_url"]:
-            result_doc = eventElement
-
-        else:
-            subElement={'sourceSitename': eventElement['start_title'], 'url': eventElement['source_url'], 'title': eventElement['title']}
-            sublist.append(subElement)
-    result_doc["sublist"] = sublist
-
-    return result_doc
+def constructEvent(eventId_dict):
+    for (eventId, eventList) in eventId_dict.items():
+        result_doc = {}
+        sublist = []
+        for eventElement in eventList:
+            if eventElement['eventId'] == eventElement["source_url"]:
+                result_doc = eventElement
+            else:
+                subElement={'sourceSitename': eventElement['start_title'], 'url': eventElement['source_url'], 'title': eventElement['title'],'create_time':eventElement['create_time']}
+                sublist.append(subElement)
+            result_doc["sublist"] = sublist
+            return sublist
 
 def GetRelateNews(relate, filter_url):
 
