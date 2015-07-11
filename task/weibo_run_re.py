@@ -120,6 +120,7 @@ def total_task():
         doc_num += 1
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
         start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+        end_time = end_time + datetime.timedelta(days=-2)
         start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
         end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
         now = datetime.datetime.now()
@@ -1309,6 +1310,7 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
     # dct = gensim.corpora.Dictionary(preprocessed_docs.values())
     dct = gensim.corpora.Dictionary([keyword])
     unfiltered = dct.token2id.keys()
+    keyword = dct.token2id
     # no_below_num = 0.005*len(training_data)
     # dct.filter_extremes(no_below=no_below_num)
     filtered = dct.token2id.keys()
@@ -1397,7 +1399,7 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
                 elif sims_elem[1]>=0.6:
                     paragraphIndex_dict[sims_elem[0]] = { "similarity": sims_elem[1]
                                                          , "unit_vec" : unit_vec[sims_elem[0]]
-                                                         , "keyword": filtered}
+                                                         , "keyword": keyword}
 
                     # paragraphIndex_list.append(sims_elem[0])
                     print "sims,%s"%sims_elem[0]
@@ -1421,7 +1423,12 @@ def calculate_sim(vec, names, unit_vec):
     sims={}
     for name in names:
         sims_value = sum([vec[i]*unit_vec[name][i] for i in range(len(vec))])
-        sims[name] = sims_value
+        same_word_num = sum([(1 if vec[i]>0 else 0)*(1 if unit_vec[name][i]>0 else 0) for i in range(len(vec))])
+        if same_word_num>=2:
+            sims[name] = sims_value
+        else:
+            sims[name] = 0.0
+
     return sims
 
 def set_googlenews_by_url_with_field_and_value_dict(url, condition_dict):

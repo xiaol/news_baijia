@@ -81,7 +81,7 @@ def homeContentFetch(options):
         docs=[]
         for day_night_elem in day_night:
             start_time = day_night_elem[0]
-            start_time_yes = start_time + datetime.timedelta(days=-1)
+            start_time_yes = start_time + datetime.timedelta(days=-2)
             end_time = day_night_elem[1]
             start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
             end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -92,7 +92,7 @@ def homeContentFetch(options):
 
             for doc_elem in doc:
                 docs.append(doc_elem)
-            undocs = conn["news_ver2"]["googleNewsItem"].find({"$or":[{"isOnline": 0}, {"isOnline": {"$exists": 0}}],"createTime":{"$gte": start_time_yes, "$lt": end_time}, "eventId": {"$exists": 1}}).sort([("createTime", -1)])
+            undocs = conn["news_ver2"]["googleNewsItem"].find({"$or":[{"isOnline": 0}, {"isOnline": {"$exists": 0}}],"createTime":{"$gte": start_time_yes}, "eventId": {"$exists": 1}}).sort([("createTime", -1)])
             undocs_list = extratInfoInUndocs(undocs)
 
 
@@ -105,7 +105,7 @@ def homeContentFetch(options):
     else:
         # start_time, end_time = get_start_end_time()
         start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
-        start_time_yes = start_time + datetime.timedelta(days=-1)
+        start_time_yes = start_time + datetime.timedelta(days=-2)
         start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
         end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
         start_time_yes = start_time_yes.strftime('%Y-%m-%d %H:%M:%S')
@@ -116,7 +116,7 @@ def homeContentFetch(options):
 
         docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1}).sort([("createTime", -1)]).limit(50)
 
-        undocs = conn["news_ver2"]["googleNewsItem"].find({"$or":[{"isOnline": 0}, {"isOnline": {"$exists": 0}}],"createTime":{"$gte": start_time_yes, "$lt": end_time}, "eventId": {"$exists": 1}}).sort([("createTime", -1)])
+        undocs = conn["news_ver2"]["googleNewsItem"].find({"$or":[{"isOnline": 0}, {"isOnline": {"$exists": 0}}],"createTime":{"$gte": start_time_yes}, "eventId": {"$exists": 1}}).sort([("createTime", -1)])
         undocs_list = extratInfoInUndocs(undocs)
 
         # db.googleNewsItem.find({'isOnline':{"$exists": 0},'createTime':{"$gte": '2015-05-15 18:00:00',"$lt": '2015-05-16 06:00:00'}, "eventId": {"$exists": 1} }).sort( { createTime: -1 } ).count()
