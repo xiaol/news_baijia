@@ -92,7 +92,7 @@ def newsFetch_channel(channelId, page=1, limit=50):
                 if "sourceName" in weibo:
                     weibo["sourceSitename"] = weibo["sourceName"]
                     del weibo["sourceName"]
-                    sublist.append(weibo)
+                    # sublist.append(weibo)
 
                 del doc["weibo"]
 
@@ -101,7 +101,7 @@ def newsFetch_channel(channelId, page=1, limit=50):
                 if "sourceName" in weibo:
                     weibo["sourceSitename"] = weibo["sourceName"]
                     del weibo["sourceName"]
-                sublist.append(weibo)
+                # sublist.append(weibo)
 
                 del doc["weibo"]
 
