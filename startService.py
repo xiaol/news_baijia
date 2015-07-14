@@ -12,7 +12,7 @@ import tornado.httpclient
 import tornado.netutil
 import json
 from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get, point_get, \
-    praise_post,start_page_post
+    praise_post, start_page_post
 from controller.push import push_message
 
 import abstract
@@ -100,6 +100,31 @@ class NewsFetchHomeHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+class LoadMoreNewsContentHandler(tornado.web.RequestHandler):
+    def post(self):
+        args = self.request.arguments
+        type = self.get_argument("type", 0)
+        time = self.get_argument("time", None)
+        limit = self.get_argument("limit", 10)
+        id = self.get_argument("news_id", None)
+        channel_id = self.get_argument("channel_id", 0)
+
+        options = {}
+        options["limit"] = int(limit)
+        options["time"] = time
+        options["type"] = int(type)
+        options["channel_id"] = channel_id
+        options["id"] = id
+
+        if len(args) < 3:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = home_get.LoadMoreNewsContent(options)
+
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
 class FetchTimeHandler(tornado.web.RequestHandler):
     def get(self):
         timefeedback = self.get_argument("timefeedback", None)
@@ -152,6 +177,7 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         result = content_get.newsFetchContent(url, filter_urls, userId, platformType)
 
         self.write(json.dumps(result))
+
     def post(self):
         args = self.request.arguments
         filter_urls = self.get_arguments("filterurls")
@@ -160,7 +186,7 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
-            result =content_get.newsFetchContent(args['url'][0],filter_urls, userId, platformType)
+            result = content_get.newsFetchContent(args['url'][0], filter_urls, userId, platformType)
 
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
@@ -317,9 +343,10 @@ class FetchChannelListHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
+
 class StartPageHandler(tornado.web.RequestHandler):
     def post(self):
-        result =start_page_post.getStartPageContent()
+        result = start_page_post.getStartPageContent()
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
@@ -347,6 +374,7 @@ class Application(tornado.web.Application):
             (r"/news/baijia/newsFetchHome", NewsFetchHomeHandler),
             (r"/news/baijia/fetchContent", FetchContentHandler),
             (r"/news/baijia/newsFetchContent", NewsFetchContentHandler),
+            (r"/news/baijia/loadMoreFetchContent", LoadMoreNewsContentHandler),
             (r"/news/baijia/startPage", StartPageHandler),
             (r"/news/baijia/fetchLogin", FetchLoginHandler),
             (r"/news/baijia/fetchIm", FetchImHandler),
