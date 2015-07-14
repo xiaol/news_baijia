@@ -106,7 +106,7 @@ class LoadMoreNewsContentHandler(tornado.web.RequestHandler):
         type = self.get_argument("type", 0)
         time = self.get_argument("time", None)
         limit = self.get_argument("limit", 10)
-        id = self.get_argument("id", None)
+        id = self.get_argument("news_id", None)
         channel_id = self.get_argument("channel_id", 0)
 
         options = {}
@@ -116,7 +116,7 @@ class LoadMoreNewsContentHandler(tornado.web.RequestHandler):
         options["channel_id"] = channel_id
         options["id"] = id
 
-        if len(args) < 1:
+        if len(args) < 3:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
             result = home_get.LoadMoreNewsContent(options)
