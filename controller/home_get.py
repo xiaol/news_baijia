@@ -229,6 +229,9 @@ def homeContentFetch(options):
                 else:
                     continue
 
+
+        sublist = delete_duplicate_sulist(sublist)
+
         if "weibo" in doc.keys():
             weibo = doc["weibo"]
             if weibo:
@@ -659,16 +662,12 @@ def constructEvent(eventList):
         else:
             subElement = {}
             if 'text' not in eventElement.keys():
-                subElement = {'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'],
-                              'title': eventElement['title'], 'img': eventElement['imgUrls']}
+                subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'similarity': eventElement["similarity"], 'unit_vec': eventElement["unit_vec"]}
             elif 'gist' not in eventElement.keys():
-                subElement = {'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'],
-                              'title': eventElement['title'], 'img': eventElement['imgUrls'],
-                              'text': eventElement['text']}
+                subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'text': eventElement['text'], 'similarity': eventElement["similarity"], 'unit_vec': eventElement["unit_vec"]}
             else:
-                subElement = {'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'],
-                              'title': eventElement['title'], 'img': eventElement['imgUrls'],
-                              'text': eventElement['text'], 'gist': eventElement['gist']}
+                subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'text': eventElement['text'], 'gist': eventElement['gist'], 'similarity': eventElement["similarity"], 'unit_vec': eventElement["unit_vec"]}
+
             sublist.append(subElement)
             result_doc["special"] = 9
             imgUrl_ex.append(eventElement['imgUrls'])
@@ -895,16 +894,11 @@ def extratInfoInUndocs(undocs):
         title = doc["title"]
         eventId = doc["eventId"]
         if 'text' not in doc.keys():
-            undocs_list.append(
-                {"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId})
+            undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId, 'similarity': doc["similarity"], 'unit_vec': doc["unit_vec"]})
         elif 'gist' not in doc.keys():
-            undocs_list.append(
-                {"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId,
-                 "text": doc["text"]})
+            undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId, "text": doc["text"], 'similarity': doc["similarity"], 'unit_vec': doc["unit_vec"]})
         else:
-            undocs_list.append(
-                {"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId,
-                 "text": doc["text"], "gist": doc["gist"]})
+            undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId, "text": doc["text"], "gist": doc["gist"], 'similarity': doc["similarity"], 'unit_vec': doc["unit_vec"]})
 
     return undocs_list
 
@@ -912,8 +906,7 @@ def extratInfoInUndocs(undocs):
 def add_abs_to_sublist(sublist):
     result_list = []
     for sublist_elem in sublist:
-        if sublist_elem[
-            'sourceSitename'] == 'weibo' or 'text' not in sublist_elem.keys() or 'gist' not in sublist_elem.keys():
+        if sublist_elem['sourceSitename'] == 'weibo' or 'text' not in sublist_elem.keys() or 'gist' not in sublist_elem.keys():
             result_list.append(sublist_elem)
             continue
         else:
@@ -923,6 +916,36 @@ def add_abs_to_sublist(sublist):
             result_list.append(sublist_elem)
     return result_list
 
+def delete_duplicate_sulist(sublist):
+    result_list = []
+    for sublist_elem in sublist:
+        if "unit_vec" not in sublist_elem.keys():
+            result_list.append(sublist_elem)
+            continue
+        is_filter_flag = 0
+        for compare_elem in result_list:
+            if "unit_vec" not in compare_elem.keys():
+                continue
+            elem_unit_vec = sublist_elem["unit_vec"]
+            compare_elem_unit_vec = compare_elem["unit_vec"]
+            sims = calculate_sim(elem_unit_vec, compare_elem_unit_vec)
+            if sims > 0.9:
+                is_filter_flag = 1
+                break
+        if is_filter_flag == 0:
+            if sublist_elem["similarity"]<0.95:
+                result_list.append(sublist_elem)
+    return result_list
+
+def calculate_sim(elem_unit_vec, compare_elem_unit_vec):
+    sims_value = sum([elem_unit_vec[i]*compare_elem_unit_vec[i] for i in range(len(elem_unit_vec))])
+    same_word_num = sum([(1 if elem_unit_vec[i]>0 else 0)*(1 if compare_elem_unit_vec[i]>0 else 0) for i in range(len(elem_unit_vec))])
+    if same_word_num>=2:
+        sims = sims_value
+    else:
+        sims = 0.0
+
+    return sims
 
 def Get_Relate_docs(doc, docs_relate, filterurls):
     allrelate = []
