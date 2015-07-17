@@ -141,7 +141,9 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
                     up = int(comment_result['up'])
                     comment_result['up'] = up + praise_num
                 if userId and platformType and 'comment_id' in comment_result.keys():
-                    isPraiseFlag = count_praise({'userId': userId, 'platformType': platformType, 'commentId': comment_result["comment_id"]}, praise_list)
+                    isPraiseFlag = count_praise(
+                        {'userId': userId, 'platformType': platformType, 'commentId': comment_result["comment_id"]},
+                        praise_list)
                     if isPraiseFlag:
                         comment_result['isPraiseFlag'] = 1
                     else:
@@ -188,7 +190,8 @@ def get_points(points, praise_list, userId, platformType):
         else:
             point['up'] = 0
         if userId and platformType and 'commentId' in point.keys():
-            isPraiseFlag = count_praise({'userId': userId, 'platformType': platformType, 'commentId': point["commentId"]}, praise_list)
+            isPraiseFlag = count_praise(
+                {'userId': userId, 'platformType': platformType, 'commentId': point["commentId"]}, praise_list)
             if isPraiseFlag:
                 point['isPraiseFlag'] = 1
             else:
@@ -329,7 +332,9 @@ def newsFetchContent(url, filterurls, userId, platformType, updateTime=None):
                     up = int(comment_result['up'])
                     comment_result['up'] = up + praise_num
                 if userId and platformType and 'comment_id' in comment_result.keys():
-                    isPraiseFlag = count_praise({'userId': userId, 'platformType': platformType, 'commentId': comment_result["comment_id"]}, praise_list)
+                    isPraiseFlag = count_praise(
+                        {'userId': userId, 'platformType': platformType, 'commentId': comment_result["comment_id"]},
+                        praise_list)
                     if isPraiseFlag:
                         comment_result['isPraiseFlag'] = 1
                     else:
@@ -341,7 +346,7 @@ def newsFetchContent(url, filterurls, userId, platformType, updateTime=None):
             result_points.extend(points)
 
     pointsCursor = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).sort([("type", -1)])
-    points_fromdb =get_points(pointsCursor, praise_list, userId, platformType)
+    points_fromdb = get_points(pointsCursor, praise_list, userId, platformType)
     result_points.extend(points_fromdb)
 
     paragraph_comment_count = {}
@@ -367,19 +372,28 @@ def newsFetchContent(url, filterurls, userId, platformType, updateTime=None):
 
     return result
 
+
 def getImg(doc):
     if "content" in doc.keys():
         for _doc in doc['content']:
             for k, item_doc in _doc.iteritems():
                 if "img" in item_doc.keys():
-                   return item_doc['img']
+                    return item_doc['img']
+
 
 def getText(doc):
     if "content" in doc.keys():
         for _doc in doc['content']:
             for k, item_doc in _doc.iteritems():
                 if "txt" in item_doc.keys():
-                   return item_doc['txt']
+                    return item_doc['txt']
+
+
+def newsFetchContentList(type, url, filterurls, userId, platformType, updateTime=None):
+    if int(type) ==0:
+        return fetchContent(url, filterurls, userId, platformType, updateTime)
+    else:
+        return newsFetchContent(url, filterurls, userId, platformType, updateTime)
 
 def project_comments_to_paragraph(doc, comments):
     points = []
@@ -650,8 +664,11 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
 
     return allrelate
 
+
 def getContentJson():
-    return {"abs":"","baike":[],"content":"","docTime":"","docUrl":"","docUserIcon":"","douban":[],"imgUrl":"","imgWall":[],"zhihu":[],"ne":{},"originsourceSiteName":"","point":[],"relate":[],"root_class":"","title":"","updateTime":"","weibo":[],"isdoc":False}
+    return {"abs": "", "baike": [], "content": "", "docTime": "", "docUrl": "", "docUserIcon": "", "douban": [],
+            "imgUrl": "", "imgWall": [], "zhihu": [], "ne": {}, "originsourceSiteName": "", "point": [], "relate": [],
+            "root_class": "", "title": "", "updateTime": "", "weibo": [], "isdoc": False}
 
 
 import urllib, cStringIO

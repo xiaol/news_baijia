@@ -192,6 +192,27 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+
+class NewsFetchContentListHandler(tornado.web.RequestHandler):
+    def post(self):
+        args = self.request.arguments
+        type = self.get_argument("type", 0)
+        filter_urls = self.get_arguments("filterurls")
+        userId = self.get_argument("userId", None)
+        platformType = self.get_argument("platformType", None)
+        urls = self.get_argument("url", None)
+        print urls
+        result = []
+        if len(args) < 1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            for url in urls:
+                result.append(content_get.newsFetchContentList(type,url,filter_urls, userId, platformType))
+
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
 class StartDredgeUpHandler(tornado.web.RequestHandler):
     def post(self):
         args = self.request.arguments
@@ -387,6 +408,7 @@ class Application(tornado.web.Application):
             (r"/news/baijia/newsFetchHome", NewsFetchHomeHandler),
             (r"/news/baijia/fetchContent", FetchContentHandler),
             (r"/news/baijia/newsFetchContent", NewsFetchContentHandler),
+            (r"/news/baijia/newsFetchContentList", NewsFetchContentListHandler),
             (r"/news/baijia/loadMoreFetchContent", LoadMoreNewsContentHandler),
             (r"/news/baijia/startDredgeUp", StartDredgeUpHandler),
             (r"/news/baijia/startPage", StartPageHandler),
