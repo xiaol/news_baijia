@@ -179,6 +179,9 @@ def constructEvent(eventList):
 
 
 def loadMoreFetchContent(channelId, type, time, limit,id):
+    # id = pymongo.ObjectId(id)
+    import bson
+    id = bson.objectid.ObjectId(id)
     conn = DBStore._connect_news
     if type == 0:
         docs = conn['news_ver2']['NewsItems'].find(
