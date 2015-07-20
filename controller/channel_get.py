@@ -5,7 +5,7 @@ import re
 import pymongo
 import operator
 import json
-
+import bson
 DBStore = dbConn.GetDateStore()
 channelEnum = {'时事': 0, '娱乐': 1, '科技': 2, '国际': 3, '体育': 4, '财经': 5, '港台': 6, '社会': 7}
 channelDict = {0: ['内地', '社会', '国内'], 1: ['娱乐'], 2: ['科技'], 3: ['国际'], 4: ['体育'], 5: ['财经'], 6: ['港台'], 7: ['社会']}
@@ -179,8 +179,6 @@ def constructEvent(eventList):
 
 
 def loadMoreFetchContent(channelId, type, time, limit,id):
-    # id = pymongo.ObjectId(id)
-    import bson
     id = bson.objectid.ObjectId(id)
     conn = DBStore._connect_news
     if type == 0:
