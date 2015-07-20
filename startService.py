@@ -167,6 +167,7 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         filter_urls = self.get_arguments("filterurls")
         userId = self.get_argument("userId", None)
         platformType = self.get_argument("platformType", None)
+        deviceType = self.get_argument("deviceType", None)
         result = {}
         if not url:
             result["rc"] = 404
@@ -174,7 +175,7 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
             self.write(json.dumps(result))
             return
 
-        result = content_get.newsFetchContent(url, filter_urls, userId, platformType)
+        result = content_get.newsFetchContent(url, filter_urls, userId, platformType, deviceType)
 
         self.write(json.dumps(result))
 
@@ -183,14 +184,14 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         filter_urls = self.get_arguments("filterurls")
         userId = self.get_argument("userId", None)
         platformType = self.get_argument("platformType", None)
+        deviceType = self.get_argument("deviceType", None)
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
-            result = content_get.newsFetchContent(args['url'][0], filter_urls, userId, platformType)
+            result = content_get.newsFetchContent(args['url'][0], filter_urls, userId, platformType, deviceType)
 
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
-
 
 
 class NewsFetchContentListHandler(tornado.web.RequestHandler):
@@ -201,13 +202,14 @@ class NewsFetchContentListHandler(tornado.web.RequestHandler):
         userId = self.get_argument("userId", None)
         platformType = self.get_argument("platformType", None)
         urls = self.get_argument("url", None)
+        deviceType = self.get_argument("deviceType", None)
         print urls
         result = []
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
             for url in urls:
-                result.append(content_get.newsFetchContentList(type,url,filter_urls, userId, platformType))
+                result.append(content_get.newsFetchContentList(type, url, filter_urls, userId, platformType, deviceType))
 
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))

@@ -2,16 +2,13 @@
 from PIL import Image
 
 from config import dbConn
-import requests
 from home_get import del_dup_relatedoc
-import datetime
 import jieba
 import gensim
 from sklearn.svm import SVC
 from math import sqrt
 import numpy as np
 import math
-from weibo.Comments import guid
 
 DBStore = dbConn.GetDateStore()
 
@@ -209,7 +206,7 @@ def get_points(points, praise_list, userId, platformType):
     return result_points
 
 
-def newsFetchContent(url, filterurls, userId, platformType, updateTime=None):
+def newsFetchContent(url, filterurls, userId, platformType, deviceType, updateTime=None):
     conn = DBStore._connect_news
     doc = conn["news_ver2"]["NewsItems"].find_one({"source_url": url})
     if "_id" in doc.keys():
@@ -233,7 +230,15 @@ def newsFetchContent(url, filterurls, userId, platformType, updateTime=None):
     result['abs'] = getText(doc)
 
     if 'content' in doc.keys():
-        result['content'] = doc['content']
+        if deviceType == 'IOS':
+            list = []
+            docs=doc['content']
+            for doc in docs:
+                for key in doc.keys():
+                    list.append(doc[key])
+            result['content'] = list
+        else:
+            result['content'] = doc['content']
 
     if 'ne' in doc.keys():
         result['ne'] = doc['ne']
@@ -389,11 +394,12 @@ def getText(doc):
                     return item_doc['txt']
 
 
-def newsFetchContentList(type, url, filterurls, userId, platformType, updateTime=None):
-    if int(type) ==0:
+def newsFetchContentList(type, url, filterurls, userId, platformType, deviceType, updateTime=None):
+    if int(type) == 0:
         return fetchContent(url, filterurls, userId, platformType, updateTime)
     else:
-        return newsFetchContent(url, filterurls, userId, platformType, updateTime)
+        return newsFetchContent(url, filterurls, userId, platformType, updateTime, deviceType)
+
 
 def project_comments_to_paragraph(doc, comments):
     points = []
