@@ -187,7 +187,7 @@ def loadMoreFetchContent(channelId, type, time, limit,id):
     else:
 
         docs = conn['news_ver2']['NewsItems'].find(
-            {"channel_id": str(channelId), "imgnum": {'$gt': 0}, 'create_time': {'$exists': True},'create_time':{'$lte': time},'_id' : {'$nin' :[id]}}).sort("create_time",pymongo.ASCENDING).limit(limit)
+            {"channel_id": str(channelId), "imgnum": {'$gt': 0}, 'create_time': {'$exists': True},'create_time':{'$lte': time},'_id' : {'$nin' :[id]}}).sort("create_time",pymongo.DESCENDING).limit(limit)
     results_docs = reorganize_news(docs, conn)
     return results_docs
 
