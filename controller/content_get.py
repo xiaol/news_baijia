@@ -233,12 +233,18 @@ def newsFetchContent(url, filterurls, userId, platformType, deviceType, updateTi
         if deviceType == 'IOS':
             contentlist = []
             docs = doc['content']
+            i = 0
             for doc in docs:
                 for key in doc.keys():
-                    if doc[key].keys()[0] == 'img_info' and contentlist[-1].keys()[0] == 'img':
+                    if doc[key].keys()[0] == 'img_info' and contentlist[-1].keys()[1] == 'img':
                         contentlist[-1]['img_info'] = doc[key].values()[0]
+                        contentlist[-1]['index'] = i - 1
+                        i = i + 1
                     else:
-                        contentlist.append(doc[key])
+                        contentDoc = doc[key]
+                        contentDoc['index'] = i
+                        contentlist.append(contentDoc)
+                        i=i+1
             result['content'] = contentlist
         else:
             result['content'] = doc['content']
