@@ -23,10 +23,10 @@ def getStartPageContent():
             results_docs['updateTime'] = doc['updateTime']
         if "sourceUrl"in doc.keys():
             url = doc['sourceUrl']
+    news_dict.append(url)
     for doc in docs_news:
         if "sourceUrl"in doc.keys():
             if(doc['sourceUrl']!=url):
                 news_dict.append(doc['sourceUrl'])
-    news_dict.append(url)
     results_docs['news_url_list']= news_dict
     return results_docs
