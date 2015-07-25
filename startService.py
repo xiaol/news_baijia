@@ -12,7 +12,7 @@ import tornado.httpclient
 import tornado.netutil
 import json
 from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get, point_get, \
-    praise_post, start_page_post
+    praise_post, start_page_post, dredge_up_post
 from controller.push import push_message
 
 import abstract
@@ -167,6 +167,7 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         filter_urls = self.get_arguments("filterurls")
         userId = self.get_argument("userId", None)
         platformType = self.get_argument("platformType", None)
+        deviceType = self.get_argument("deviceType", None)
         result = {}
         if not url:
             result["rc"] = 404
@@ -174,7 +175,7 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
             self.write(json.dumps(result))
             return
 
-        result = content_get.newsFetchContent(url, filter_urls, userId, platformType)
+        result = content_get.newsFetchContent(url, filter_urls, userId, platformType, deviceType)
 
         self.write(json.dumps(result))
 
@@ -183,11 +184,46 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         filter_urls = self.get_arguments("filterurls")
         userId = self.get_argument("userId", None)
         platformType = self.get_argument("platformType", None)
+        deviceType = self.get_argument("deviceType", None)
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
-            result = content_get.newsFetchContent(args['url'][0], filter_urls, userId, platformType)
+            result = content_get.newsFetchContent(args['url'][0], filter_urls, userId, platformType, deviceType)
 
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
+class NewsFetchContentListHandler(tornado.web.RequestHandler):
+    def post(self):
+        args = self.request.arguments
+        type = self.get_argument("type", 0)
+        filter_urls = self.get_arguments("filterurls")
+        userId = self.get_argument("userId", None)
+        platformType = self.get_argument("platformType", None)
+        urls = self.get_argument("url", None)
+        deviceType = self.get_argument("deviceType", None)
+        print urls
+        result = []
+        if len(args) < 1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            for url in urls:
+                result.append(content_get.newsFetchContentList(type, url, filter_urls, userId, platformType, deviceType))
+
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
+class StartDredgeUpHandler(tornado.web.RequestHandler):
+    def post(self):
+        args = self.request.arguments
+        user_id = self.get_argument("user_id", None)
+        content = self.get_argument("content", None)
+        if len(args) < 1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = dredge_up_post.startDredgeUp(user_id, content)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
@@ -374,7 +410,9 @@ class Application(tornado.web.Application):
             (r"/news/baijia/newsFetchHome", NewsFetchHomeHandler),
             (r"/news/baijia/fetchContent", FetchContentHandler),
             (r"/news/baijia/newsFetchContent", NewsFetchContentHandler),
+            (r"/news/baijia/newsFetchContentList", NewsFetchContentListHandler),
             (r"/news/baijia/loadMoreFetchContent", LoadMoreNewsContentHandler),
+            (r"/news/baijia/startDredgeUp", StartDredgeUpHandler),
             (r"/news/baijia/startPage", StartPageHandler),
             (r"/news/baijia/fetchLogin", FetchLoginHandler),
             (r"/news/baijia/fetchIm", FetchImHandler),
