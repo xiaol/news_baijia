@@ -19,7 +19,7 @@ from PIL import Image
 import datetime
 from requests.exceptions import Timeout, ConnectionError
 from text_classifier import get_category_by_hack
-from analyzer import jieba
+
 
 import gensim
 from math import sqrt
@@ -40,18 +40,19 @@ path_add = '/'.join(path_add)
 
 sys.path.append(path_add+"/weibo/")
 sys.path.append(path_add+"/controller/")
+sys.path.append(path_add+"/analyzer/")
 sys.path.append(path_add)
 try:
     from weibo import weibo_relate_docs_get, user_info_get
     from controller.utils import get_start_end_time, is_number
     from weibo import Comments
+    from analyzer import jieba
 except ImportError:
     import user_info_get
     import weibo_relate_docs_get
     from utils import get_start_end_time, is_number
     import Comments
     print "import error"
-
 from abstract import KeywordExtraction
 from para_sim.TextRank4ZH.gist import Gist
 
