@@ -19,6 +19,7 @@ from PIL import Image
 import datetime
 from requests.exceptions import Timeout, ConnectionError
 from text_classifier import get_category_by_hack
+from analyzer import jieba
 
 import gensim
 from math import sqrt
@@ -606,6 +607,8 @@ def do_content_img_task(params):
     r_text = requests.get(apiUrl_text)
     text = (r_text.json())["text"]
     if text:
+        text = trim_new_line_character(text)
+    if text:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
         gist = Gist().get_gist_str(text)
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"gist": gist}})
@@ -962,6 +965,8 @@ def do_event_task(params, start_time, end_time):
 
                 # set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", top_story)
                 eventCount += 1
+
+            duplicate_docs_check(domain_events)
 
             print 'found topic events count ===>' , eventCount
 
@@ -1430,6 +1435,104 @@ def calculate_sim(vec, names, unit_vec):
             sims[name] = 0.0
 
     return sims
+
+
+def duplicate_docs_check(domain_events):
+    events = []
+    for event in domain_events:
+
+        if "sentence" not in event.keys():
+            text = event["text"]
+            paragraph_list = text.split('\n')
+            sentence_dict = {}
+            sentence_cut_dict = {}
+            paragraph_dict = {}
+            i = 0
+            for paragraph_elem in paragraph_list:
+                if len(paragraph_elem)<=4:
+                    continue
+                sentence_dict[str(i)], sentence_cut_dict[str(i)] = extractSentenceBlock(paragraph_elem)
+                paragraph_dict[str(i)] = paragraph_elem
+                # result_dict[str(i)]
+                i = i+1
+            event["sentence"] = sentence_dict
+            event["sentence_cut"] = sentence_cut_dict
+            event["paragraph"] = paragraph_dict
+            conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": event["_id"]}, {"$set": {"sentence": sentence_dict
+                                                                                        , "sentence_cut": sentence_cut_dict
+                                                                                        , "paragraph": paragraph_dict}})
+
+        events.append(event)
+
+
+    for event in events:
+        main_event = event
+        url = main_event["_id"]
+        result = {}
+        for event_elem in events:
+            if url == event_elem["_id"]:
+                continue
+            result = compare_doc_is_duplicate(main_event, event_elem, result)
+        if len(result) >0:
+            conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"duplicate_check": result}})
+
+
+def compare_doc_is_duplicate(main_event, event_elem,result):
+    sentence_cut = main_event["sentence_cut"]
+    paragraph = event_elem["paragraph"]
+    url = event_elem["_id"]
+
+
+    for paragraph_key, paragraph_value in sentence_cut.items():
+        for sentence_key, sentence_value in paragraph_value.items():
+            top_match_ratio = 0.0
+            top_match_paragraph_id = "-1"
+            keyword_num = len(sentence_value)
+            if keyword_num <=5:
+                continue
+            for compare_paragraph_key , compare_paragraph_value in paragraph.items():
+                match_num = 0
+                for sentence_keyword in sentence_value:
+                    compare_result = compare_paragraph_value.find(sentence_keyword)
+                    if compare_result >= 0:
+                        match_num = match_num + 1
+                match_ratio = match_num / (keyword_num * 1.0)
+                if match_ratio > top_match_ratio:
+                    top_match_ratio = match_ratio
+                    top_match_paragraph_id = compare_paragraph_key
+            if top_match_ratio > 0.8:
+                if paragraph_key not in result.keys():
+                    result[paragraph_key] = {}
+                if sentence_key not in result[paragraph_key].keys():
+                    result[paragraph_key][sentence_key] = []
+                    result[paragraph_key][sentence_key] = [{"url": url, "paragraph_id": top_match_paragraph_id, "match_ratio": top_match_ratio}]
+                else:
+                    result[paragraph_key][sentence_key].append([{"url": url, "paragraph_id": top_match_paragraph_id, "match_ratio": top_match_ratio}])
+    return result
+
+
+
+
+
+
+def extractSentenceBlock(doc):
+    SENTENCE_SEP=re.compile(ur'[。\n!！]')
+    result = {}
+    result_cut = {}
+    doc_array=re.split(SENTENCE_SEP, doc.encode('utf8').decode("utf8"))
+    i = 0
+    for elem in doc_array:
+        if len(elem)<=5:
+            continue
+        result[str(i)] = elem.strip()
+        keyword = set()
+        keyword = {word for word in jieba.cut_with_stop(elem.strip())}
+        keyword_list = list(keyword)
+        result_cut[str(i)] = keyword_list
+        # result.append(elem.strip())
+        i = i + 1
+    return result, result_cut
+
 
 def set_googlenews_by_url_with_field_and_value_dict(url, condition_dict):
 
