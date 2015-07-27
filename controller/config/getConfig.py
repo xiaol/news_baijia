@@ -14,7 +14,7 @@ pwd_2 = pwd_2[:-1]
 pwd_2 = '/'.join(pwd_2)
 
 try:
-    with open(os.path.join(pwd,'controller/config/config.ini'),'r') as configfile:
+    with open(os.path.join(pwd,'/Users/Gavin/work/news_baijia/controller/config/config.ini'),'r') as configfile:
         cf.readfp(configfile)
 except IOError:
     with open(os.path.join(pwd_2,'controller/config/config.ini'),'r') as configfile:
