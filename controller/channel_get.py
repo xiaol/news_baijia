@@ -5,7 +5,7 @@ import re
 import pymongo
 import operator
 import json
-
+import bson
 DBStore = dbConn.GetDateStore()
 channelEnum = {'时事': 0, '娱乐': 1, '科技': 2, '国际': 3, '体育': 4, '财经': 5, '港台': 6, '社会': 7}
 channelDict = {0: ['内地', '社会', '国内'], 1: ['娱乐'], 2: ['科技'], 3: ['国际'], 4: ['体育'], 5: ['财经'], 6: ['港台'], 7: ['社会']}
@@ -179,6 +179,7 @@ def constructEvent(eventList):
 
 
 def loadMoreFetchContent(channelId, type, time, limit,id):
+    id = bson.objectid.ObjectId(id)
     conn = DBStore._connect_news
     if type == 0:
         docs = conn['news_ver2']['NewsItems'].find(
@@ -186,7 +187,7 @@ def loadMoreFetchContent(channelId, type, time, limit,id):
     else:
 
         docs = conn['news_ver2']['NewsItems'].find(
-            {"channel_id": str(channelId), "imgnum": {'$gt': 0}, 'create_time': {'$exists': True},'create_time':{'$lte': time},'_id' : {'$nin' :[id]}}).sort("create_time",pymongo.ASCENDING).limit(limit)
+            {"channel_id": str(channelId), "imgnum": {'$gt': 0}, 'create_time': {'$exists': True},'create_time':{'$lte': time},'_id' : {'$nin' :[id]}}).sort("create_time",pymongo.DESCENDING).limit(limit)
     results_docs = reorganize_news(docs, conn)
     return results_docs
 

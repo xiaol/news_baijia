@@ -2,16 +2,13 @@
 from PIL import Image
 
 from config import dbConn
-import requests
 from home_get import del_dup_relatedoc
-import datetime
 import jieba
 import gensim
 from sklearn.svm import SVC
 from math import sqrt
 import numpy as np
 import math
-from weibo.Comments import guid
 
 DBStore = dbConn.GetDateStore()
 
@@ -141,7 +138,9 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
                     up = int(comment_result['up'])
                     comment_result['up'] = up + praise_num
                 if userId and platformType and 'comment_id' in comment_result.keys():
-                    isPraiseFlag = count_praise({'userId': userId, 'platformType': platformType, 'commentId': comment_result["comment_id"]}, praise_list)
+                    isPraiseFlag = count_praise(
+                        {'userId': userId, 'platformType': platformType, 'commentId': comment_result["comment_id"]},
+                        praise_list)
                     if isPraiseFlag:
                         comment_result['isPraiseFlag'] = 1
                     else:
@@ -188,7 +187,8 @@ def get_points(points, praise_list, userId, platformType):
         else:
             point['up'] = 0
         if userId and platformType and 'commentId' in point.keys():
-            isPraiseFlag = count_praise({'userId': userId, 'platformType': platformType, 'commentId': point["commentId"]}, praise_list)
+            isPraiseFlag = count_praise(
+                {'userId': userId, 'platformType': platformType, 'commentId': point["commentId"]}, praise_list)
             if isPraiseFlag:
                 point['isPraiseFlag'] = 1
             else:
@@ -206,7 +206,7 @@ def get_points(points, praise_list, userId, platformType):
     return result_points
 
 
-def newsFetchContent(url, filterurls, userId, platformType, updateTime=None):
+def newsFetchContent(url, filterurls, userId, platformType, deviceType, updateTime=None):
     conn = DBStore._connect_news
     doc = conn["news_ver2"]["NewsItems"].find_one({"source_url": url})
     if "_id" in doc.keys():
@@ -229,8 +229,28 @@ def newsFetchContent(url, filterurls, userId, platformType, updateTime=None):
     result['imgUrl'] = getImg(doc)
     result['abs'] = getText(doc)
 
+    if "title" in doc.keys():
+        result["title"] = doc["title"]
+
     if 'content' in doc.keys():
-        result['content'] = doc['content']
+        if deviceType == 'IOS':
+            contentlist = []
+            docs = doc['content']
+            i = 0
+            for doc in docs:
+                for key in doc.keys():
+                    if doc[key].keys()[0] == 'img_info' and contentlist[-1].keys()[1] == 'img':
+                        contentlist[-1]['img_info'] = doc[key].values()[0]
+                        contentlist[-1]['index'] = i - 1
+                        i = i + 1
+                    else:
+                        contentDoc = doc[key]
+                        contentDoc['index'] = i
+                        contentlist.append(contentDoc)
+                        i=i+1
+            result['content'] = contentlist
+        else:
+            result['content'] = doc['content']
 
     if 'ne' in doc.keys():
         result['ne'] = doc['ne']
@@ -248,26 +268,6 @@ def newsFetchContent(url, filterurls, userId, platformType, updateTime=None):
             result['weibo'] = [weibo]
         elif isinstance(weibo, list) and len(weibo) > 0:
             result['weibo'] = weibo
-
-    if doc_comment:
-        if doc_comment["comments"] is not None:
-            if 'weibo' not in doc.keys():
-                result['weibo'] = []
-            comments_list = doc_comment["comments"]
-            for comments_elem in comments_list:
-                comments_elem_dict = {}
-                dict_len = len(comments_elem)
-                comment_result = comments_elem[str(dict_len)]
-                comments_elem_dict["user"] = comment_result["author_name"]
-                comments_elem_dict["title"] = comment_result["message"]
-                comments_elem_dict["sourceSitename"] = "weibo"
-                comments_elem_dict["img"] = ""
-                comments_elem_dict["url"] = ""
-                comments_elem_dict["profileImageUrl"] = ""
-                comments_elem_dict["isCommentFlag"] = 1
-                comments_elem_dict["up"] = comment_result["up"]
-                comments_elem_dict["down"] = comment_result["down"]
-                result['weibo'].append(comments_elem_dict)
 
     if 'douban' in doc.keys():
         douban = doc['douban']
@@ -305,8 +305,25 @@ def newsFetchContent(url, filterurls, userId, platformType, updateTime=None):
     if "update_time" in doc.keys():
         result["updateTime"] = doc["update_time"]
 
-    if "title" in doc.keys():
-        result["title"] = doc["title"]
+    if doc_comment:
+        if doc_comment["comments"] is not None:
+            if 'weibo' not in doc.keys():
+                result['weibo'] = []
+            comments_list = doc_comment["comments"]
+            for comments_elem in comments_list:
+                comments_elem_dict = {}
+                dict_len = len(comments_elem)
+                comment_result = comments_elem[str(dict_len)]
+                comments_elem_dict["user"] = comment_result["author_name"]
+                comments_elem_dict["title"] = comment_result["message"]
+                comments_elem_dict["sourceSitename"] = "weibo"
+                comments_elem_dict["img"] = ""
+                comments_elem_dict["url"] = ""
+                comments_elem_dict["profileImageUrl"] = ""
+                comments_elem_dict["isCommentFlag"] = 1
+                comments_elem_dict["up"] = comment_result["up"]
+                comments_elem_dict["down"] = comment_result["down"]
+                result['weibo'].append(comments_elem_dict)
 
     result["relate"] = allrelate
     result["rc"] = 200
@@ -329,7 +346,9 @@ def newsFetchContent(url, filterurls, userId, platformType, updateTime=None):
                     up = int(comment_result['up'])
                     comment_result['up'] = up + praise_num
                 if userId and platformType and 'comment_id' in comment_result.keys():
-                    isPraiseFlag = count_praise({'userId': userId, 'platformType': platformType, 'commentId': comment_result["comment_id"]}, praise_list)
+                    isPraiseFlag = count_praise(
+                        {'userId': userId, 'platformType': platformType, 'commentId': comment_result["comment_id"]},
+                        praise_list)
                     if isPraiseFlag:
                         comment_result['isPraiseFlag'] = 1
                     else:
@@ -341,7 +360,7 @@ def newsFetchContent(url, filterurls, userId, platformType, updateTime=None):
             result_points.extend(points)
 
     pointsCursor = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).sort([("type", -1)])
-    points_fromdb =get_points(pointsCursor, praise_list, userId, platformType)
+    points_fromdb = get_points(pointsCursor, praise_list, userId, platformType)
     result_points.extend(points_fromdb)
 
     paragraph_comment_count = {}
@@ -367,19 +386,29 @@ def newsFetchContent(url, filterurls, userId, platformType, updateTime=None):
 
     return result
 
+
 def getImg(doc):
     if "content" in doc.keys():
         for _doc in doc['content']:
             for k, item_doc in _doc.iteritems():
                 if "img" in item_doc.keys():
-                   return item_doc['img']
+                    return item_doc['img']
+
 
 def getText(doc):
     if "content" in doc.keys():
         for _doc in doc['content']:
             for k, item_doc in _doc.iteritems():
                 if "txt" in item_doc.keys():
-                   return item_doc['txt']
+                    return item_doc['txt']
+
+
+def newsFetchContentList(type, url, filterurls, userId, platformType, deviceType, updateTime=None):
+    if int(type) == 0:
+        return fetchContent(url, filterurls, userId, platformType, updateTime)
+    else:
+        return newsFetchContent(url, filterurls, userId, platformType, updateTime, deviceType)
+
 
 def project_comments_to_paragraph(doc, comments):
     points = []
@@ -650,8 +679,11 @@ def Get_Relate_docs(doc, docs_relate, filterurls):
 
     return allrelate
 
+
 def getContentJson():
-    return {"abs":"","baike":[],"content":"","docTime":"","docUrl":"","docUserIcon":"","douban":[],"imgUrl":"","imgWall":[],"zhihu":[],"ne":{},"originsourceSiteName":"","point":[],"relate":[],"root_class":"","title":"","updateTime":"","weibo":[],"isdoc":False}
+    return {"abs": "", "baike": [], "content": "", "docTime": "", "docUrl": "", "docUserIcon": "", "douban": [],
+            "imgUrl": "", "imgWall": [], "zhihu": [], "ne": {}, "originsourceSiteName": "", "point": [], "relate": [],
+            "root_class": "", "title": "", "updateTime": "", "weibo": [], "isdoc": False}
 
 
 import urllib, cStringIO
