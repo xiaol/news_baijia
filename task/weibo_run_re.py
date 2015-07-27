@@ -1252,8 +1252,8 @@ def fetch_url_title_lefturl_pairs(docs):
         lefturl = ''
         sourceSiteName = ''
 
-        if "sourceSiteName" in doc.keys():
-            sourceSiteName = doc["sourceSiteName"]
+        if "originsourceSiteName" in doc.keys():
+            sourceSiteName = doc["originsourceSiteName"]
 
         if "relate" in relate_doc.keys():
             relate = relate_doc['relate']
