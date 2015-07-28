@@ -9,7 +9,7 @@ from sklearn.svm import SVC
 from math import sqrt
 import numpy as np
 import math
-
+import bson
 DBStore = dbConn.GetDateStore()
 
 
@@ -206,9 +206,13 @@ def get_points(points, praise_list, userId, platformType):
     return result_points
 
 
-def newsFetchContent(url, filterurls, userId, platformType, deviceType, updateTime=None):
+def newsFetchContent(news_id,url, filterurls, userId, platformType, deviceType, updateTime=None):
     conn = DBStore._connect_news
-    doc = conn["news_ver2"]["NewsItems"].find_one({"source_url": url})
+    if news_id:
+        id = bson.objectid.ObjectId(news_id)
+        doc = conn["news_ver2"]["NewsItems"].find_one({"_id": id})
+    else:
+        doc = conn["news_ver2"]["NewsItems"].find_one({"source_url": url})
     if "_id" in doc.keys():
         doc.pop('_id')
 
