@@ -1467,8 +1467,11 @@ def duplicate_docs_check(domain_events):
 
 
     for event in events:
+
         main_event = event
         url = main_event["_id"]
+
+
         result = {}
         for event_elem in events:
             if url == event_elem["_id"]:
@@ -1476,6 +1479,62 @@ def duplicate_docs_check(domain_events):
             result = compare_doc_is_duplicate(main_event, event_elem, result)
         if len(result) >0:
             conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"duplicate_check": result}})
+
+
+
+        common_opinion, self_opinion = extract_opinion(main_event,result)
+        event["self_opinion"] = self_opinion
+        event["common_opinion"] = common_opinion
+
+        # f = open("/Users/yangjiwen/Documents/yangjw/duplicate_case.txt","a")
+        # if "eventId" in main_event.keys():
+        #     f.write("event_id:"+str(main_event["eventId"]).encode('utf-8')+'\n\n'
+        #             "新闻url:"+str(main_event["_id"]).encode('utf-8')+'\n\n'
+        #             "独家观点:"+str(self_opinion).encode('utf-8')+'\n\n'
+        #             "共同观点:"+str(common_opinion).encode('utf-8')+'\n\n'
+        #             "----------------------------------------------------"
+        #             )
+        #     f.close()
+
+    for event in events:
+        main_event = event
+        url = main_event["_id"]
+        result ={}
+        result["self_opinion"] = []
+        result["common_opinion"] = []
+        for event_elem in events:
+            if url == event_elem["_id"]:
+                continue
+            else:
+                if len(event_elem["self_opinion"])>=10:
+                    result["self_opinion"].append({"self_opinion": event_elem["self_opinion"], "url": event_elem["_id"]})
+                if len(event_elem["common_opinion"])>10:
+                    result["common_opinion"].append({"common_opinion": event_elem["common_opinion"], "url": event_elem["_id"]})
+
+        conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"relate_opinion": result}})
+
+
+
+def extract_opinion(main_event,result):
+    sentence = main_event["sentence"]
+    common_opinion=''
+    self_opinion = ''
+    for paragraph_key, paragraph_value in sentence.items():
+        if paragraph_key in result.keys():
+            for sentence_key, sentence_value in paragraph_value.items():
+                if sentence_key in result[paragraph_key].keys():
+                    common_opinion=common_opinion + sentence_value +'。'
+                else:
+                    self_opinion = self_opinion + sentence_value + '。'
+        else:
+            for sentence_key, sentence_value in paragraph_value.items():
+                self_opinion=self_opinion+sentence_value+'。'
+    return  common_opinion, self_opinion
+
+
+
+
+
 
 
 def compare_doc_is_duplicate(main_event, event_elem,result):
@@ -1502,13 +1561,48 @@ def compare_doc_is_duplicate(main_event, event_elem,result):
                     top_match_ratio = match_ratio
                     top_match_paragraph_id = compare_paragraph_key
             if top_match_ratio > 0.8:
+                # f = open("/Users/yangjiwen/Documents/yangjw/duplicate_case.txt","a")
+                # f.write("mainurl:"+str(main_event["_id"]).encode('utf-8')
+                #             +"main_paragraph_id:"+str(paragraph_key).encode('utf-8')
+                #             +"main_sentence_id:"+str(sentence_key).encode('utf-8')
+                #             +"sentence_content:"+str(main_event["sentence"][paragraph_key][sentence_key]).encode('utf-8')
+                #             +"sentence_cut_content:"+str(','.join(sentence_value)).encode('utf-8')
+                #             +"relateurl:"+str(url).encode('utf-8')
+                #             +"realte_paragraph_id:"+str(top_match_paragraph_id).encode('utf-8')
+                #             +"match_ratio:"+str(top_match_ratio).encode('utf-8')
+                #             +"relate_paragraph_content"+str(paragraph[top_match_paragraph_id]).encode('utf-8')
+                #             )
+
+
+
+
+
+                # f.write("*"+str(main_event["_id"]).encode('utf-8')
+                #             +"*"+str(paragraph_key).encode('utf-8')
+                #             +"*"+str(sentence_key).encode('utf-8')
+                #             +"*"+str(main_event["sentence"][paragraph_key][sentence_key]).encode('utf-8')
+                #             +"*"+str(','.join(sentence_value)).encode('utf-8')
+                #             +"*"+str(url).encode('utf-8')
+                #             +"*"+str(top_match_paragraph_id).encode('utf-8')
+                #             +"*"+str(top_match_ratio).encode('utf-8')
+                #             +"*"+str(paragraph[top_match_paragraph_id]).encode('utf-8')
+                #             )
+                #
+                #
+                # f.write('\n')
+                # f.close()
                 if paragraph_key not in result.keys():
                     result[paragraph_key] = {}
                 if sentence_key not in result[paragraph_key].keys():
                     result[paragraph_key][sentence_key] = []
                     result[paragraph_key][sentence_key] = [{"url": url, "paragraph_id": top_match_paragraph_id, "match_ratio": top_match_ratio}]
+
                 else:
                     result[paragraph_key][sentence_key].append([{"url": url, "paragraph_id": top_match_paragraph_id, "match_ratio": top_match_ratio}])
+
+
+
+
     return result
 
 

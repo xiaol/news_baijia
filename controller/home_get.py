@@ -10,7 +10,9 @@ from utils import get_start_end_time
 from pymongo.read_preferences import ReadPreference
 from channel_get import fetch_channel, newsFetch_channel,loadMoreFetchContent
 from para_sim.TextRank4ZH.gist import Gist
+import task.requests_with_sleep as requests
 # from content_get import Get_Relate_docs
+import urllib.urlencode
 
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
@@ -549,6 +551,7 @@ def newsHomeContentFetch(options):
             if zhihu:
                 isZhihuFlag = 1
 
+
             # if isinstance(zhihu, dict):
             #     zhihu["sourceSitename"] = "zhihu"
             #     sublist.append(zhihu)
@@ -911,10 +914,27 @@ def add_abs_to_sublist(sublist):
             continue
         else:
             text = sublist_elem['text']
+            gist = sublist_elem['gist']
+            title = sentence_compressor(gist)
             # sublist_elem['title'] = Gist().get_gist_str(text)
-            sublist_elem['title'] = sublist_elem['gist']
+            sublist_elem['title'] = title
             result_list.append(sublist_elem)
     return result_list
+
+
+def sentence_compressor(gist):
+    gist = urlencode(gist)
+    apiUrl_text = "http://60.28.29.37:8080/SentenceCompressor?sentence=" + gist
+    r_text = requests.get(apiUrl_text)
+    if r_text.status_code == 200:
+
+        text = (r_text.json())["text"]
+
+        return text["result"]
+    else:
+        return gist
+
+
 
 def delete_duplicate_sulist(sublist):
     result_list = []
