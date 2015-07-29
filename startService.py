@@ -199,11 +199,14 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
 class NewsFetchContentListHandler(tornado.web.RequestHandler):
     def post(self):
         args = self.request.arguments
+        print "yuanhuirequest", self.request
+        print "yuanhuiargs", args
         type = self.get_argument("type", 0)
         filter_urls = self.get_arguments("filterurls")
         userId = self.get_argument("userId", None)
         platformType = self.get_argument("platformType", None)
         urls = self.get_argument("url", None)
+        print "yuanhuiurls", urls
         deviceType = self.get_argument("deviceType", None)
         urls = json.loads(urls)
         result = []
