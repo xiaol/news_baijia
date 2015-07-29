@@ -12,7 +12,7 @@ from channel_get import fetch_channel, newsFetch_channel,loadMoreFetchContent
 from para_sim.TextRank4ZH.gist import Gist
 import task.requests_with_sleep as requests
 # from content_get import Get_Relate_docs
-import urllib.urlencode
+from AI_funcs.sen_compr.text_handler import SentenceCompressor
 
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
@@ -923,16 +923,12 @@ def add_abs_to_sublist(sublist):
 
 
 def sentence_compressor(gist):
-    gist = urlencode(gist)
-    apiUrl_text = "http://60.28.29.37:8080/SentenceCompressor?sentence=" + gist
-    r_text = requests.get(apiUrl_text)
-    if r_text.status_code == 200:
+    sencom = SentenceCompressor()
+    sencom = sencom.get_compression_result(raw_sentence=gist)
+    result = sencom["result"]
+    sentence = sencom["sentence"]
+    return result
 
-        text = (r_text.json())["text"]
-
-        return text["result"]
-    else:
-        return gist
 
 
 
