@@ -205,7 +205,7 @@ class NewsFetchContentListHandler(tornado.web.RequestHandler):
         platformType = self.get_argument("platformType", None)
         urls = self.get_argument("url", None)
         deviceType = self.get_argument("deviceType", None)
-        print urls
+        urls = json.loads(urls)
         result = []
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
