@@ -173,6 +173,10 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
     if (flag == False):
         result["isdoc"] = False
 
+
+    if "relate_opinion" in doc.keys():
+        result["relate_opinion"] = doc["relate_opinion"]
+
     return result
 
 
