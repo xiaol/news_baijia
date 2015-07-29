@@ -915,9 +915,9 @@ def add_abs_to_sublist(sublist):
         else:
             text = sublist_elem['text']
             gist = sublist_elem['gist']
-            title = sentence_compressor(gist)
+            # title = sentence_compressor(gist)
             # sublist_elem['title'] = Gist().get_gist_str(text)
-            sublist_elem['title'] = title
+            sublist_elem['title'] = gist
             result_list.append(sublist_elem)
     return result_list
 
