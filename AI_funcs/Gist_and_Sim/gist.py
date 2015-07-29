@@ -37,16 +37,9 @@ class Gist:
             print self.presult
             return self.presult
 
-    def get_gist(self, text_dict = {}):
+    def get_gist(self, text_dict={}):
         self.gresult = {}
         for key, value in text_dict.iteritems():
-            # # self.tr4w = TextRank4Keyword(self.stop_words_file)  # 导入停止词
-            # #使用词性过滤，文本小写，窗口为2
-            # self.tr4w.train(text=value, speech_tag_filter=True, lower=True, window=2)
-            # # 20个关键词且每个的长度最小为1
-            # self.wresult = ' '.join(self.tr4w.get_keywords(20, word_min_len=1))
-            # # 20个关键词去构造短语，短语在原文本中出现次数最少为2
-            # self.presult = ' '.join(self.tr4w.get_keyphrases(keywords_num=20, min_occur_num= 2))
             self.tr4s = TextRank4Sentence(self.stop_words_file)
             # 使用词性过滤，文本小写，使用words_all_filters生成句子之间的相似性
             self.tr4s.train(text=value, speech_tag_filter=True, lower=True, source = 'all_filters')
@@ -159,11 +152,9 @@ if __name__ == "__main__":
 
 记者了解到，目前余正伟已离开监利返回重庆，两名家属则留守在监利等待其妻消息。"""
 
+    txt_dic = {"听力设备故障": u, "枪案":v,"美舰找事":w,"沉船":m,"幸存者":n}
 
-
-
-    text_dict = {"听力设备故障": u, "枪案":v,"美舰找事":w,"沉船":m,"幸存者":n}
-    a = Gist().get_gist(text_dict)
+    a = Gist().get_gist(txt_dic)
 
 
 

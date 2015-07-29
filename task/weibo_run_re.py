@@ -1258,8 +1258,8 @@ def fetch_url_title_lefturl_pairs(docs):
         lefturl = ''
         sourceSiteName = ''
 
-        if "sourceSiteName" in doc.keys():
-            sourceSiteName = doc["sourceSiteName"]
+        if "originsourceSiteName" in doc.keys():
+            sourceSiteName = doc["originsourceSiteName"]
 
         if "relate" in relate_doc.keys():
             relate = relate_doc['relate']
@@ -1672,6 +1672,7 @@ def test_extract_tags():
     print " ".join(extract_tags_helper("阿里在中国最美公路旁边建了一个数据中心"))
 
 
+
 if __name__ == '__main__':
 
     # if False != width_height_ratio_meet_condition(100, 900, 4):
@@ -1703,7 +1704,6 @@ if __name__ == '__main__':
             time.sleep(60)
 
     # GetWeibo("孙楠 歌手")
-
 
 
 
