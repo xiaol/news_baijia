@@ -230,6 +230,34 @@ class FetchDredgeUpStatusHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+class CreateAlbumHandler(tornado.web.RequestHandler):
+    def post(self):
+        args = self.request.arguments
+        user_id = self.get_argument("user_id", None)
+        album_title = self.get_argument("album_title", None)
+        album_des = self.get_argument("album_des", None)
+        album_img = self.get_argument("album_img", None)
+        album_news_count = self.get_argument("album_news_count", None)
+        if len(args) < 1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = dredge_up_post.createAlbum(user_id, album_title, album_des, album_img, album_news_count)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
+class FetchAlbumListHandler(tornado.web.RequestHandler):
+    def post(self):
+        args = self.request.arguments
+        user_id = self.get_argument("user_id", None)
+        if len(args) < 1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = dredge_up_post.fetchAlbumList(user_id)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
 class FetchLoginHandler(tornado.web.RequestHandler):
     def get(self):
         # updateTime = self.get_argument("updateTime", None)
@@ -423,6 +451,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/loadMoreFetchContent", LoadMoreNewsContentHandler),
             (r"/news/baijia/dredgeUpStatus", FetchDredgeUpStatusHandler),
             (r"/news/baijia/startPage", StartPageHandler),
+            (r"/news/baijia/createAlbum", CreateAlbumHandler),
+            (r"/news/baijia/fetchAlbumList", FetchAlbumListHandler),
             (r"/news/baijia/fetchElementary", FetchElementaryHandler),
             (r"/news/baijia/fetchLogin", FetchLoginHandler),
             (r"/news/baijia/fetchIm", FetchImHandler),
