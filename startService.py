@@ -199,16 +199,13 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
 class NewsFetchContentListHandler(tornado.web.RequestHandler):
     def post(self):
         args = self.request.arguments
-        print "yuanhuirequest", self.request
-        print "yuanhuiargs", args
         type = self.get_argument("type", 0)
         filter_urls = self.get_arguments("filterurls")
         userId = self.get_argument("userId", None)
         platformType = self.get_argument("platformType", None)
         urls = self.get_argument("url", None)
-        print "yuanhuiurls", urls
         deviceType = self.get_argument("deviceType", None)
-        urls = json.loads(urls)
+        urls = urls.split(",")
         result = []
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
@@ -229,6 +226,34 @@ class FetchDredgeUpStatusHandler(tornado.web.RequestHandler):
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
             result = dredge_up_post.dredgeUpStatus(keys)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
+class CreateAlbumHandler(tornado.web.RequestHandler):
+    def post(self):
+        args = self.request.arguments
+        user_id = self.get_argument("user_id", None)
+        album_title = self.get_argument("album_title", None)
+        album_des = self.get_argument("album_des", None)
+        album_img = self.get_argument("album_img", None)
+        album_news_count = self.get_argument("album_news_count", None)
+        if len(args) < 1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = dredge_up_post.createAlbum(user_id, album_title, album_des, album_img, album_news_count)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
+class FetchAlbumListHandler(tornado.web.RequestHandler):
+    def post(self):
+        args = self.request.arguments
+        user_id = self.get_argument("user_id", None)
+        if len(args) < 1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = dredge_up_post.fetchAlbumList(user_id)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
@@ -426,6 +451,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/loadMoreFetchContent", LoadMoreNewsContentHandler),
             (r"/news/baijia/dredgeUpStatus", FetchDredgeUpStatusHandler),
             (r"/news/baijia/startPage", StartPageHandler),
+            (r"/news/baijia/createAlbum", CreateAlbumHandler),
+            (r"/news/baijia/fetchAlbumList", FetchAlbumListHandler),
             (r"/news/baijia/fetchElementary", FetchElementaryHandler),
             (r"/news/baijia/fetchLogin", FetchLoginHandler),
             (r"/news/baijia/fetchIm", FetchImHandler),
