@@ -13,6 +13,7 @@ from para_sim.TextRank4ZH.gist import Gist
 import task.requests_with_sleep as requests
 # from content_get import Get_Relate_docs
 from AI_funcs.sen_compr.text_handler import SentenceCompressor
+import re
 
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
@@ -915,22 +916,57 @@ def add_abs_to_sublist(sublist):
         else:
             text = sublist_elem['text']
             gist = sublist_elem['gist']
-            # title = sentence_compressor(gist)
+            # gist = quote(str(gist))
+            title = get_compression_result(gist)
             # sublist_elem['title'] = Gist().get_gist_str(text)
-            sublist_elem['title'] = gist
+            sublist_elem['title'] = title
             result_list.append(sublist_elem)
     return result_list
 
-
-def sentence_compressor(gist):
-    sencom = SentenceCompressor()
-    sencom = sencom.get_compression_result(raw_sentence=gist)
-    result = sencom["result"]
-    sentence = sencom["sentence"]
-    return result
-
+# text is the string to be pre-processed, regex is the regular expression(s).
+def text_preprocess(raw_sentence):
+    regex = ur"[,|，].*称[,|，]|“|”| |‘|’|《|》|%|\[|]|-|·"
+    text = raw_sentence
+    pre_processed_txt = re.sub(regex, normalize_orders, text)
+    return pre_processed_txt
 
 
+def normalize_orders(matchobj):
+    if matchobj.group() == "%":
+        return "百分号"
+    elif matchobj.group() == '\[':
+        return '('
+    elif matchobj.group() == ']':
+        return ')'
+    elif matchobj.group() == "-":
+        # return "_"
+        return "_"
+    elif matchobj.group() == '·':
+        return '_'
+    # elif matchobj.group() == " ":
+    #     return ","
+    elif matchobj.group() == r"[,|，].*称[,|，]|“|”| |‘|’|《|》":
+        return ""
+        #Get last text segment of a sentence as last comma encountered
+
+
+def get_last_sen_seg(sen=''):
+    # last_sen_seg = sen.split('，')[-1]
+    last_sen_seg = re.split(ur",|，|，", sen.encode('utf8').decode("utf8"))[-1]    #",|，|，"
+    return last_sen_seg
+def get_compression_result(raw_sentence):
+    refined_text = text_preprocess(raw_sentence)
+    get_last_sen = get_last_sen_seg(refined_text)
+    sentence_ready_to_compress = get_last_sen
+    if len(refined_text) <= 12:
+        return refined_text
+
+    try:
+        compr_result = requests.get("http://60.28.29.37:8080/SentenceCompressor?sentence=" + sentence_ready_to_compress)
+        compr_result = (compr_result.json())
+        return compr_result["result"]
+    except:
+        return get_last_sen
 
 def delete_duplicate_sulist(sublist):
     result_list = []
