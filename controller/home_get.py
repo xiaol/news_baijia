@@ -961,12 +961,13 @@ def get_compression_result(raw_sentence):
     if len(refined_text) <= 12:
         return refined_text
 
-    try:
-        compr_result = requests.get("http://60.28.29.37:8080/SentenceCompressor?sentence=" + sentence_ready_to_compress)
-        compr_result = (compr_result.json())
-        return compr_result["result"]
-    except:
-        return get_last_sen
+    # try:
+    #     compr_result = requests.get("http://60.28.29.37:8080/SentenceCompressor?sentence=" + sentence_ready_to_compress)
+    #     compr_result = (compr_result.json())
+    #     return compr_result["result"]
+    # except:
+    #     return get_last_sen
+    return get_last_sen
 
 def delete_duplicate_sulist(sublist):
     result_list = []
