@@ -3,7 +3,7 @@
 from config import dbConn
 import datetime
 import pymongo
-import redis
+import redis,bson
 
 DBStore = dbConn.GetDateStore()
 pool = redis.ConnectionPool(host='h213', port=6379)
@@ -34,6 +34,17 @@ def createAlbum(user_id, album_title, album_des, album_img, album_news_count):
 
     return results_docs
 
+
+def updateAlbum(album_id, album_title, album_des, album_img, album_news_count):
+    conn = DBStore._connect_news
+    album_id = bson.objectid.ObjectId(album_id)
+    db = conn["news_ver2"]["AlbumItems"]
+    results_docs = {}
+    db.update({"_id": album_id},{"$set":{"album_title": album_title, "album_des": album_des, "album_img": album_img,
+               "album_news_count": album_news_count}})
+    results_docs['response'] = 200
+
+    return results_docs
 
 def fetchAlbumList(user_id):
     conn = DBStore._connect_news
