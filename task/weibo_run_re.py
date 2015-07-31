@@ -255,6 +255,8 @@ def doImgGetAndSave(k, relate, url):
         e["text"] = text
         gist = Gist().get_gist_str(text)
         e["gist"] = gist
+        compress = get_compression_result(gist)
+        e["compress"] = compress
 
     try:
         set_googlenews_by_url_with_field_and_value(url, "relate."+k, sub_relate)
@@ -613,6 +615,8 @@ def do_content_img_task(params):
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
         gist = Gist().get_gist_str(text)
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"gist": gist}})
+        compress = get_compression_result(gist)
+        conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"compress": compress}})
 
     if lefturl:
         url_use_to_fetch_content_img = lefturl
@@ -1600,9 +1604,6 @@ def compare_doc_is_duplicate(main_event, event_elem,result):
                 else:
                     result[paragraph_key][sentence_key].append([{"url": url, "paragraph_id": top_match_paragraph_id, "match_ratio": top_match_ratio}])
 
-
-
-
     return result
 
 
@@ -1627,6 +1628,54 @@ def extractSentenceBlock(doc):
         # result.append(elem.strip())
         i = i + 1
     return result, result_cut
+
+
+# text is the string to be pre-processed, regex is the regular expression(s).
+def text_preprocess(raw_sentence):
+    regex = ur"[,|，].*称[,|，]|“|”| |‘|’|《|》|%|\[|]|-|·"
+    text = raw_sentence
+    pre_processed_txt = re.sub(regex, normalize_orders, text)
+    return pre_processed_txt
+
+
+def normalize_orders(matchobj):
+    if matchobj.group() == "%":
+        return "百分号"
+    elif matchobj.group() == '\[':
+        return '('
+    elif matchobj.group() == ']':
+        return ')'
+    elif matchobj.group() == "-":
+        # return "_"
+        return "_"
+    elif matchobj.group() == '·':
+        return '_'
+    # elif matchobj.group() == " ":
+    #     return ","
+    elif matchobj.group() == r"[,|，].*称[,|，]|“|”| |‘|’|《|》":
+        return ""
+        #Get last text segment of a sentence as last comma encountered
+
+
+def get_last_sen_seg(sen=''):
+    # last_sen_seg = sen.split('，')[-1]
+    last_sen_seg = re.split(ur",|，|，", sen.encode('utf8').decode("utf8"))[-1]    #",|，|，"
+    return last_sen_seg
+def get_compression_result(raw_sentence):
+    refined_text = text_preprocess(raw_sentence)
+    get_last_sen = get_last_sen_seg(refined_text)
+    sentence_ready_to_compress = get_last_sen
+    if len(refined_text) <= 12:
+        return refined_text
+
+    try:
+        compr_result = requests.get("http://60.28.29.37:8080/SentenceCompressor?sentence=" + sentence_ready_to_compress)
+        compr_result = (compr_result.json())
+        return compr_result["result"]
+    except:
+        return get_last_sen
+    return get_last_sen
+
 
 
 def set_googlenews_by_url_with_field_and_value_dict(url, condition_dict):
