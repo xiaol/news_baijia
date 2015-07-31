@@ -118,6 +118,10 @@ def total_task():
     url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
+        # if url == "http://news.163.com/photoview/00AP0001/95223.html":
+        #     print "1"
+        # else:
+        #     continue
 
         doc_num += 1
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
@@ -1262,8 +1266,8 @@ def fetch_url_title_lefturl_pairs(docs):
         lefturl = ''
         sourceSiteName = ''
 
-        if "originsourceSiteName" in doc.keys():
-            sourceSiteName = doc["originsourceSiteName"]
+        if "originsourceSiteName" in relate_doc.keys():
+            sourceSiteName = relate_doc["originsourceSiteName"]
 
         if "relate" in relate_doc.keys():
             relate = relate_doc['relate']
