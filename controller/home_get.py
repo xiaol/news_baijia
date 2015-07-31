@@ -13,6 +13,7 @@ from para_sim.TextRank4ZH.gist import Gist
 import task.requests_with_sleep as requests
 # from content_get import Get_Relate_docs
 from AI_funcs.sen_compr.text_handler import SentenceCompressor
+import re
 
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
@@ -915,21 +916,16 @@ def add_abs_to_sublist(sublist):
         else:
             text = sublist_elem['text']
             gist = sublist_elem['gist']
-            # title = sentence_compressor(gist)
+            # gist = quote(str(gist))
+            # title = get_compression_result(gist)
             # sublist_elem['title'] = Gist().get_gist_str(text)
-            sublist_elem['title'] = gist
+            if "compress" not in sublist_elem.keys():
+                sublist_elem['title'] = gist
+            else:
+                sublist_elem['title'] = sublist_elem["compress"]
+
             result_list.append(sublist_elem)
     return result_list
-
-
-def sentence_compressor(gist):
-    sencom = SentenceCompressor()
-    sencom = sencom.get_compression_result(raw_sentence=gist)
-    result = sencom["result"]
-    sentence = sencom["sentence"]
-    return result
-
-
 
 
 def delete_duplicate_sulist(sublist):
