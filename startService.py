@@ -233,11 +233,11 @@ class FetchDredgeUpStatusHandler(tornado.web.RequestHandler):
 class CreateAlbumHandler(tornado.web.RequestHandler):
     def post(self):
         args = self.request.arguments
-        user_id = self.get_argument("user_id", None)
-        album_title = self.get_argument("album_title", None)
-        album_des = self.get_argument("album_des", None)
-        album_img = self.get_argument("album_img", None)
-        album_news_count = self.get_argument("album_news_count", None)
+        user_id = self.get_argument("userId", None)
+        album_title = self.get_argument("albumTitle", None)
+        album_des = self.get_argument("albumDes", None)
+        album_img = self.get_argument("albumImg", None)
+        album_news_count = self.get_argument("albumNewsCount", None)
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
@@ -246,10 +246,26 @@ class CreateAlbumHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+class UpdateAlbumHandler(tornado.web.RequestHandler):
+    def post(self):
+        args = self.request.arguments
+        album_id = self.get_argument("albumId", None)
+        user_id = self.get_argument("userId", None)
+        album_title = self.get_argument("albumTitle", None)
+        album_des = self.get_argument("albumDes", None)
+        album_img = self.get_argument("albumImg", None)
+        album_news_count = self.get_argument("albumNewsCount", None)
+        if len(args) < 1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = dredge_up_post.updateAlbum(album_id,user_id, album_title, album_des, album_img, album_news_count)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
 class FetchAlbumListHandler(tornado.web.RequestHandler):
     def post(self):
         args = self.request.arguments
-        user_id = self.get_argument("user_id", None)
+        user_id = self.get_argument("userId", None)
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
@@ -452,6 +468,7 @@ class Application(tornado.web.Application):
             (r"/news/baijia/dredgeUpStatus", FetchDredgeUpStatusHandler),
             (r"/news/baijia/startPage", StartPageHandler),
             (r"/news/baijia/createAlbum", CreateAlbumHandler),
+            (r"/news/baijia/updateAlbum", UpdateAlbumHandler),
             (r"/news/baijia/fetchAlbumList", FetchAlbumListHandler),
             (r"/news/baijia/fetchElementary", FetchElementaryHandler),
             (r"/news/baijia/fetchLogin", FetchLoginHandler),
