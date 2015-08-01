@@ -118,7 +118,7 @@ def total_task():
     url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
-        # if url == "http://news.163.com/photoview/00AP0001/95223.html":
+        # if url == "http://www.guancha.cn/local/2015_08_01_328987.shtml":
         #     print "1"
         # else:
         #     continue
@@ -497,6 +497,10 @@ def do_abs_task(params):
         if not content:
             return False
         try:
+            if sourceSiteName == '观察者网':
+                content = extract_text(content)
+                content = trim_new_line_character(content)
+                conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"content": content}})
             abstract_here = KeywordExtraction.abstract(content)
             print ">>>>>>>>abstract:", abstract_here
             set_googlenews_by_url_with_field_and_value(url, "abstract", abstract_here)
@@ -521,6 +525,18 @@ def do_abs_task(params):
         set_task_ok_by_url_and_field(url, "abstractOk")
 
     return True
+
+
+def extract_text(content):
+    result = ''
+    for content_elem in content:
+        for content_elem_elem in content_elem:
+            if 'txt' in content_elem_elem.keys():
+                result =result + content_elem_elem['txt']
+
+    return result
+
+
 
 
 def fetch_ne_by_url(url,all=False):
@@ -1240,7 +1256,6 @@ def fetch_unrunned_docs_by_date(lastUpdate=False, update_direction=pymongo.ASCEN
     start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
-
 
     if not lastUpdate:
         docs = conn["news_ver2"]["Task"].find({"isOnline": 0, "updateTime": {"$gte": end_time}}).sort([("updateTime", update_direction)])
