@@ -1564,23 +1564,43 @@ def extract_opinion(main_event,result):
     sentence = main_event["sentence"]
     common_opinion=''
     self_opinion = ''
-    for paragraph_key, paragraph_value in sentence.items():
+    for paragraph_key in sorted(sentence.keys()):
+        self_opinion_flag = False
+        common_opinion_flag = False
+        paragraph_value = sentence[paragraph_key]
         if paragraph_key in result.keys():
-            for sentence_key, sentence_value in paragraph_value.items():
+            for sentence_key in sorted(paragraph_value.keys()):
+                sentence_value = paragraph_value[sentence_key]
                 if sentence_key in result[paragraph_key].keys():
                     common_opinion=common_opinion + sentence_value +'。'
+                    common_opinion_flag = True
                 else:
                     self_opinion = self_opinion + sentence_value + '。'
+                    self_opinion_flag = True
+
         else:
-            for sentence_key, sentence_value in paragraph_value.items():
-                self_opinion=self_opinion+sentence_value+'。'
+            for sentence_key in sorted(paragraph_value.keys()):
+                sentence_value = paragraph_value[sentence_key]
+                self_opinion = self_opinion + sentence_value+'。'
+                self_opinion_flag = True
+        if  self_opinion_flag:
+            self_opinion = self_opinion + '\n'
+        if  common_opinion_flag:
+            common_opinion = common_opinion + '\n'
+
     return  common_opinion, self_opinion
 
-
-
-
-
-
+    # for paragraph_key, paragraph_value in sentence.items():
+    #     if paragraph_key in result.keys():
+    #         for sentence_key, sentence_value in paragraph_value.items():
+    #             if sentence_key in result[paragraph_key].keys():
+    #                 common_opinion=common_opinion + sentence_value +'。'
+    #             else:
+    #                 self_opinion = self_opinion + sentence_value + '。'
+    #     else:
+    #         for sentence_key, sentence_value in paragraph_value.items():
+    #             self_opinion=self_opinion+sentence_value+'。'
+    # return  common_opinion, self_opinion
 
 def compare_doc_is_duplicate(main_event, event_elem,result):
     sentence_cut = main_event["sentence_cut"]
