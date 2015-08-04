@@ -117,16 +117,30 @@ def total_task():
 
     url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
 
-    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
+    docs_online = fetch_unrunned_docs_by_date(isOnline = True)
+    url_title_lefturl_sourceSite_pairs_online = fetch_url_title_lefturl_pairs(docs_online)
 
+    start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+    end_time = end_time + datetime.timedelta(days=-2)
+    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+    now = datetime.datetime.now()
+    now_time = now.strftime('%Y-%m-%d %H:%M:%S')
+    logging.warning("##################### online_event_task start ********************")
+
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online:
+        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        do_event_task(params, end_time, now_time)
+
+    logging.warning("##################### online_event_task complete ********************")
+
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
+        # if url == "http://www.guancha.cn/local/2015_08_01_328987.shtml":
+        #     print "1"
+        # else:
+        #     continue
         doc_num += 1
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
-        start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
-        end_time = end_time + datetime.timedelta(days=-2)
-        start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
-        end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
-        now = datetime.datetime.now()
-        now_time = now.strftime('%Y-%m-%d %H:%M:%S')
         try:
 
             print "*****************************task start, the url is %s, sourceSiteName: %s " \
@@ -165,6 +179,10 @@ def total_task():
         return "no_doc"
     else:
         return "have_doc"
+
+
+
+
 
 
 
@@ -493,6 +511,10 @@ def do_abs_task(params):
         if not content:
             return False
         try:
+            if sourceSiteName == '观察者网':
+                content = extract_text(content)
+                content = trim_new_line_character(content)
+                conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"content": content}})
             abstract_here = KeywordExtraction.abstract(content)
             print ">>>>>>>>abstract:", abstract_here
             set_googlenews_by_url_with_field_and_value(url, "abstract", abstract_here)
@@ -517,6 +539,18 @@ def do_abs_task(params):
         set_task_ok_by_url_and_field(url, "abstractOk")
 
     return True
+
+
+def extract_text(content):
+    result = ''
+    for content_elem in content:
+        for content_elem_elem in content_elem:
+            if 'txt' in content_elem_elem.keys():
+                result =result + content_elem_elem['txt']
+
+    return result
+
+
 
 
 def fetch_ne_by_url(url,all=False):
@@ -888,29 +922,29 @@ def do_event_task(params, start_time, end_time):
         domain_dict = {}
 
         events=filter_unrelate_news(events, doc)
-        # domain_dict = {'1', events}
-        if "text" not in doc.keys():
-            return
-        for e in events:
-            if "classes" not in e.keys():
-                classes = get_category_by_hack(e['title'])
-                if classes:
-                    e['classes'] = classes
-                    set_googlenews_by_url_with_field_and_value(e["sourceUrl"], "classes", classes)
-            isCertain = False
-            for class_elem in e['classes']:
-                if class_elem['conf'] > 0.55:
-                    if class_elem['class_num'] in domain_dict:
-                        domain_dict[class_elem['class_num']].append(e)
-                    else:
-                        domain_dict[class_elem['class_num']] = [e]
-                    isCertain = True
-                    break
-            if not isCertain:
-                if -1 in domain_dict:
-                    domain_dict[-1].append(e)
-                else:
-                    domain_dict[-1] = [e]
+        domain_dict = {-1:events}
+        # if "text" not in doc.keys():
+        #     return
+        # for e in events:
+        #     if "classes" not in e.keys():
+        #         classes = get_category_by_hack(e['title'])
+        #         if classes:
+        #             e['classes'] = classes
+        #             set_googlenews_by_url_with_field_and_value(e["sourceUrl"], "classes", classes)
+        #     isCertain = False
+        #     for class_elem in e['classes']:
+        #         if class_elem['conf'] > 0.55:
+        #             if class_elem['class_num'] in domain_dict:
+        #                 domain_dict[class_elem['class_num']].append(e)
+        #             else:
+        #                 domain_dict[class_elem['class_num']] = [e]
+        #             isCertain = True
+        #             break
+        #     if not isCertain:
+        #         if -1 in domain_dict:
+        #             domain_dict[-1].append(e)
+        #         else:
+        #             domain_dict[-1] = [e]
 
         for k, domain_events in domain_dict.iteritems():
             eventCount = 0
@@ -975,10 +1009,12 @@ def do_event_task(params, start_time, end_time):
 
             print 'found topic events count ===>' , eventCount
 
+
+
 def filter_unrelate_news(events, compare_news):
     result = []
     if "text" not in compare_news.keys():
-        return events
+        return []
     paragraphIndex = 0
     content_dict = {}
     events_result = []
@@ -1232,11 +1268,13 @@ def fetch_unrunned_docs():
     return un_runned_docs
 
 
-def fetch_unrunned_docs_by_date(lastUpdate=False, update_direction=pymongo.ASCENDING):
+def fetch_unrunned_docs_by_date(lastUpdate=False,isOnline=False,update_direction=pymongo.ASCENDING):
     start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
-
+    if isOnline:
+        docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
+        return docs
 
     if not lastUpdate:
         docs = conn["news_ver2"]["Task"].find({"isOnline": 0, "updateTime": {"$gte": end_time}}).sort([("updateTime", update_direction)])
@@ -1262,8 +1300,8 @@ def fetch_url_title_lefturl_pairs(docs):
         lefturl = ''
         sourceSiteName = ''
 
-        if "originsourceSiteName" in doc.keys():
-            sourceSiteName = doc["originsourceSiteName"]
+        if "originsourceSiteName" in relate_doc.keys():
+            sourceSiteName = relate_doc["originsourceSiteName"]
 
         if "relate" in relate_doc.keys():
             relate = relate_doc['relate']
@@ -1395,7 +1433,7 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
             # vec = lsi_docs[name]
             # vec = bow_docs_tfidf[name]
             vec = unit_vec[name]
-            sims = calculate_sim(vec, names, unit_vec)
+            sims, same_word = calculate_sim(vec, names, unit_vec)
 
             # sims = index[vec]
 
@@ -1406,7 +1444,7 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
             for sims_elem in sims:
                 if sims_elem[0]=="doc":
                     continue
-                elif sims_elem[1]>=0.6:
+                elif sims_elem[1]>=0.7 or same_word[sims_elem[0]]>=4:
                     paragraphIndex_dict[sims_elem[0]] = { "similarity": sims_elem[1]
                                                          , "unit_vec" : unit_vec[sims_elem[0]]
                                                          , "keyword": keyword}
@@ -1414,6 +1452,7 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
                     # paragraphIndex_list.append(sims_elem[0])
                     print "sims,%s"%sims_elem[0]
                     print "title,%s,sims,%10.3f"%(docs[sims_elem[0]], sims_elem[1])
+                    print "same_word,%10.3f"%same_word[sims_elem[0]]
                 else:
                     continue
                     # print "sims,%s"%sims_elem[0]
@@ -1431,15 +1470,17 @@ def vec2dense(vec, num_terms):
 
 def calculate_sim(vec, names, unit_vec):
     sims={}
+    sims_word={}
     for name in names:
         sims_value = sum([vec[i]*unit_vec[name][i] for i in range(len(vec))])
         same_word_num = sum([(1 if vec[i]>0 else 0)*(1 if unit_vec[name][i]>0 else 0) for i in range(len(vec))])
+        sims_word[name] = same_word_num
         if same_word_num>=2:
             sims[name] = sims_value
         else:
             sims[name] = 0.0
 
-    return sims
+    return sims,sims_word
 
 
 def duplicate_docs_check(domain_events):
@@ -1523,23 +1564,43 @@ def extract_opinion(main_event,result):
     sentence = main_event["sentence"]
     common_opinion=''
     self_opinion = ''
-    for paragraph_key, paragraph_value in sentence.items():
+    for paragraph_key in sorted(sentence.keys()):
+        self_opinion_flag = False
+        common_opinion_flag = False
+        paragraph_value = sentence[paragraph_key]
         if paragraph_key in result.keys():
-            for sentence_key, sentence_value in paragraph_value.items():
+            for sentence_key in sorted(paragraph_value.keys()):
+                sentence_value = paragraph_value[sentence_key]
                 if sentence_key in result[paragraph_key].keys():
                     common_opinion=common_opinion + sentence_value +'。'
+                    common_opinion_flag = True
                 else:
                     self_opinion = self_opinion + sentence_value + '。'
+                    self_opinion_flag = True
+
         else:
-            for sentence_key, sentence_value in paragraph_value.items():
-                self_opinion=self_opinion+sentence_value+'。'
+            for sentence_key in sorted(paragraph_value.keys()):
+                sentence_value = paragraph_value[sentence_key]
+                self_opinion = self_opinion + sentence_value+'。'
+                self_opinion_flag = True
+        if  self_opinion_flag:
+            self_opinion = self_opinion + '\n'
+        if  common_opinion_flag:
+            common_opinion = common_opinion + '\n'
+
     return  common_opinion, self_opinion
 
-
-
-
-
-
+    # for paragraph_key, paragraph_value in sentence.items():
+    #     if paragraph_key in result.keys():
+    #         for sentence_key, sentence_value in paragraph_value.items():
+    #             if sentence_key in result[paragraph_key].keys():
+    #                 common_opinion=common_opinion + sentence_value +'。'
+    #             else:
+    #                 self_opinion = self_opinion + sentence_value + '。'
+    #     else:
+    #         for sentence_key, sentence_value in paragraph_value.items():
+    #             self_opinion=self_opinion+sentence_value+'。'
+    # return  common_opinion, self_opinion
 
 def compare_doc_is_duplicate(main_event, event_elem,result):
     sentence_cut = main_event["sentence_cut"]
@@ -1740,13 +1801,22 @@ if __name__ == '__main__':
 
     #parseBaike('安培晋三')
     #test_extract_tags()
-    '''start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
-    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
-    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
-    now = datetime.datetime.now()
-    now_time = now.strftime('%Y-%m-%d %H:%M:%S')
-    do_event_task({'url':"http://tech.caijing.com.cn/20150608/3900634.shtml", 'title':"阿里在中国最美公路旁边建了一个数据中心"}, start_time, end_time)'''
+    # start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+    # start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    # end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+    # now = datetime.datetime.now()
+    # now_time = now.strftime('%Y-%m-%d %H:%M:%S')
+    # do_event_task({'url':"http://www.techweb.com.cn/internet/2015-08-03/2184133.shtml", 'title':"王思聪cj被拦路人狂笑"}, start_time, end_time)
     # fetch_and_save_content('http://news.southcn.com/international/content/2015-06/14/content_126321942.htm','http://news.southcn.com/international/content/2015-06/14/content_126321942.htm')
+
+    # start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+    # end_time = end_time + datetime.timedelta(days=-2)
+    # start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    # end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+    # now = datetime.datetime.now()
+    # now_time = now.strftime('%Y-%m-%d %H:%M:%S')
+    # do_event_task({'url':"http://www.jfdaily.com/tiyu/bw/201508/t20150803_1723010.html", 'title':"哈萨克斯坦总统祝贺北京申奥成功"}, end_time, now_time)
+
     while True:
         doc_num = total_task()
         if doc_num == "no_doc":

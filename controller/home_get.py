@@ -669,8 +669,12 @@ def constructEvent(eventList):
                 subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'similarity': eventElement["similarity"], 'unit_vec': eventElement["unit_vec"]}
             elif 'gist' not in eventElement.keys():
                 subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'text': eventElement['text'], 'similarity': eventElement["similarity"], 'unit_vec': eventElement["unit_vec"]}
-            else:
+            elif 'compress' not in eventElement.keys():
                 subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'text': eventElement['text'], 'gist': eventElement['gist'], 'similarity': eventElement["similarity"], 'unit_vec': eventElement["unit_vec"]}
+            else:
+                subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'text': eventElement['text'], 'gist': eventElement['gist'], 'similarity': eventElement["similarity"], 'unit_vec': eventElement["unit_vec"], 'compress': eventElement["compress"]}
+
+
 
             sublist.append(subElement)
             result_doc["special"] = 9
@@ -901,9 +905,10 @@ def extratInfoInUndocs(undocs):
             undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId, 'similarity': doc["similarity"], 'unit_vec': doc["unit_vec"]})
         elif 'gist' not in doc.keys():
             undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId, "text": doc["text"], 'similarity': doc["similarity"], 'unit_vec': doc["unit_vec"]})
-        else:
+        elif 'compress' not in doc.keys():
             undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId, "text": doc["text"], "gist": doc["gist"], 'similarity': doc["similarity"], 'unit_vec': doc["unit_vec"]})
-
+        else:
+            undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId, "text": doc["text"], "gist": doc["gist"], 'similarity': doc["similarity"], 'unit_vec': doc["unit_vec"], 'compress': doc["compress"]})
     return undocs_list
 
 

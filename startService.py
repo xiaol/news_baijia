@@ -12,7 +12,7 @@ import tornado.httpclient
 import tornado.netutil
 import json
 from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get, point_get, \
-    praise_post, start_page_post, dredge_up_post, elementary_post
+    praise_post, start_page_post, dredge_up_post, elementary_post ,tags_get
 from controller.push import push_message
 
 import abstract
@@ -465,6 +465,23 @@ class PraiseHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
+class FetchTagsHandler(tornado.web.RequestHandler):
+    def get(self):
+        # updateTime = self.get_argument("updateTime", None)
+        userId = self.get_argument("userId", None)
+        token = self.get_argument("token", None)
+        platformType = self.get_argument("platformType", None)
+
+        options = {}
+        options["userId"] = userId
+        options["token"] = token
+        options["platformType"] = platformType
+
+        result = tags_get.TagsFetch(options)
+        print result
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
 
 class Application(tornado.web.Application):
     def __init__(self):
@@ -491,7 +508,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchChannel", FetchChannel),
             (r"/news/baijia/fetchImContent", FetchImContentHandler),
             (r"/news/baijia/FetchChannelList", FetchChannelListHandler),
-            (r"/news/baijia/praise", PraiseHandler)
+            (r"/news/baijia/praise", PraiseHandler),
+            (r"/news/baijia/fetchTags", FetchTagsHandler)
 
         ]
 
