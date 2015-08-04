@@ -221,11 +221,11 @@ class NewsFetchContentListHandler(tornado.web.RequestHandler):
 class FetchDredgeUpStatusHandler(tornado.web.RequestHandler):
     def post(self):
         args = self.request.arguments
-        keys = self.get_argument("keys", None)
+        user_id = self.get_argument("user_id", None)
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
-            result = dredge_up_post.dredgeUpStatus(keys)
+            result = dredge_up_post.dredgeUpStatus(user_id)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
@@ -258,6 +258,18 @@ class UpdateAlbumHandler(tornado.web.RequestHandler):
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
             result = dredge_up_post.updateAlbum(album_id, album_title, album_des, album_img, album_news_count)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+class RemoveAlbumHandler(tornado.web.RequestHandler):
+    def post(self):
+        args = self.request.arguments
+        album_id = self.get_argument("album_id", None)
+        default_album_id = self.get_argument("default_album_id", None)
+        if len(args) < 1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = dredge_up_post.removeAlbum(album_id, default_album_id)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
@@ -468,6 +480,7 @@ class Application(tornado.web.Application):
             (r"/news/baijia/startPage", StartPageHandler),
             (r"/news/baijia/createAlbum", CreateAlbumHandler),
             (r"/news/baijia/updateAlbum", UpdateAlbumHandler),
+            (r"/news/baijia/removeAlbum", RemoveAlbumHandler),
             (r"/news/baijia/fetchAlbumList", FetchAlbumListHandler),
             (r"/news/baijia/fetchElementary", FetchElementaryHandler),
             (r"/news/baijia/fetchLogin", FetchLoginHandler),

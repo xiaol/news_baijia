@@ -3,22 +3,32 @@
 from config import dbConn
 import datetime
 import pymongo
-import redis,bson
+import redis, bson
+import re
 
 DBStore = dbConn.GetDateStore()
 pool = redis.ConnectionPool(host='h213', port=6379)
 r = redis.Redis(connection_pool=pool)
 
 
-def dredgeUpStatus(keys):
-    keys = ['11111111:魔兽世界', '123456:啦啦啦']
+def dredgeUpStatus(user_id):
     results_docs = {}
-    dict = {}
-    for key in keys:
-        dict[key] = r.hmget(key, "status", "insertId")
-    results_docs = dict
-    print results_docs
-    return results_docs
+    result_dict = []
+    r.set("3:url_urlOfThisTask",
+          {"create_time": "2015-02-13 00:00:00", "title": "title of content", "titl1e": "title of cont2ent"})
+    r.set("3:key_keyOfThisTask",
+          {"create_time": "2015-02-12 00:00:00", "title": "title of content", "titl1e": "title of cont2ent"})
+    dict = r.hgetall("ExcavatorItems")
+    for d, x in dict.items():
+        list = x.split('&')
+        if user_id in list:
+            results_docs[user_id + ":" + d] = eval(r.get(user_id + ":" + d))
+    result_list = sorted(results_docs.keys(), key=lambda a: results_docs[a]['create_time'],reverse=True)
+    for l in result_list:
+	    result = {}
+	    result[l] = results_docs[l]
+	    result_dict.append(result)
+    return result_dict
 
 
 def createAlbum(user_id, album_title, album_des, album_img, album_news_count):
@@ -40,11 +50,27 @@ def updateAlbum(album_id, album_title, album_des, album_img, album_news_count):
     album_id = bson.objectid.ObjectId(album_id)
     db = conn["news_ver2"]["AlbumItems"]
     results_docs = {}
-    db.update({"_id": album_id},{"$set":{"album_title": album_title, "album_des": album_des, "album_img": album_img,
-               "album_news_count": album_news_count}})
+    db.update({"_id": album_id}, {"$set": {"album_title": album_title, "album_des": album_des, "album_img": album_img,
+                                           "album_news_count": album_news_count}})
     results_docs['response'] = 200
 
     return results_docs
+
+
+def removeAlbum(album_id, default_album_id):
+    conn = DBStore._connect_news
+    album_id = bson.objectid.ObjectId(album_id)
+    default_album_id = bson.objectid.ObjectId(default_album_id)
+    db = conn["news_ver2"]["AlbumItems"]
+    results_docs = {}
+    db.remove({"_id": album_id})
+
+    conn["news_ver2"]["NewsItems"].update({"album_id": album_id}, {"$set": {"album_id": default_album_id}})
+
+    results_docs['response'] = 200
+
+    return results_docs
+
 
 def fetchAlbumList(user_id):
     conn = DBStore._connect_news
