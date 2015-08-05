@@ -30,12 +30,10 @@ def createAlbum(user_id, album_title, album_des, album_img, album_news_count):
     conn = DBStore._connect_news
     db = conn["news_ver2"]["AlbumItems"]
     time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    db.insert({"user_id": user_id, "album_title": album_title, "album_des": album_des, "album_img": album_img,
+    object_id= db.insert({"user_id": user_id, "album_title": album_title, "album_des": album_des, "album_img": album_img,
                "album_news_count": album_news_count, "create_time": time})
     results_docs = {}
-    docs = db.find({"user_id": user_id, "create_time": time}).limit(1)
-    for doc in docs:
-        results_docs['album_id'] = str(doc['_id'])
+    results_docs['album_id'] = str(object_id)
 
     return results_docs
 
