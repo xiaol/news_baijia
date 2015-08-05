@@ -19,7 +19,6 @@ def dredgeUpStatus(user_id, album_id, is_add):
         if "album_news_count" in doc.keys():
             count = int(doc["album_news_count"]) + 1
             db.update({"_id": id}, {"$set": {"album_news_count": str(count)}})
-    results_docs = {}
     result_dict = []
     dict = r.hgetall("ExcavatorItems")
     for d, x in dict.items():
@@ -29,25 +28,21 @@ def dredgeUpStatus(user_id, album_id, is_add):
             if current.get("alid") == album_id:
                 result_dict.append(r.hgetall(user_id + ":" + d))
     result_dict = sorted(result_dict, key=lambda s: s['createTime'],reverse=True)
-    # result_list = sorted(results_docs.keys(), key=lambda a: results_docs[a]['createTime'], reverse=True)
-    # for l in result_list:
-    #     result = {}
-    #     result[l] = results_docs[l]
-    #     if "content" in result[l].keys():
-    #         result[l].pop("content")
-    #     if "aggreItems" in result[l].keys():
-    #         result[l].pop("aggreItems")
-    #     if "user_id" in result[l].keys():
-    #         result[l].pop("user_id")
-    #     if "title" in result[l].keys():
-    #         result[l].pop("title")
-    #     if "alid" in result[l].keys():
-    #         result[l].pop("alid")
-    #     if "completeTime" in result[l].keys():
-    #         result[l].pop("completeTime")
-    #     if "createTime" in result[l].keys():
-    #         result[l].pop("createTime")
-    #     result_dict.append(result)
+    for l in result_dict:
+        if "content" in l.keys():
+            l.pop("content")
+        if "aggreItems" in l.keys():
+            l.pop("aggreItems")
+        if "user_id" in l.keys():
+            l.pop("user_id")
+        if "title" in l.keys():
+            l.pop("title")
+        if "alid" in l.keys():
+            l.pop("alid")
+        if "completeTime" in l.keys():
+            l.pop("completeTime")
+        if "createTime" in l.keys():
+            l.pop("createTime")
     return result_dict
 
 
