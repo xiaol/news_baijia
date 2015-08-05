@@ -117,6 +117,7 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
     result["relate"] = allrelate
     result["rc"] = 200
 
+
     result_points = []
 
     praise = conn['news_ver2']['praiseItem'].find({'sourceUrl': url})  # ({'uuid': uuid, 'commentId': commentId})
@@ -176,6 +177,10 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
 
     if "relate_opinion" in doc.keys():
         result["relate_opinion"] = doc["relate_opinion"]
+
+    if "sourceSiteName" in doc.keys():
+        sourceSitename = doc["sourceSiteName"]
+        result["category"] = sourceSitename[2:4]
 
     return result
 
