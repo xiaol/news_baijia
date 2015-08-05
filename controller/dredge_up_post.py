@@ -4,7 +4,6 @@ from config import dbConn
 import datetime
 import pymongo
 import redis, bson
-import re
 
 DBStore = dbConn.GetDateStore()
 pool = redis.ConnectionPool(host='h213', port=6379)
@@ -14,10 +13,6 @@ r = redis.Redis(connection_pool=pool)
 def dredgeUpStatus(user_id):
     results_docs = {}
     result_dict = []
-    r.set("3:url_urlOfThisTask",
-          {"create_time": "2015-02-13 00:00:00", "title": "title of content", "titl1e": "title of cont2ent"})
-    r.set("3:key_keyOfThisTask",
-          {"create_time": "2015-02-12 00:00:00", "title": "title of content", "titl1e": "title of cont2ent"})
     dict = r.hgetall("ExcavatorItems")
     for d, x in dict.items():
         list = x.split('&')
