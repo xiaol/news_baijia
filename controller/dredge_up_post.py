@@ -10,7 +10,15 @@ pool = redis.ConnectionPool(host='h213', port=6379)
 r = redis.Redis(connection_pool=pool)
 
 
-def dredgeUpStatus(user_id, album_id):
+def dredgeUpStatus(user_id, album_id, is_add):
+    conn = DBStore._connect_news
+    db = conn["news_ver2"]["AlbumItems"]
+    if is_add == "1":
+        id = bson.objectid.ObjectId(album_id)
+        doc = db.find_one({"_id": id})
+        if "album_news_count" in doc.keys():
+            count = int(doc["album_news_count"]) + 1
+            db.update({"_id": id}, {"$set": {"album_news_count": str(count)}})
     results_docs = {}
     result_dict = []
     dict = r.hgetall("ExcavatorItems")
