@@ -218,8 +218,8 @@ def get_points(points, praise_list, userId, platformType):
 def newsFetchContent(news_id,url, filterurls, userId, platformType, deviceType, updateTime=None):
     conn = DBStore._connect_news
     if news_id:
-        id = bson.objectid.ObjectId(news_id)
-        doc = conn["news_ver2"]["NewsItems"].find_one({"_id": id})
+        # id = bson.objectid.ObjectId(news_id)
+        doc = conn["news_ver2"]["testForReactiveMongoV1"].find_one({"_id": news_id})
     else:
         doc = conn["news_ver2"]["NewsItems"].find_one({"source_url": url})
     if "_id" in doc.keys():
