@@ -4,7 +4,6 @@ from config import dbConn
 import datetime
 import pymongo
 import redis, bson
-import re
 
 DBStore = dbConn.GetDateStore()
 pool = redis.ConnectionPool(host='h213', port=6379)
@@ -14,10 +13,6 @@ r = redis.Redis(connection_pool=pool)
 def dredgeUpStatus(user_id):
     results_docs = {}
     result_dict = []
-    r.set("3:url_urlOfThisTask",
-          {"create_time": "2015-02-13 00:00:00", "title": "title of content", "titl1e": "title of cont2ent"})
-    r.set("3:key_keyOfThisTask",
-          {"create_time": "2015-02-12 00:00:00", "title": "title of content", "titl1e": "title of cont2ent"})
     dict = r.hgetall("ExcavatorItems")
     for d, x in dict.items():
         list = x.split('&')
@@ -35,12 +30,10 @@ def createAlbum(user_id, album_title, album_des, album_img, album_news_count):
     conn = DBStore._connect_news
     db = conn["news_ver2"]["AlbumItems"]
     time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    db.insert({"user_id": user_id, "album_title": album_title, "album_des": album_des, "album_img": album_img,
+    object_id= db.insert({"user_id": user_id, "album_title": album_title, "album_des": album_des, "album_img": album_img,
                "album_news_count": album_news_count, "create_time": time})
     results_docs = {}
-    docs = db.find({"user_id": user_id, "create_time": time}).limit(1)
-    for doc in docs:
-        results_docs['album_id'] = str(doc['_id'])
+    results_docs['album_id'] = str(object_id)
 
     return results_docs
 
