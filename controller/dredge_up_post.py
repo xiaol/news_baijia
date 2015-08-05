@@ -22,33 +22,32 @@ def dredgeUpStatus(user_id, album_id, is_add):
     results_docs = {}
     result_dict = []
     dict = r.hgetall("ExcavatorItems")
-    i = 0
     for d, x in dict.items():
         list = x.split('&')
         if user_id in list:
             current = r.hgetall(user_id + ":" + d)
             if current.get("alid") == album_id:
-                results_docs[i] = r.hgetall(user_id + ":" + d)
-                i += 1
-    result_list = sorted(results_docs.keys(), key=lambda a: results_docs[a]['createTime'], reverse=True)
-    for l in result_list:
-        result = {}
-        result[l] = results_docs[l]
-        if "content" in result[l].keys():
-            result[l].pop("content")
-        if "aggreItems" in result[l].keys():
-            result[l].pop("aggreItems")
-        if "user_id" in result[l].keys():
-            result[l].pop("user_id")
-        if "title" in result[l].keys():
-            result[l].pop("title")
-        if "alid" in result[l].keys():
-            result[l].pop("alid")
-        if "completeTime" in result[l].keys():
-            result[l].pop("completeTime")
-        if "createTime" in result[l].keys():
-            result[l].pop("createTime")
-        result_dict.append(result)
+                result_dict.append(r.hgetall(user_id + ":" + d))
+    result_dict = sorted(result_dict, key=lambda s: s['createTime'],reverse=True)
+    # result_list = sorted(results_docs.keys(), key=lambda a: results_docs[a]['createTime'], reverse=True)
+    # for l in result_list:
+    #     result = {}
+    #     result[l] = results_docs[l]
+    #     if "content" in result[l].keys():
+    #         result[l].pop("content")
+    #     if "aggreItems" in result[l].keys():
+    #         result[l].pop("aggreItems")
+    #     if "user_id" in result[l].keys():
+    #         result[l].pop("user_id")
+    #     if "title" in result[l].keys():
+    #         result[l].pop("title")
+    #     if "alid" in result[l].keys():
+    #         result[l].pop("alid")
+    #     if "completeTime" in result[l].keys():
+    #         result[l].pop("completeTime")
+    #     if "createTime" in result[l].keys():
+    #         result[l].pop("createTime")
+    #     result_dict.append(result)
     return result_dict
 
 
