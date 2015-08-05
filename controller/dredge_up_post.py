@@ -10,19 +10,21 @@ pool = redis.ConnectionPool(host='h213', port=6379)
 r = redis.Redis(connection_pool=pool)
 
 
-def dredgeUpStatus(user_id):
+def dredgeUpStatus(user_id, album_id):
     results_docs = {}
     result_dict = []
     dict = r.hgetall("ExcavatorItems")
     for d, x in dict.items():
         list = x.split('&')
         if user_id in list:
-            results_docs[user_id + ":" + d] = eval(r.get(user_id + ":" + d))
-    result_list = sorted(results_docs.keys(), key=lambda a: results_docs[a]['create_time'],reverse=True)
+            current = r.hgetall(user_id + ":" + d)
+            if current.get("alid") == album_id:
+                results_docs[user_id + ":" + d] = r.hgetall(user_id + ":" + d)
+    result_list = sorted(results_docs.keys(), key=lambda a: results_docs[a]['createTime'], reverse=True)
     for l in result_list:
-	    result = {}
-	    result[l] = results_docs[l]
-	    result_dict.append(result)
+        result = {}
+        result[l] = results_docs[l]
+        result_dict.append(result)
     return result_dict
 
 
@@ -30,8 +32,9 @@ def createAlbum(user_id, album_title, album_des, album_img, album_news_count):
     conn = DBStore._connect_news
     db = conn["news_ver2"]["AlbumItems"]
     time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    object_id= db.insert({"user_id": user_id, "album_title": album_title, "album_des": album_des, "album_img": album_img,
-               "album_news_count": album_news_count, "create_time": time})
+    object_id = db.insert(
+        {"user_id": user_id, "album_title": album_title, "album_des": album_des, "album_img": album_img,
+         "album_news_count": album_news_count, "create_time": time})
     results_docs = {}
     results_docs['album_id'] = str(object_id)
 

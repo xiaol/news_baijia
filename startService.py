@@ -222,10 +222,11 @@ class FetchDredgeUpStatusHandler(tornado.web.RequestHandler):
     def post(self):
         args = self.request.arguments
         user_id = self.get_argument("user_id", None)
+        album_id = self.get_argument("album_id", None)
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
-            result = dredge_up_post.dredgeUpStatus(user_id)
+            result = dredge_up_post.dredgeUpStatus(user_id,album_id)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
