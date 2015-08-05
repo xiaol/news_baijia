@@ -40,8 +40,6 @@ def dredgeUpStatus(user_id, album_id, is_add):
             result[l].pop("aggreItems")
         if "user_id" in result[l].keys():
             result[l].pop("user_id")
-        if "inserteId" in result[l].keys():
-            result[l].pop("inserteId")
         if "title" in result[l].keys():
             result[l].pop("title")
         if "alid" in result[l].keys():
