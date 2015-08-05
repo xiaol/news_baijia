@@ -24,6 +24,9 @@ def getStartPageContent():
             results_docs['updateTime'] = doc['updateTime']
         if "sourceUrl" in doc.keys():
             img_url = doc['sourceUrl']
+        if "sourceSiteName" in doc.keys():
+            sourceSitename = doc["sourceSiteName"]
+            results_docs["category"] = sourceSitename[2:4]
     news_dict.append(img_url)
     for doc in docs_news:
         if "sourceUrl" in doc.keys():
