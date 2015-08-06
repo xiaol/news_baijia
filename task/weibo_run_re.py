@@ -1449,10 +1449,12 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
                                                          , "unit_vec" : unit_vec[sims_elem[0]]
                                                          , "keyword": keyword}
 
+
                     # paragraphIndex_list.append(sims_elem[0])
                     print "sims,%s"%sims_elem[0]
                     print "title,%s,sims,%10.3f"%(docs[sims_elem[0]], sims_elem[1])
                     print "same_word,%10.3f"%same_word[sims_elem[0]]
+                    # print ""
                 else:
                     continue
                     # print "sims,%s"%sims_elem[0]
@@ -1552,9 +1554,9 @@ def duplicate_docs_check(domain_events):
                 continue
             else:
                 if len(event_elem["self_opinion"])>=10:
-                    result["self_opinion"].append({"self_opinion": event_elem["self_opinion"], "url": event_elem["_id"]})
+                    result["self_opinion"].append({"self_opinion": event_elem["self_opinion"], "url": event_elem["title"]})
                 if len(event_elem["common_opinion"])>10:
-                    result["common_opinion"].append({"common_opinion": event_elem["common_opinion"], "url": event_elem["_id"]})
+                    result["common_opinion"].append({"common_opinion": event_elem["common_opinion"], "url": event_elem["title"]})
 
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"relate_opinion": result}})
 
@@ -1816,6 +1818,12 @@ if __name__ == '__main__':
     # now = datetime.datetime.now()
     # now_time = now.strftime('%Y-%m-%d %H:%M:%S')
     # do_event_task({'url':"http://www.jfdaily.com/tiyu/bw/201508/t20150803_1723010.html", 'title':"哈萨克斯坦总统祝贺北京申奥成功"}, end_time, now_time)
+
+    # text = "<script type=\"text/javascript\"> var m=Math.random(); document.write('<script type=\"text/javascript\" src=\"http://cast.ra.icast.cn/p/?id=2084&rnd='+m+'\"><\\/script>'); </script> <script> var timestamp = Date.parse(new Date()); var src = \"http://statistic.dvsend.china.com/cc/00S4K?adcrm?v=\"+timestamp; var s = document.createElement(\"SCRIPT\"); document.getElementsByTagName(\"HEAD\")[0].appendChild(s); s.src = src; </script>\n<script type=\"text/javascript\"> /*内页通发流媒体300*250 创建于 2015-04-02*/ var cpro_id = \"u2024173\"; </script> <script src=\"http://cpro.baidustatic.com/cpro/ui/f.js\" type=\"text/javascript\"></script> <script> var timestamp = Date.parse(new Date()); var src = \"http://statistic.dvsend.china.com/cc/00UYZ?adcrm?v=\"+timestamp; var s = document.createElement(\"SCRIPT\"); document.getElementsByTagName(\"HEAD\")[0].appendChild(s); s.src = src; </script>\n<!--<script type=\"text/javascript\">//<![CDATA[ ac_as_id = 2384; ac_click_track_url = \"\";ac_format = 0;ac_mode = 1; ac_width = 280;ac_height = 210; //]]></script> <script type=\"text/javascript\" src=\"http://static.acs86.com/g.js\"></script> <script> var timestamp = Date.parse(new Date()); var src = \"http://statistic.dvsend.china.com/cc/00W54?adcrm?v=\"+timestamp; var s = document.createElement(\"SCRIPT\"); document.getElementsByTagName(\"HEAD\")[0].appendChild(s); s.src = src; </script>-->\n"
+
+    # text ='''<script type="text/javascript"> var m=Math.random(); document.write('<script type="text/javascript" src="http://cast.ra.icast.cn/p/?id=2084&rnd='+m+'"><\/script>'); </script> <script> var timestamp = Date.parse(new Date()); var src = "http://statistic.dvsend.china.com/cc/00S4K?adcrm?v="+timestamp; var s = document.createElement("SCRIPT"); document.getElementsByTagName("HEAD")[0].appendChild(s); s.src = src; </script><script type="text/javascript"> /*内页通发流媒体300*250 创建于 2015-04-02*/ var cpro_id = "u2024173"; </script> <script src="http://cpro.baidustatic.com/cpro/ui/f.js" type="text/javascript"></script> <script> var timestamp = Date.parse(new Date()); var src = "http://statistic.dvsend.china.com/cc/00UYZ?adcrm?v="+timestamp; var s = document.createElement("SCRIPT"); document.getElementsByTagName("HEAD")[0].appendChild(s); s.src = src; </script><script type="text/javascript"> mx_as_id =3006801; mx_server_base_url ="mega.mlt01.com/"; </script> <script type="text/javascript" src="http://static.mlt01.com/b.js"></script> <script> var timestamp = Date.parse(new Date()); var src = "http://statistic.dvsend.china.com/cc/00W2W?adcrm?v="+timestamp; var s = document.createElement("SCRIPT"); document.getElementsByTagName("HEAD")[0].appendChild(s); s.src = src; </script>'''
+
+    # keyword = list(extract_tags_helper(text))
 
     while True:
         doc_num = total_task()
