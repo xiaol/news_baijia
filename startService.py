@@ -180,6 +180,7 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
     def post(self):
+        self.set_header("Access-Control-Allow-Origin", "http://localhost:63342")
         args = self.request.arguments
         filter_urls = self.get_arguments("filterurls")
         userId = self.get_argument("userId", None)
