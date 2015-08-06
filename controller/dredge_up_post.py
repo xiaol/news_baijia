@@ -93,7 +93,7 @@ def fetchAlbumList(user_id):
         "create_time", pymongo.ASCENDING)
     if docs.count() == 0:
         time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        db.insert({"user_id": user_id, "album_title": "默认", "album_des": "", "album_img": "2130837691",
+        db.insert({"user_id": user_id, "album_title": "默认", "album_des": "", "album_img": "2130837576",
                    "album_news_count": "0", "create_time": time})
         docs = db.find({"user_id": user_id, "create_time": time}).limit(1)
 
