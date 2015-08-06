@@ -10,6 +10,7 @@ from math import sqrt
 import numpy as np
 import math
 import bson
+
 DBStore = dbConn.GetDateStore()
 
 
@@ -117,7 +118,6 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
     result["relate"] = allrelate
     result["rc"] = 200
 
-
     result_points = []
 
     praise = conn['news_ver2']['praiseItem'].find({'sourceUrl': url})  # ({'uuid': uuid, 'commentId': commentId})
@@ -174,7 +174,6 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
     if (flag == False):
         result["isdoc"] = False
 
-
     if "relate_opinion" in doc.keys():
         result["relate_opinion"] = doc["relate_opinion"]
 
@@ -215,18 +214,20 @@ def get_points(points, praise_list, userId, platformType):
     return result_points
 
 
-def newsFetchContent(news_id,url, filterurls, userId, platformType, deviceType, updateTime=None):
+def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType, updateTime=None):
     conn = DBStore._connect_news
     if news_id:
         # id = bson.objectid.ObjectId(news_id)
         doc = conn["news_ver2"]["testForReactiveMongoV1"].find_one({"_id": news_id})
     else:
         doc = conn["news_ver2"]["NewsItems"].find_one({"source_url": url})
-    if "_id" in doc.keys():
-        doc.pop('_id')
 
     if not doc:
-        return
+        result = {'response': '未找到相关内容'}
+        return result
+
+    if "_id" in doc.keys():
+        doc.pop('_id')
 
     if updateTime is None:
         updateTime = ''
@@ -260,7 +261,7 @@ def newsFetchContent(news_id,url, filterurls, userId, platformType, deviceType, 
                         contentDoc = doc[key]
                         contentDoc['index'] = i
                         contentlist.append(contentDoc)
-                        i=i+1
+                        i = i + 1
             result['content'] = contentlist
         else:
             result['content'] = doc['content']
@@ -396,6 +397,9 @@ def newsFetchContent(news_id,url, filterurls, userId, platformType, deviceType, 
     result["point"] = result_points
     if (flag == False):
         result["isdoc"] = False
+
+    if "relate_opinion" in doc.keys():
+        result["relate_opinion"] = doc["relate_opinion"]
 
     return result
 
