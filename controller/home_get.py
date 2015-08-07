@@ -285,6 +285,10 @@ def homeContentFetch(options):
                 isCommentsFlag = 1
 
         sublist = add_abs_to_sublist(sublist)
+        for sublist_elem in sublist:
+            if "text" in sublist_elem.keys():
+                del sublist_elem["text"]
+
         doc["sublist"] = sublist
         # doc["otherNum"] = otherNum + baidu_news_num + reorganize_num
         docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime", -1)]).limit(10)
@@ -304,6 +308,61 @@ def homeContentFetch(options):
         doc["isZhihuFlag"] = isZhihuFlag
         doc["isImgWallFlag"] = isImgWallFlag
         doc["isCommentsFlag"] = isCommentsFlag
+
+        if "paragraph" in doc.keys():
+            del doc["paragraph"]
+
+        if "keyword" in doc.keys():
+            del doc["keyword"]
+
+        if "auto_tags" in doc.keys():
+            del doc["auto_tags"]
+
+        if "compress" in doc.keys():
+            del doc["compress"]
+
+        if "sentence_cut" in doc.keys():
+            del doc["sentence_cut"]
+
+        if "description" in doc.keys():
+            del doc["description"]
+
+        if "reorganize" in doc.keys():
+            del doc["reorganize"]
+
+
+        if "in_tag_detail" in doc.keys():
+            del doc["in_tag_detail"]
+
+        if "text" in doc.keys():
+            del doc["text"]
+
+        if "in_tag" in doc.keys():
+            del doc["in_tag"]
+
+        if "relate_opinion" in doc.keys():
+            del doc["relate_opinion"]
+
+        if "ne" in doc.keys():
+            del doc["ne"]
+
+        if "similarity" in doc.keys():
+            del doc["similarity"]
+
+        if "gist" in doc.keys():
+            del doc["gist"]
+
+        if "eventId_detail" in doc.keys():
+            del doc["eventId_detail"]
+
+        if "duplicate_check" in doc.keys():
+            del doc["duplicate_check"]
+
+        if "unit_vec" in doc.keys():
+            del doc["unit_vec"]
+
+        if "sentence" in doc.keys():
+            del doc["sentence"]
 
         # if timefeedback:
         #     doc["timefeedback"]=timefeedback_dict
@@ -571,6 +630,8 @@ def newsHomeContentFetch(options):
                 isCommentsFlag = 1
 
         sublist = add_abs_to_sublist(sublist)
+
+
         doc["sublist"] = sublist
         # doc["otherNum"] = otherNum + baidu_news_num + reorganize_num
         docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime", -1)]).limit(10)
@@ -599,6 +660,9 @@ def newsHomeContentFetch(options):
             special_list.append(doc)
         else:
             nospecial_list.append(doc)
+
+
+
 
     special_list = sorted(special_list, key=operator.itemgetter("createTime"))
     docs_return = special_list + nospecial_list
