@@ -32,6 +32,10 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
     result = {}
 
     allrelate = Get_Relate_docs(doc, docs_relate, filterurls)
+    for relate_elem in allrelate:
+        if "text" in relate_elem.keys():
+            del relate_elem["text"]
+
 
     if "imgUrls" in doc.keys():
         result['imgUrl'] = doc['imgUrls']
@@ -175,11 +179,16 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
         result["isdoc"] = False
 
     if "relate_opinion" in doc.keys():
+        if "common_opinion" in doc["relate_opinion"].keys():
+            del doc["relate_opinion"]["common_opinion"]
         result["relate_opinion"] = doc["relate_opinion"]
 
     if "sourceSiteName" in doc.keys():
         sourceSitename = doc["sourceSiteName"]
         result["category"] = sourceSitename[2:4]
+
+
+
 
     return result
 
