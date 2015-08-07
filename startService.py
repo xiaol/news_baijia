@@ -12,7 +12,7 @@ import tornado.httpclient
 import tornado.netutil
 import json
 from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get, point_get, \
-    praise_post, start_page_post, dredge_up_post, elementary_post ,tags_get
+    praise_post, start_page_post, dredge_up_post, elementary_post, tags_get
 from controller.push import push_message
 
 import abstract
@@ -180,6 +180,7 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
     def post(self):
+        self.set_header("Access-Control-Allow-Origin", "http://localhost:63342")
         args = self.request.arguments
         filter_urls = self.get_arguments("filterurls")
         userId = self.get_argument("userId", None)
@@ -222,10 +223,12 @@ class FetchDredgeUpStatusHandler(tornado.web.RequestHandler):
     def post(self):
         args = self.request.arguments
         user_id = self.get_argument("user_id", None)
+        album_id = self.get_argument("album_id", None)
+        is_add = self.get_argument("is_add", 0)
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
-            result = dredge_up_post.dredgeUpStatus(user_id)
+            result = dredge_up_post.dredgeUpStatus(user_id, album_id, is_add)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
@@ -261,6 +264,7 @@ class UpdateAlbumHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
+
 class RemoveAlbumHandler(tornado.web.RequestHandler):
     def post(self):
         args = self.request.arguments
@@ -272,6 +276,7 @@ class RemoveAlbumHandler(tornado.web.RequestHandler):
             result = dredge_up_post.removeAlbum(album_id, default_album_id)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
+
 
 class FetchAlbumListHandler(tornado.web.RequestHandler):
     def post(self):
@@ -464,6 +469,7 @@ class PraiseHandler(tornado.web.RequestHandler):
 
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
+
 
 class FetchTagsHandler(tornado.web.RequestHandler):
     def get(self):

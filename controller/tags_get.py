@@ -135,11 +135,13 @@ def retrieveUserTag(sinaToken, sinaId):
                     friendsTag.remove(v)
                     if v in friendsTag:
                         result.append(v)
+    result_ = set()
+    for i in result:
+        if i == '0' or i == '1':
+            continue
+        result_.add(i)
 
-    for i in set(result):
-        print i
-
-    return set(result)
+    return set(result_)
 
 def retrieveUserInfo(sinaToken, sinaId):
     userInfoUrl = "https://api.weibo.com/2/users/show.json?" \

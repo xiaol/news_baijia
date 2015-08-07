@@ -10,19 +10,39 @@ pool = redis.ConnectionPool(host='h213', port=6379)
 r = redis.Redis(connection_pool=pool)
 
 
-def dredgeUpStatus(user_id):
-    results_docs = {}
+def dredgeUpStatus(user_id, album_id, is_add):
+    conn = DBStore._connect_news
+    db = conn["news_ver2"]["AlbumItems"]
+    if is_add == "1":
+        id = bson.objectid.ObjectId(album_id)
+        doc = db.find_one({"_id": id})
+        if "album_news_count" in doc.keys():
+            count = int(doc["album_news_count"]) + 1
+            db.update({"_id": id}, {"$set": {"album_news_count": str(count)}})
     result_dict = []
     dict = r.hgetall("ExcavatorItems")
     for d, x in dict.items():
         list = x.split('&')
         if user_id in list:
-            results_docs[user_id + ":" + d] = eval(r.get(user_id + ":" + d))
-    result_list = sorted(results_docs.keys(), key=lambda a: results_docs[a]['create_time'],reverse=True)
-    for l in result_list:
-	    result = {}
-	    result[l] = results_docs[l]
-	    result_dict.append(result)
+            current = r.hgetall(user_id + ":" + d)
+            if current.get("alid") == album_id:
+                result_dict.append(r.hgetall(user_id + ":" + d))
+    result_dict = sorted(result_dict, key=lambda s: s['createTime'],reverse=True)
+    for l in result_dict:
+        if "content" in l.keys():
+            l.pop("content")
+        if "aggreItems" in l.keys():
+            l.pop("aggreItems")
+        if "user_id" in l.keys():
+            l.pop("user_id")
+        if "title" in l.keys():
+            l.pop("title")
+        if "alid" in l.keys():
+            l.pop("alid")
+        if "completeTime" in l.keys():
+            l.pop("completeTime")
+        if "createTime" in l.keys():
+            l.pop("createTime")
     return result_dict
 
 
@@ -30,8 +50,9 @@ def createAlbum(user_id, album_title, album_des, album_img, album_news_count):
     conn = DBStore._connect_news
     db = conn["news_ver2"]["AlbumItems"]
     time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    object_id= db.insert({"user_id": user_id, "album_title": album_title, "album_des": album_des, "album_img": album_img,
-               "album_news_count": album_news_count, "create_time": time})
+    object_id = db.insert(
+        {"user_id": user_id, "album_title": album_title, "album_des": album_des, "album_img": album_img,
+         "album_news_count": album_news_count, "create_time": time})
     results_docs = {}
     results_docs['album_id'] = str(object_id)
 
@@ -72,7 +93,7 @@ def fetchAlbumList(user_id):
         "create_time", pymongo.ASCENDING)
     if docs.count() == 0:
         time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        db.insert({"user_id": user_id, "album_title": "默认", "album_des": "", "album_img": "2130837689",
+        db.insert({"user_id": user_id, "album_title": "默认", "album_des": "", "album_img": "2130837576",
                    "album_news_count": "0", "create_time": time})
         docs = db.find({"user_id": user_id, "create_time": time}).limit(1)
 
