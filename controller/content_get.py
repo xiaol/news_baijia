@@ -252,6 +252,10 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
     result['imgUrl'] = getImg(doc)
     result['abs'] = getText(doc)
 
+    for relate_elem in allrelate:
+        if "text" in relate_elem.keys():
+            del relate_elem["text"]
+
     if "title" in doc.keys():
         result["title"] = doc["title"]
 
@@ -408,6 +412,8 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
         result["isdoc"] = False
 
     if "relate_opinion" in doc.keys():
+        if "common_opinion" in doc["relate_opinion"].keys():
+            del doc["relate_opinion"]["common_opinion"]
         result["relate_opinion"] = doc["relate_opinion"]
 
     return result
