@@ -14,6 +14,7 @@ import task.requests_with_sleep as requests
 # from content_get import Get_Relate_docs
 from AI_funcs.sen_compr.text_handler import SentenceCompressor
 import re
+import tornado.gen
 
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
@@ -29,6 +30,7 @@ DBStore = dbConn.GetDateStore()
 special_source = ["观察", "网易"]
 
 
+@tornado.gen.coroutine
 def homeContentFetch(options):
     """
 
@@ -379,8 +381,8 @@ def homeContentFetch(options):
     # docs_return = sorted(docs_return, key=operator.itemgetter("special"))
 
     # print docs_return
-    return docs_return
-
+    # return docs_return
+    raise tornado.gen.Return(docs_return)
 
 def newsHomeContentFetch(options):
     """
