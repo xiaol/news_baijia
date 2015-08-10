@@ -1440,6 +1440,7 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
             sims = sorted(sims.iteritems(), key=lambda d:d[1], reverse = True)
             # sims_names = sims.keys()
             keyword_num = len(keyword)
+            keyword_num_muti = (keyword_num*0.2)
             # index=0
             for sims_elem in sims:
                 if sims_elem[0]=="doc":
@@ -1534,18 +1535,20 @@ def duplicate_docs_check(domain_events):
         event["common_opinion"] = common_opinion
 
         duplicate_result_by_paragraph = compute_match_ratio_sentence_to_paragraph(result)
-        one_paragraph_by_article, total_paragraph_by_article = extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph)
-        event["self_opinion"] = one_paragraph_by_article
-
-        f = open("/Users/yangjiwen/Documents/yangjw/duplicate_case.txt","a")
-        if "eventId" in main_event.keys():
-            f.write("event_id:"+str(main_event["eventId"]).encode('utf-8')+'\n\n'
-                    "新闻url:"+str(main_event["_id"]).encode('utf-8')+'\n\n'
-                    "独家观点:"+str(main_event["self_opinion"]).encode('utf-8')+'\n\n'
-                    # "共同观点:"+str(common_opinion).encode('utf-8')+'\n\n'
-                    "----------------------------------------------------"
-                    )
-            f.close()
+        min_match_ratio, one_paragraph_by_article, total_paragraph_by_article = extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph)
+        if min_match_ratio<0.39:
+            event["self_opinion"] = one_paragraph_by_article
+        else:
+            event["self_opinion"] = ''
+        # f = open("/Users/yangjiwen/Documents/yangjw/duplicate_case.txt","a")
+        # if "eventId" in main_event.keys():
+        #     f.write("event_id:"+str(main_event["eventId"]).encode('utf-8')+'\n\n'
+        #             "新闻url:"+str(main_event["_id"]).encode('utf-8')+'\n\n'
+        #             "独家观点:"+str(main_event["self_opinion"]).encode('utf-8')+'\n\n'
+        #             # "共同观点:"+str(common_opinion).encode('utf-8')+'\n\n'
+        #             "----------------------------------------------------"
+        #             )
+        #     f.close()
 
 
     for event in events:
@@ -1632,7 +1635,7 @@ def extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph):
     one_paragraph_by_article = paragraph[min_paragraph_key]
 
 
-    return one_paragraph_by_article, total_paragraph_by_article
+    return min_match_ratio,one_paragraph_by_article, total_paragraph_by_article
 
 
 
