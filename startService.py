@@ -180,7 +180,7 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
     def post(self):
-        self.set_header("Access-Control-Allow-Origin", "http://localhost:63342,deeporiginalx.com,www.deeporiginalx.com")
+        self.set_header("Access-Control-Allow-Origin", "*")  #TODO should change to exact domain after test in localhost
         args = self.request.arguments
         filter_urls = self.get_arguments("filterurls")
         userId = self.get_argument("userId", None)
