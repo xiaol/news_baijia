@@ -30,7 +30,7 @@ DBStore = dbConn.GetDateStore()
 special_source = ["观察", "网易"]
 
 
-@tornado.gen.coroutine
+# @tornado.gen.coroutine
 def homeContentFetch(options):
     """
 
@@ -392,7 +392,8 @@ def homeContentFetch(options):
     # return docs_return
     t04 = time.time()
     print "fifth ts: ", t04
-    raise tornado.gen.Return(docs_return)
+    # raise tornado.gen.Return(docs_return)
+    return docs_return
 
 def newsHomeContentFetch(options):
     """

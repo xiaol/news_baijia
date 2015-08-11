@@ -26,7 +26,7 @@ define("host", default="127.0.0.1", help="run on the given host", type=str)
 
 
 class FetchHomeHandler(tornado.web.RequestHandler):
-    @tornado.web.asynchronous
+    # @tornado.web.asynchronous
     @tornado.gen.coroutine
     def get(self):
         # updateTime = self.get_argument("updateTime", None)
