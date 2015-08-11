@@ -27,7 +27,7 @@ def dredgeUpStatus(user_id, album_id, is_add):
             current = r.hgetall(user_id + ":" + d)
             if current.get("alid") == album_id:
                 result_dict.append(r.hgetall(user_id + ":" + d))
-    result_dict = sorted(result_dict, key=lambda s: s['createTime'],reverse=True)
+    result_dict = sorted(result_dict, key=lambda s: s['createTime'], reverse=True)
     for l in result_dict:
         if "content" in l.keys():
             l.pop("content")
@@ -46,13 +46,17 @@ def dredgeUpStatus(user_id, album_id, is_add):
     return result_dict
 
 
-def createAlbum(user_id, album_title, album_des, album_img, album_news_count):
+def createAlbum(user_id, album_id, album_title, album_des, album_img, album_news_count, create_time):
     conn = DBStore._connect_news
     db = conn["news_ver2"]["AlbumItems"]
-    time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    object_id = db.insert(
-        {"user_id": user_id, "album_title": album_title, "album_des": album_des, "album_img": album_img,
-         "album_news_count": album_news_count, "create_time": time})
+    album_id = bson.objectid.ObjectId(album_id)
+    if create_time is None:
+        create_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if album_title:
+        object_id = db.insert(
+        {"_id": album_id, "user_id": user_id, "album_title": album_title, "album_des": album_des,
+         "album_img": album_img,
+         "album_news_count": album_news_count, "create_time": create_time})
     results_docs = {}
     results_docs['album_id'] = str(object_id)
 

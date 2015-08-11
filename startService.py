@@ -58,7 +58,7 @@ class FetchHomeHandler(tornado.web.RequestHandler):
 
             # if updateTime:
             # options["updateTime"] = updateTime
-        result =  yield home_get.homeContentFetch(options)
+        result = yield home_get.homeContentFetch(options)
         # print result
 
         self.set_header("Content-Type", "Application/json")
@@ -184,7 +184,8 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
     def post(self):
-        self.set_header("Access-Control-Allow-Origin", "*")  #TODO should change to exact domain after test in localhost
+        self.set_header("Access-Control-Allow-Origin",
+                        "*")  # TODO should change to exact domain after test in localhost
         args = self.request.arguments
         filter_urls = self.get_arguments("filterurls")
         userId = self.get_argument("userId", None)
@@ -241,6 +242,8 @@ class CreateAlbumHandler(tornado.web.RequestHandler):
     def post(self):
         args = self.request.arguments
         user_id = self.get_argument("user_id", None)
+        album_id = self.get_argument("album_id", None)
+        create_time = self.get_argument("create_time", None)
         album_title = self.get_argument("album_title", None)
         album_des = self.get_argument("album_des", None)
         album_img = self.get_argument("album_img", None)
@@ -248,7 +251,8 @@ class CreateAlbumHandler(tornado.web.RequestHandler):
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
-            result = dredge_up_post.createAlbum(user_id, album_title, album_des, album_img, album_news_count)
+            result = dredge_up_post.createAlbum(user_id, album_id, album_title, album_des, album_img, album_news_count,
+                                                create_time)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
