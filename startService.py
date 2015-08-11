@@ -59,7 +59,7 @@ class FetchHomeHandler(tornado.web.RequestHandler):
             # if updateTime:
             # options["updateTime"] = updateTime
         result =  yield home_get.homeContentFetch(options)
-        print result
+        # print result
 
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
