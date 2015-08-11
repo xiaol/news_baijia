@@ -245,7 +245,6 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
             aggre_items = doc["aggre_items"]
             for doc in aggre_items:
                 ls = {}
-                print doc
                 for (k,v) in doc.items():
                     ls["img"] = k
                     ls["sourceSitename"] = v
