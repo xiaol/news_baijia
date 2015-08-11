@@ -122,10 +122,11 @@ def homeContentFetch(options):
 
         docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1}).sort([("createTime", -1)]).limit(50)
 
-        undocs = conn["news_ver2"]["googleNewsItem"].find(
-            {"$or": [{"isOnline": 0}, {"isOnline": {"$exists": 0}}], "createTime": {"$gte": start_time_yes},
-             "eventId": {"$exists": 1}}).sort([("createTime", -1)])
-        undocs_list = extratInfoInUndocs(undocs)
+        # undocs = conn["news_ver2"]["googleNewsItem"].find(
+        #     {"$or": [{"isOnline": 0}, {"isOnline": {"$exists": 0}}], "createTime": {"$gte": start_time_yes},
+        #      "eventId": {"$exists": 1}}).sort([("createTime", -1)])
+        # undocs_list = extratInfoInUndocs(undocs)
+        undocs_list = []
 
         # db.googleNewsItem.find({'isOnline':{"$exists": 0},'createTime':{"$gte": '2015-05-15 18:00:00',"$lt": '2015-05-16 06:00:00'}, "eventId": {"$exists": 1} }).sort( { createTime: -1 } ).count()
 
