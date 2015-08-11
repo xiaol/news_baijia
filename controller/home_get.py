@@ -276,15 +276,15 @@ def homeContentFetch(options):
             #     del doc["zhihu"]
             del doc["zhihu"]
 
-        doc_crawl_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
-        doc_point_comment = conn["news_ver2"]["pointItem"].find_one({"sourceUrl": url})
-        if doc_crawl_comment:
-            if doc_crawl_comment["comments"]:
-                isCommentsFlag = 1
-
-        if doc_point_comment:
-            if doc_point_comment["srcText"]:
-                isCommentsFlag = 1
+        # doc_crawl_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
+        # doc_point_comment = conn["news_ver2"]["pointItem"].find_one({"sourceUrl": url})
+        # if doc_crawl_comment:
+        #     if doc_crawl_comment["comments"]:
+        #         isCommentsFlag = 1
+        #
+        # if doc_point_comment:
+        #     if doc_point_comment["srcText"]:
+        #         isCommentsFlag = 1
 
         sublist = add_abs_to_sublist(sublist)
         for sublist_elem in sublist:
@@ -293,7 +293,8 @@ def homeContentFetch(options):
 
         doc["sublist"] = sublist
         # doc["otherNum"] = otherNum + baidu_news_num + reorganize_num
-        docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime", -1)]).limit(10)
+        # docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime", -1)]).limit(10)
+        docs_relate = []
         allrelate = Get_Relate_docs(doc, docs_relate, filterurls=[])
         doc["otherNum"] = len(allrelate)
 
