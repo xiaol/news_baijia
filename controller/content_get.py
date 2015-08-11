@@ -241,20 +241,23 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
     if updateTime is None:
         updateTime = ''
 
-    docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime", -1)]).limit(10)
-
-    doc_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
-
+    if news_id:
+        docs_relate = []
+        doc_comment = []
+        allrelate = []
+    else:
+        docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime", -1)]).limit(10)
+        doc_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
+        allrelate = Get_Relate_docs(doc, docs_relate, filterurls)
     result = getContentJson()
-
-    allrelate = Get_Relate_docs(doc, docs_relate, filterurls)
 
     result['imgUrl'] = getImg(doc)
     result['abs'] = getText(doc)
 
-    for relate_elem in allrelate:
-        if "text" in relate_elem.keys():
-            del relate_elem["text"]
+    if allrelate:
+        for relate_elem in allrelate:
+            if "text" in relate_elem.keys():
+                del relate_elem["text"]
 
     if "title" in doc.keys():
         result["title"] = doc["title"]
