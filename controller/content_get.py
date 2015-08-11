@@ -243,9 +243,9 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
         allrelate = []
         if "aggre_items" in doc.keys():
             aggre_items = doc["aggre_items"]
-            for doc in aggre_items:
+            for aggre in aggre_items:
                 ls = {}
-                for (k,v) in doc.items():
+                for (k,v) in aggre.items():
                     ls["img"] = k
                     ls["sourceSitename"] = v
                     ls['height'] = 75
