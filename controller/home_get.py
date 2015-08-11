@@ -14,6 +14,7 @@ import task.requests_with_sleep as requests
 # from content_get import Get_Relate_docs
 from AI_funcs.sen_compr.text_handler import SentenceCompressor
 import re
+import tornado.gen
 
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
@@ -29,12 +30,15 @@ DBStore = dbConn.GetDateStore()
 special_source = ["观察", "网易"]
 
 
+@tornado.gen.coroutine
 def homeContentFetch(options):
     """
 
     :rtype :
     """
     # updateTime = ''
+    t00 = time.time()
+    print "first ts: ", t00
     page = 1
     limit = 10
     # if "updateTime" in options.keys():
@@ -119,12 +123,17 @@ def homeContentFetch(options):
         #                                                                                "$lt": end_time}}).sort([("createTime", -1)])
 
         docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1}).sort([("createTime", -1)]).limit(50)
+        t01 = time.time()
+        print "second ts: ", t01
 
         undocs = conn["news_ver2"]["googleNewsItem"].find(
             {"$or": [{"isOnline": 0}, {"isOnline": {"$exists": 0}}], "createTime": {"$gte": start_time_yes},
              "eventId": {"$exists": 1}}).sort([("createTime", -1)])
+        t02 = time.time()
+        print "third ts: ", t02
         undocs_list = extratInfoInUndocs(undocs)
-
+        t03 = time.time()
+        print "fourth ts: ", t03
         # db.googleNewsItem.find({'isOnline':{"$exists": 0},'createTime':{"$gte": '2015-05-15 18:00:00',"$lt": '2015-05-16 06:00:00'}, "eventId": {"$exists": 1} }).sort( { createTime: -1 } ).count()
 
     special_list = []
@@ -274,6 +283,7 @@ def homeContentFetch(options):
             #     del doc["zhihu"]
             del doc["zhihu"]
 
+
         doc_crawl_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
         doc_point_comment = conn["news_ver2"]["pointItem"].find_one({"sourceUrl": url})
         if doc_crawl_comment:
@@ -379,8 +389,11 @@ def homeContentFetch(options):
     # docs_return = sorted(docs_return, key=operator.itemgetter("special"))
 
     # print docs_return
-    return docs_return
-
+    # return docs_return
+    t04 = time.time()
+    print "fifth ts: ", t04
+    raise tornado.gen.Return(docs_return)
+    # return docs_return
 
 def newsHomeContentFetch(options):
     """

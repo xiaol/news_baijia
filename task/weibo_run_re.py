@@ -1439,12 +1439,13 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
 
             sims = sorted(sims.iteritems(), key=lambda d:d[1], reverse = True)
             # sims_names = sims.keys()
-
+            keyword_num = len(keyword)
+            keyword_num_muti = (keyword_num*0.2)
             # index=0
             for sims_elem in sims:
                 if sims_elem[0]=="doc":
                     continue
-                elif sims_elem[1]>=0.7 or same_word[sims_elem[0]]>=4:
+                elif sims_elem[1]>=0.7 or same_word[sims_elem[0]]>=keyword_num*0.2:
                     paragraphIndex_dict[sims_elem[0]] = { "similarity": sims_elem[1]
                                                          , "unit_vec" : unit_vec[sims_elem[0]]
                                                          , "keyword": keyword}
@@ -1454,7 +1455,7 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
                     print "sims,%s"%sims_elem[0]
                     print "title,%s,sims,%10.3f"%(docs[sims_elem[0]], sims_elem[1])
                     print "same_word,%10.3f"%same_word[sims_elem[0]]
-                    # print ""
+                    print "keyword_num,%10.3f"%keyword_num
                 else:
                     continue
                     # print "sims,%s"%sims_elem[0]
@@ -1488,7 +1489,8 @@ def calculate_sim(vec, names, unit_vec):
 def duplicate_docs_check(domain_events):
     events = []
     for event in domain_events:
-
+        # if event["_id"] == 'http://nk.news.sohu.com/20150808/n418401792.shtml':
+        #     print "1"
         if "sentence" not in event.keys():
             text = event["text"]
             paragraph_list = text.split('\n')
@@ -1519,29 +1521,35 @@ def duplicate_docs_check(domain_events):
         url = main_event["_id"]
 
 
+        duplicate_result = {}
         result = {}
         for event_elem in events:
             if url == event_elem["_id"]:
                 continue
-            result = compare_doc_is_duplicate(main_event, event_elem, result)
-        if len(result) >0:
-            conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"duplicate_check": result}})
+            duplicate_result, result = compare_doc_is_duplicate(main_event, event_elem, duplicate_result, result)
+        if len(duplicate_result) >0:
+            conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"duplicate_check": duplicate_result}})
 
-
-
-        common_opinion, self_opinion = extract_opinion(main_event,result)
+        common_opinion, self_opinion = extract_opinion(main_event,duplicate_result)
         event["self_opinion"] = self_opinion
         event["common_opinion"] = common_opinion
 
+        duplicate_result_by_paragraph = compute_match_ratio_sentence_to_paragraph(result)
+        min_match_ratio, one_paragraph_by_article, total_paragraph_by_article = extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph)
+        if min_match_ratio<0.39:
+            event["self_opinion"] = one_paragraph_by_article
+        else:
+            event["self_opinion"] = ''
         # f = open("/Users/yangjiwen/Documents/yangjw/duplicate_case.txt","a")
         # if "eventId" in main_event.keys():
         #     f.write("event_id:"+str(main_event["eventId"]).encode('utf-8')+'\n\n'
         #             "新闻url:"+str(main_event["_id"]).encode('utf-8')+'\n\n'
-        #             "独家观点:"+str(self_opinion).encode('utf-8')+'\n\n'
-        #             "共同观点:"+str(common_opinion).encode('utf-8')+'\n\n'
+        #             "独家观点:"+str(main_event["self_opinion"]).encode('utf-8')+'\n\n'
+        #             # "共同观点:"+str(common_opinion).encode('utf-8')+'\n\n'
         #             "----------------------------------------------------"
         #             )
         #     f.close()
+
 
     for event in events:
         main_event = event
@@ -1559,6 +1567,7 @@ def duplicate_docs_check(domain_events):
                     result["common_opinion"].append({"common_opinion": event_elem["common_opinion"], "url": event_elem["title"]})
 
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"relate_opinion": result}})
+
 
 
 
@@ -1604,7 +1613,80 @@ def extract_opinion(main_event,result):
     #             self_opinion=self_opinion+sentence_value+'。'
     # return  common_opinion, self_opinion
 
-def compare_doc_is_duplicate(main_event, event_elem,result):
+def extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph):
+    total_paragraph_by_article = {}
+    one_paragraph_by_article = ''
+    paragraph = main_event["paragraph"]
+    min_match_ratio = 1
+    min_paragraph_key = '0'
+
+
+    for paragraph_key, paragraph_value in paragraph.items():
+        total_paragraph_by_article[paragraph_key] = {}
+        total_paragraph_by_article[paragraph_key]["content"] = paragraph[paragraph_key]
+        if paragraph_key in duplicate_result_by_paragraph.keys():
+            total_paragraph_by_article[paragraph_key]["match_ratio"] = duplicate_result_by_paragraph[paragraph_key]
+        else:
+            total_paragraph_by_article[paragraph_key]["match_ratio"] = 1
+        if  total_paragraph_by_article[paragraph_key]["match_ratio"] < min_match_ratio:
+            min_match_ratio = total_paragraph_by_article[paragraph_key]["match_ratio"]
+            min_paragraph_key = paragraph_key
+
+    one_paragraph_by_article = paragraph[min_paragraph_key]
+
+
+    return min_match_ratio,one_paragraph_by_article, total_paragraph_by_article
+
+
+
+
+
+
+
+
+
+
+
+
+def compute_match_ratio_sentence_to_paragraph(result):
+    duplicate_result_by_paragraph = {}
+
+    for paragraph_key, paragraph_value in result.items():
+        avg_match_ratio_by_paragraph = 1
+        sum_match_ratio_by_paragraph = 0
+        sentence_num = len(paragraph_value)
+        for sentence_key, sentence_value in paragraph_value.items():
+            top_match_ratio_by_sentence = 0
+            for sentence_value_elem in sentence_value:
+                if  sentence_value_elem["match_ratio"] > top_match_ratio_by_sentence:
+                    top_match_ratio_by_sentence = sentence_value_elem["match_ratio"]
+            sum_match_ratio_by_paragraph = sum_match_ratio_by_paragraph + top_match_ratio_by_sentence
+        if sentence_num > 0:
+            avg_match_ratio_by_paragraph = sum_match_ratio_by_paragraph*1.0/sentence_num
+
+        duplicate_result_by_paragraph[paragraph_key] = avg_match_ratio_by_paragraph
+    return duplicate_result_by_paragraph
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def compare_doc_is_duplicate(main_event, event_elem, duplicate_result, result):
     sentence_cut = main_event["sentence_cut"]
     paragraph = event_elem["paragraph"]
     url = event_elem["_id"]
@@ -1615,15 +1697,18 @@ def compare_doc_is_duplicate(main_event, event_elem,result):
             top_match_ratio = 0.0
             top_match_paragraph_id = "-1"
             keyword_num = len(sentence_value)
-            if keyword_num <=5:
-                continue
+            # if keyword_num <=5:
+            #     continue
             for compare_paragraph_key , compare_paragraph_value in paragraph.items():
                 match_num = 0
                 for sentence_keyword in sentence_value:
                     compare_result = compare_paragraph_value.find(sentence_keyword)
                     if compare_result >= 0:
                         match_num = match_num + 1
-                match_ratio = match_num / (keyword_num * 1.0)
+                if keyword_num < 2:
+                    match_ratio = 1
+                else:
+                    match_ratio = match_num / (keyword_num * 1.0)
                 if match_ratio > top_match_ratio:
                     top_match_ratio = match_ratio
                     top_match_paragraph_id = compare_paragraph_key
@@ -1658,16 +1743,30 @@ def compare_doc_is_duplicate(main_event, event_elem,result):
                 #
                 # f.write('\n')
                 # f.close()
-                if paragraph_key not in result.keys():
-                    result[paragraph_key] = {}
-                if sentence_key not in result[paragraph_key].keys():
-                    result[paragraph_key][sentence_key] = []
-                    result[paragraph_key][sentence_key] = [{"url": url, "paragraph_id": top_match_paragraph_id, "match_ratio": top_match_ratio}]
+                if paragraph_key not in duplicate_result.keys():
+                    duplicate_result[paragraph_key] = {}
+                if sentence_key not in duplicate_result[paragraph_key].keys():
+                    duplicate_result[paragraph_key][sentence_key] = []
+                    duplicate_result[paragraph_key][sentence_key] = [{"url": url, "paragraph_id": top_match_paragraph_id, "match_ratio": top_match_ratio}]
 
                 else:
-                    result[paragraph_key][sentence_key].append([{"url": url, "paragraph_id": top_match_paragraph_id, "match_ratio": top_match_ratio}])
+                    duplicate_result[paragraph_key][sentence_key].append({"url": url, "paragraph_id": top_match_paragraph_id, "match_ratio": top_match_ratio})
 
-    return result
+
+
+
+            if paragraph_key not in result.keys():
+                result[paragraph_key] = {}
+            if sentence_key not in result[paragraph_key].keys():
+                result[paragraph_key][sentence_key] = []
+                result[paragraph_key][sentence_key] = [{"url": url, "paragraph_id": top_match_paragraph_id, "match_ratio": top_match_ratio}]
+
+            else:
+                result[paragraph_key][sentence_key].append({"url": url, "paragraph_id": top_match_paragraph_id, "match_ratio": top_match_ratio})
+
+
+
+    return duplicate_result, result
 
 
 
