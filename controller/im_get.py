@@ -33,6 +33,33 @@ def imUserFetch(options):
         print "uuid or jpushid is none"
         return {"response": "404"}
 
+
+
+def uploadUmengPushId(options):
+    DBStore = dbConn.GetDateStore()
+    if "uuid" in options.keys() and options["uuid"] and "umengPushId" in options.keys() and options["umengPushId"]:
+        options['_id'] = options["umengPushId"]
+        Item = {'_id': options['_id']}
+        conn = DBStore._connect_news
+        doc = conn['news_ver2']['umengPushIdItem'].find_one(Item)
+
+        if doc:
+            print "_id,%salread exists in databases"%options['_id']
+            item_dict = dict(options)
+            conn['news_ver2']['umengPushIdItem'].save(item_dict)
+            return {"response": "200"}
+        else:
+            item_dict = dict(options)
+            conn['news_ver2']['umengPushIdItem'].save(item_dict)
+            return {"response": "200"}
+
+    else:
+
+        print "uuid or umengPushId is none"
+        return {"response": "404"}
+
+
+
 def imContentFetch(options):
     DBStore = dbConn.GetDateStore()
     # "$or":[{"googleSearchOk": 0}, {"googleSearchOk": {"$exists": 0}}]

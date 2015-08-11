@@ -399,6 +399,25 @@ class FetchImUserHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+class uploadUmengPushId(tornado.web.RequestHandler):
+    def get(self):
+        uuid = self.get_argument("uuid", None)
+        umengPushId = self.get_argument("umengPushId", None)
+        userId = self.get_argument("userId", None)
+        platformType = self.get_argument("platformType", None)
+
+        options = {}
+        options["uuid"] = uuid
+        options["umengPushId"] = umengPushId
+        options["userId"] = userId
+        options["platformType"] = platformType
+        result = im_get.uploadUmengPushId(options)
+        print result
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
+
 class FetchImContentHandler(tornado.web.RequestHandler):
     def get(self):
         jpushId = self.get_argument("jpushId", None)
@@ -519,7 +538,9 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchImContent", FetchImContentHandler),
             (r"/news/baijia/FetchChannelList", FetchChannelListHandler),
             (r"/news/baijia/praise", PraiseHandler),
-            (r"/news/baijia/fetchTags", FetchTagsHandler)
+            (r"/news/baijia/fetchTags", FetchTagsHandler),
+            (r"/news/baijia/uploadUmengPushId", uploadUmengPushId)
+
 
         ]
 
