@@ -36,7 +36,6 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
         if "text" in relate_elem.keys():
             del relate_elem["text"]
 
-
     if "imgUrls" in doc.keys():
         result['imgUrl'] = doc['imgUrls']
 
@@ -187,9 +186,6 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
         sourceSitename = doc["sourceSiteName"]
         result["category"] = sourceSitename[2:4]
 
-
-
-
     return result
 
 
@@ -245,6 +241,16 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
         docs_relate = []
         doc_comment = []
         allrelate = []
+        if "aggre_items" in doc.keys():
+            aggre_items = doc["aggre_items"]
+            for aggre in aggre_items:
+                ls = {}
+                for (k,v) in aggre.items():
+                    ls["img"] = k
+                    ls["sourceSitename"] = v
+                    ls['height'] = 75
+                    ls['width'] = 121
+                    allrelate.append(ls)
     else:
         docs_relate = conn["news"]["AreaItems"].find({"relateUrl": url}).sort([("updateTime", -1)]).limit(10)
         doc_comment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
