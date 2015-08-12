@@ -128,17 +128,13 @@ def total_task():
     now_time = now.strftime('%Y-%m-%d %H:%M:%S')
     logging.warning("##################### online_event_task start ********************")
 
-    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online:
-        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
-        do_event_task(params, end_time, now_time)
-
-    logging.warning("##################### online_event_task complete ********************")
+    # for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online:
+    #     params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+    #     do_event_task(params, end_time, now_time)
+    #
+    # logging.warning("##################### online_event_task complete ********************")
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
-        # if url == "http://www.guancha.cn/local/2015_08_01_328987.shtml":
-        #     print "1"
-        # else:
-        #     continue
         doc_num += 1
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
         try:
@@ -978,7 +974,7 @@ def do_event_task(params, start_time, end_time):
                                                                             , "eventId_detail": eventId_detail
                                                                             , "similarity": story["similarity"]
                                                                             , "unit_vec": story["unit_vec"]
-                                                                            , "keyword": story["keyword"]
+                                                                            # , "keyword": story["keyword"]
 
                                                                               })
 
@@ -999,7 +995,7 @@ def do_event_task(params, start_time, end_time):
                                                                             , "eventId_detail": [url]
                                                                             , "similarity": story["similarity"]
                                                                             , "unit_vec": story["unit_vec"]
-                                                                            , "keyword": story["keyword"]
+                                                                            # , "keyword": story["keyword"]
                                                                               })
 
                 # set_googlenews_by_url_with_field_and_value(story["sourceUrl"], "eventId", top_story)
@@ -1491,7 +1487,7 @@ def duplicate_docs_check(domain_events):
     for event in domain_events:
         # if event["_id"] == 'http://nk.news.sohu.com/20150808/n418401792.shtml':
         #     print "1"
-        if "sentence" not in event.keys():
+        if "sentence"  not in event.keys():
             text = event["text"]
             paragraph_list = text.split('\n')
             sentence_dict = {}
@@ -1848,8 +1844,8 @@ def set_googlenews_by_url_with_field_and_value_dict(url, condition_dict):
                                                                          "eventId": condition_dict["eventId"],
                                                                          "eventId_detail": condition_dict["eventId_detail"],
                                                                          "similarity": condition_dict["similarity"],
-                                                                         "unit_vec": condition_dict["unit_vec"],
-                                                                         "keyword": condition_dict["keyword"]
+                                                                         "unit_vec": condition_dict["unit_vec"]
+                                                                         # "keyword": condition_dict["keyword"]
                                                                          }
                                                                })
 
