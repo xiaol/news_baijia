@@ -27,7 +27,7 @@ mapOfSourceName = {"weibo": "微博",
 
 DBStore = dbConn.GetDateStore()
 
-special_source = ["观察", "网易"]
+special_source = ["观察", "网易","地球"]
 
 
 @tornado.gen.coroutine
