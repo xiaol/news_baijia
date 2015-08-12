@@ -27,7 +27,7 @@ mapOfSourceName = {"weibo": "微博",
 
 DBStore = dbConn.GetDateStore()
 
-special_source = ["观察", "网易"]
+special_source = ["观察", "网易","地球"]
 
 
 @tornado.gen.coroutine
@@ -182,7 +182,10 @@ def homeContentFetch(options):
 
         if "sourceSiteName" in doc.keys():
             sourceSitename = doc["sourceSiteName"]
-            doc["category"] = sourceSitename[2:4]
+            if sourceSitename == "地球图辑队":
+                doc["category"] = "社会"
+            else:
+                doc["category"] = sourceSitename[2:4]
         else:
             continue
         # 不取没有相关的
