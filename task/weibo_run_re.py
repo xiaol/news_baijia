@@ -62,7 +62,7 @@ conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replic
                                                              read_preference=ReadPreference.SECONDARY)
 HOST_NER = "60.28.29.47"
 
-not_need_copy_content_news = ["网易新闻图片", "观察者网"]
+not_need_copy_content_news = ["网易新闻图片", "观察者网",'地球图辑队']
 
 
 g_time_filter = ["今天","明天","后天"]
@@ -511,7 +511,7 @@ def do_abs_task(params):
         if not content:
             return False
         try:
-            if sourceSiteName == '观察者网':
+            if sourceSiteName in ['观察者网','地球图辑队']:
                 content = extract_text(content)
                 content = trim_new_line_character(content)
                 conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"content": content}})
