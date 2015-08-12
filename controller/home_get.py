@@ -182,7 +182,10 @@ def homeContentFetch(options):
 
         if "sourceSiteName" in doc.keys():
             sourceSitename = doc["sourceSiteName"]
-            doc["category"] = sourceSitename[2:4]
+            if sourceSitename == "地球图辑队":
+                doc["category"] = "社会"
+            else:
+                doc["category"] = sourceSitename[2:4]
         else:
             continue
         # 不取没有相关的
