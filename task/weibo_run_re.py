@@ -135,6 +135,10 @@ def total_task():
     # logging.warning("##################### online_event_task complete ********************")
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
+        # if url == "http://world.yam.com/post.php?id=4440":
+            # print 1
+        # else:
+        #     continue
         doc_num += 1
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
         try:
@@ -641,6 +645,9 @@ def do_content_img_task(params):
     text = (r_text.json())["text"]
     if text:
         text = trim_new_line_character(text)
+        if is_error_code(text):
+            return False
+            # continue
     if text:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
         gist = Gist().get_gist_str(text)
@@ -663,6 +670,15 @@ def do_content_img_task(params):
         return True
 
     return False
+
+def is_error_code(text):
+    pattern = re.compile(ur'script')
+    text = text.decode('utf-8')
+    result = re.search(pattern, text)
+    if result:
+        return True
+    else:
+        return False
 
 
 def trim_new_line_character(text):
@@ -1558,9 +1574,9 @@ def duplicate_docs_check(domain_events):
                 continue
             else:
                 if len(event_elem["self_opinion"])>=10:
-                    result["self_opinion"].append({"self_opinion": event_elem["self_opinion"], "url": event_elem["title"]})
+                    result["self_opinion"].append({"self_opinion": event_elem["self_opinion"], "url": event_elem["_id"], "title": event_elem["title"]})
                 if len(event_elem["common_opinion"])>10:
-                    result["common_opinion"].append({"common_opinion": event_elem["common_opinion"], "url": event_elem["title"]})
+                    result["common_opinion"].append({"common_opinion": event_elem["common_opinion"], "url": event_elem["_id"], "title": event_elem["title"]})
 
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"relate_opinion": result}})
 
@@ -1624,7 +1640,7 @@ def extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph):
             total_paragraph_by_article[paragraph_key]["match_ratio"] = duplicate_result_by_paragraph[paragraph_key]
         else:
             total_paragraph_by_article[paragraph_key]["match_ratio"] = 1
-        if  total_paragraph_by_article[paragraph_key]["match_ratio"] < min_match_ratio:
+        if  total_paragraph_by_article[paragraph_key]["match_ratio"] < min_match_ratio and is_normal_info(paragraph[paragraph_key]):
             min_match_ratio = total_paragraph_by_article[paragraph_key]["match_ratio"]
             min_paragraph_key = paragraph_key
 
@@ -1635,12 +1651,14 @@ def extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph):
 
 
 
-
-
-
-
-
-
+def is_normal_info(paragraph):
+    paragraph = paragraph.decode('utf-8')
+    pattern=re.compile(ur'http[:：]|[[【]|[]】]|扫描二维码|来源[:：]|编辑[:：]|作者[:：]')
+    result = re.search(pattern, paragraph)
+    if result:
+        return False
+    else:
+        return True
 
 
 
@@ -1662,24 +1680,6 @@ def compute_match_ratio_sentence_to_paragraph(result):
 
         duplicate_result_by_paragraph[paragraph_key] = avg_match_ratio_by_paragraph
     return duplicate_result_by_paragraph
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def compare_doc_is_duplicate(main_event, event_elem, duplicate_result, result):
@@ -1919,7 +1919,8 @@ if __name__ == '__main__':
     # text ='''<script type="text/javascript"> var m=Math.random(); document.write('<script type="text/javascript" src="http://cast.ra.icast.cn/p/?id=2084&rnd='+m+'"><\/script>'); </script> <script> var timestamp = Date.parse(new Date()); var src = "http://statistic.dvsend.china.com/cc/00S4K?adcrm?v="+timestamp; var s = document.createElement("SCRIPT"); document.getElementsByTagName("HEAD")[0].appendChild(s); s.src = src; </script><script type="text/javascript"> /*内页通发流媒体300*250 创建于 2015-04-02*/ var cpro_id = "u2024173"; </script> <script src="http://cpro.baidustatic.com/cpro/ui/f.js" type="text/javascript"></script> <script> var timestamp = Date.parse(new Date()); var src = "http://statistic.dvsend.china.com/cc/00UYZ?adcrm?v="+timestamp; var s = document.createElement("SCRIPT"); document.getElementsByTagName("HEAD")[0].appendChild(s); s.src = src; </script><script type="text/javascript"> mx_as_id =3006801; mx_server_base_url ="mega.mlt01.com/"; </script> <script type="text/javascript" src="http://static.mlt01.com/b.js"></script> <script> var timestamp = Date.parse(new Date()); var src = "http://statistic.dvsend.china.com/cc/00W2W?adcrm?v="+timestamp; var s = document.createElement("SCRIPT"); document.getElementsByTagName("HEAD")[0].appendChild(s); s.src = src; </script>'''
 
     # keyword = list(extract_tags_helper(text))
-
+    # is_normal_info("2015-08-12 08:47:32  | 来源：")
+    # is_error_code('scriptdddd')
     while True:
         doc_num = total_task()
         if doc_num == "no_doc":

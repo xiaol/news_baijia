@@ -15,6 +15,7 @@ import task.requests_with_sleep as requests
 from AI_funcs.sen_compr.text_handler import SentenceCompressor
 import re
 import tornado.gen
+from task.weibo_run_re import is_error_code
 
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
@@ -981,6 +982,9 @@ def extratInfoInUndocs(undocs):
             img = ""
         title = doc["title"]
         eventId = doc["eventId"]
+        if 'text' in doc.keys():
+            if is_error_code(doc["text"]):
+                continue
         if 'text' not in doc.keys():
             undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId, 'similarity': doc["similarity"], 'unit_vec': doc["unit_vec"]})
         elif 'gist' not in doc.keys():
