@@ -9,6 +9,8 @@ import tornado.web
 import tornado.httpserver
 import tornado.httpclient
 
+import sys
+
 import tornado.netutil
 import json
 from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get, point_get, \
@@ -21,7 +23,7 @@ from tornado.options import define, options
 import tornado.gen
 import tornado.concurrent
 
-define("port", default=9999, help="run on the given port", type=int)
+# define("port", default=9999, help="run on the given port", type=int)
 define("host", default="127.0.0.1", help="run on the given host", type=str)
 
 
@@ -558,7 +560,7 @@ class Application(tornado.web.Application):
 if __name__ == "__main__":
     # sched = SchedulerAll()
     # sched.start()
-
+    port = sys.argv[1]
     tornado.options.parse_command_line()
     # sockets = tornado.netutil.bind_sockets(options.port)
     # tornado.process.fork_processes(0)
@@ -568,5 +570,5 @@ if __name__ == "__main__":
 
     # app = Application()
     http_server = tornado.httpserver.HTTPServer(Application())
-    http_server.listen(options.port)
+    http_server.listen(port)
     tornado.ioloop.IOLoop.instance().start()
