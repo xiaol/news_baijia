@@ -41,8 +41,6 @@ def dredgeUpStatus(user_id, album_id, is_add):
             l.pop("alid")
         if "completeTime" in l.keys():
             l.pop("completeTime")
-        if "createTime" in l.keys():
-            l.pop("createTime")
     return result_dict
 
 
