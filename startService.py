@@ -147,6 +147,8 @@ class FetchTimeHandler(tornado.web.RequestHandler):
 
 class FetchContentHandler(tornado.web.RequestHandler):
     def get(self):
+        self.set_header("Access-Control-Allow-Origin",
+                        "*")  # TODO should change to exact domain after test in localhost
         self.set_header("Content-Type", "Application/json")
         url = self.get_argument("url", None)
         filter_urls = self.get_arguments("filterurls")
