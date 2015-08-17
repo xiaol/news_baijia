@@ -1029,7 +1029,12 @@ def delete_duplicate_sulist(sublist):
                 continue
             elem_unit_vec = sublist_elem["unit_vec"]
             compare_elem_unit_vec = compare_elem["unit_vec"]
-            sims = calculate_sim(elem_unit_vec, compare_elem_unit_vec)
+            try:
+                sims = calculate_sim(elem_unit_vec, compare_elem_unit_vec)
+            except:
+                sims = 1
+                print "elem_unit_vec_url,%s"%sublist_elem["url"]
+                print "compare_elem_unit_vec_url,%s"%compare_elem["url"]
             if sims > 0.9:
                 is_filter_flag = 1
                 break
@@ -1039,14 +1044,9 @@ def delete_duplicate_sulist(sublist):
     return result_list
 
 def calculate_sim(elem_unit_vec, compare_elem_unit_vec):
-    try:
-        sims_value = sum([elem_unit_vec[i]*compare_elem_unit_vec[i] for i in range(len(elem_unit_vec))])
-    except:
-        sims_value = 0.0
-    try:
-        same_word_num = sum([(1 if elem_unit_vec[i]>0 else 0)*(1 if compare_elem_unit_vec[i]>0 else 0) for i in range(len(elem_unit_vec))])
-    except:
-        same_word_num = 0
+
+    sims_value = sum([elem_unit_vec[i]*compare_elem_unit_vec[i] for i in range(len(elem_unit_vec))])
+    same_word_num = sum([(1 if elem_unit_vec[i]>0 else 0)*(1 if compare_elem_unit_vec[i]>0 else 0) for i in range(len(elem_unit_vec))])
     if same_word_num>=2:
         sims = sims_value
     else:
