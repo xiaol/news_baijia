@@ -128,11 +128,18 @@ def total_task():
     now_time = now.strftime('%Y-%m-%d %H:%M:%S')
     logging.warning("##################### online_event_task start ********************")
 
-    # for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online:
-    #     params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
-    #     do_event_task(params, end_time, now_time)
-    #
-    # logging.warning("##################### online_event_task complete ********************")
+
+
+
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online:
+        # if url == "http://www.techweb.com.cn/ihealth/2015-08-17/2189753.shtml":
+        #     print 1
+        # else:
+        #     continue
+        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        do_event_task(params, end_time, now_time)
+
+    logging.warning("##################### online_event_task complete ********************")
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
         # if url == "http://world.yam.com/post.php?id=4440":
