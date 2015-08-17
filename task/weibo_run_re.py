@@ -1573,9 +1573,9 @@ def duplicate_docs_check(domain_events):
             if url == event_elem["_id"]:
                 continue
             else:
-                if len(event_elem["self_opinion"])>=10:
+                if len(event_elem["self_opinion"])>=20:
                     result["self_opinion"].append({"self_opinion": event_elem["self_opinion"], "url": event_elem["_id"], "title": event_elem["title"]})
-                if len(event_elem["common_opinion"])>10:
+                if len(event_elem["common_opinion"])>20:
                     result["common_opinion"].append({"common_opinion": event_elem["common_opinion"], "url": event_elem["_id"], "title": event_elem["title"]})
 
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"relate_opinion": result}})
@@ -1631,7 +1631,8 @@ def extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph):
     paragraph = main_event["paragraph"]
     min_match_ratio = 1
     min_paragraph_key = '0'
-
+    title = main_event["title"]
+    tags = extract_tags_helper(title)
 
     for paragraph_key, paragraph_value in paragraph.items():
         total_paragraph_by_article[paragraph_key] = {}
@@ -1640,9 +1641,10 @@ def extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph):
             total_paragraph_by_article[paragraph_key]["match_ratio"] = duplicate_result_by_paragraph[paragraph_key]
         else:
             total_paragraph_by_article[paragraph_key]["match_ratio"] = 1
-        if  total_paragraph_by_article[paragraph_key]["match_ratio"] < min_match_ratio and is_normal_info(paragraph[paragraph_key]):
+        if  total_paragraph_by_article[paragraph_key]["match_ratio"] < min_match_ratio and is_normal_info(paragraph[paragraph_key]) and is_tags_in_paragraph(tags, paragraph[paragraph_key]):
             min_match_ratio = total_paragraph_by_article[paragraph_key]["match_ratio"]
             min_paragraph_key = paragraph_key
+            print "min_paragraph_key_change"
 
     one_paragraph_by_article = paragraph[min_paragraph_key]
 
@@ -1653,13 +1655,19 @@ def extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph):
 
 def is_normal_info(paragraph):
     paragraph = paragraph.decode('utf-8')
-    pattern=re.compile(ur'http[:：]|[[【]|[]】]|扫描二维码|来源[:：]|编辑[:：]|作者[:：]')
+    pattern=re.compile(ur'http[:：]|[[【]|[]】]|扫描二维码|来源[:：]|编辑[:：]|作者[:：]|发布[:：]|正文已结束|字号[:：]|未经授权禁止转载')
     result = re.search(pattern, paragraph)
     if result:
         return False
     else:
         return True
 
+def is_tags_in_paragraph(tags,paragraph):
+    for tag in tags:
+        if tag in paragraph:
+            return True
+
+    return False
 
 
 def compute_match_ratio_sentence_to_paragraph(result):
