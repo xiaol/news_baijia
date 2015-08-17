@@ -735,7 +735,7 @@ def GetImgByUrl(url):
 
         img_result = find_first_img_meet_condition(img_result)
 
-        result['img'] = img_result
+        result['img'] = img_result.strip()
     else:
         result['img'] = ''
 
