@@ -1039,8 +1039,14 @@ def delete_duplicate_sulist(sublist):
     return result_list
 
 def calculate_sim(elem_unit_vec, compare_elem_unit_vec):
-    sims_value = sum([elem_unit_vec[i]*compare_elem_unit_vec[i] for i in range(len(elem_unit_vec))])
-    same_word_num = sum([(1 if elem_unit_vec[i]>0 else 0)*(1 if compare_elem_unit_vec[i]>0 else 0) for i in range(len(elem_unit_vec))])
+    try:
+        sims_value = sum([elem_unit_vec[i]*compare_elem_unit_vec[i] for i in range(len(elem_unit_vec))])
+    except:
+        sims_value = 0.0
+    try:
+        same_word_num = sum([(1 if elem_unit_vec[i]>0 else 0)*(1 if compare_elem_unit_vec[i]>0 else 0) for i in range(len(elem_unit_vec))])
+    except:
+        same_word_num = 0
     if same_word_num>=2:
         sims = sims_value
     else:
