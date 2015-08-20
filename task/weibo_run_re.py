@@ -114,23 +114,29 @@ def total_task():
 
     docs = fetch_unrunned_docs_by_date()
     # docs = fetch_unrunned_docs()
-
     url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
-
     docs_online = fetch_unrunned_docs_by_date(isOnline = True)
+    docs_online_search_ok = fetch_unrunned_docs_by_date(isOnline = True, aggreSearchOk = True)
     url_title_lefturl_sourceSite_pairs_online = fetch_url_title_lefturl_pairs(docs_online)
-
+    url_title_lefturl_sourceSite_pairs_online_serach_ok = fetch_url_title_lefturl_pairs(docs_online_search_ok)
     start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
     end_time = end_time + datetime.timedelta(days=-2)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
     now = datetime.datetime.now()
     now_time = now.strftime('%Y-%m-%d %H:%M:%S')
+
+    logging.warning("##################### online_search_task start ********************")
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online_serach_ok:
+
+        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        do_search_task(params)
+        conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"aggreSearchOk": 1}})
+
+
+    logging.warning("##################### online_search_task complete ********************")
+
     logging.warning("##################### online_event_task start ********************")
-
-
-
-
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online:
         # if url == "http://www.techweb.com.cn/ihealth/2015-08-17/2189753.shtml":
         #     print 1
@@ -940,6 +946,7 @@ def do_event_task(params, start_time, end_time):
                             "createTime": {"$gte": start_time, '$lte': end_time}}).sort([("createTime", pymongo.DESCENDING)])
         domain_dict = {}
 
+
         events=filter_unrelate_news(events, doc)
         domain_dict = {-1:events}
         # if "text" not in doc.keys():
@@ -1287,12 +1294,15 @@ def fetch_unrunned_docs():
     return un_runned_docs
 
 
-def fetch_unrunned_docs_by_date(lastUpdate=False,isOnline=False,update_direction=pymongo.ASCENDING):
+def fetch_unrunned_docs_by_date(lastUpdate=False,isOnline=False, aggreSearchOk=False, update_direction=pymongo.ASCENDING):
     start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
     if isOnline:
-        docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
+        if aggreSearchOk:
+            docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "aggreSearchOk": {"$exists": 0}, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
+        else:
+            docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
         return docs
 
     if not lastUpdate:
@@ -1850,6 +1860,82 @@ def get_compression_result(raw_sentence):
     return get_last_sen
 
 
+def do_search_task(params):
+    url = params["url"]
+    title = params["title"]
+    # regex = ur"[：]"
+    title = title.encode('utf8').decode("utf8")
+    regex = ur"[,|，].*称[,|，]|“|”| |‘|’|《|》|%|\[|]|-|·|:|："
+    title = re.sub(regex, "", title)
+    topic = title[:len(title)/3*2]
+
+    searchUrl_text = "http://60.28.29.37:8080/search?key=" + topic
+    try:
+        r_text = requests.get(searchUrl_text)
+    except:
+        return
+    text = (r_text.json())
+    search_list = text["items"]
+    search_doc_num = 0
+    for search_elem in search_list:
+        result_elem = {}
+        search_url = search_elem["url"]
+        search_title = search_elem["title"]
+        try:
+            apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + search_url
+            r_text = requests.get(apiUrl_text)
+            text = (r_text.json())["text"]
+        except:
+            continue
+        if text:
+            text = trim_new_line_character(text)
+        try:
+            img = GetImgByUrl(search_url)['img']
+        except:
+            continue
+        if not img:
+            print "url:%s" % search_url, " : img is None"
+            continue
+        if not text:
+            print "url:%s" % search_url, " : text is None"
+            continue
+
+        result_elem["_id"] = search_url
+        result_elem["originsourceSiteName"] = "百家"
+        result_elem["updateTime"] = getDefaultTimeStr()
+        result_elem["sourceUrl"] = search_url
+        result_elem["description"] = ""
+        result_elem["title"] = search_title
+        result_elem["relate"] = {}
+        result_elem["sourceSiteName"] = "百家"
+        result_elem["createTime"] = getDefaultTimeStr()
+        result_elem["channel"] = "融合搜索"
+        result_elem["root_class"] = "40度"
+        result_elem["relate_url"] = url
+        result_elem["keyword"] = topic
+        result_elem["imgUrls"] = img
+        result_elem["content"] = text
+        result_elem["text"]= text
+        title=result_elem['title']
+        titleItem={'title': search_title}
+
+        if conn["news_ver2"]["googleNewsItem"].find_one(titleItem):
+            logging.warn("Item %s alread exists in  database " %(result_elem['_id']))
+            continue
+        conn["news_ver2"]["googleNewsItem"].save(dict(result_elem))
+        search_doc_num = search_doc_num + 1
+        if search_doc_num >= 10:
+            break
+
+
+def getDefaultTimeStr():
+    format='%Y-%m-%d %H:%M:%S'
+    timeDelta=datetime.timedelta(milliseconds=3600*1000)
+    defaultTime=(datetime.datetime.now()-timeDelta)
+    defaultTimeStr=defaultTime.strftime(format)
+    return defaultTimeStr
+
+
 
 def set_googlenews_by_url_with_field_and_value_dict(url, condition_dict):
 
@@ -1936,6 +2022,7 @@ if __name__ == '__main__':
     # keyword = list(extract_tags_helper(text))
     # is_normal_info("2015-08-12 08:47:32  | 来源：")
     # is_error_code('scriptdddd')
+    # do_search_task({"url":'http://www.guancha.cn/society/2015_08_19_331204.shtml', "title":'天津爆炸最新消息：瑞海操控人看守所透露公司“政商关系网”'})
     while True:
         doc_num = total_task()
         if doc_num == "no_doc":
