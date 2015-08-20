@@ -131,7 +131,7 @@ def total_task():
 
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
         do_search_task(params)
-        conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"aggreSearchOk": 1}})
+        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"aggreSearchOk": 1}})
 
 
     logging.warning("##################### online_search_task complete ********************")
