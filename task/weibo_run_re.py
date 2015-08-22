@@ -1936,7 +1936,9 @@ def do_search_task(params):
         if conn["news_ver2"]["googleNewsItem"].find_one(titleItem):
             logging.warn("Item %s alread exists in  database " %(result_elem['_id']))
             continue
+        print "google_news_save_start"
         conn["news_ver2"]["googleNewsItem"].save(dict(result_elem))
+        print "google_news_save_end"
         search_doc_num = search_doc_num + 1
         if "img" in params.keys():
             Task = {}
