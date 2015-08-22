@@ -1885,6 +1885,7 @@ def do_search_task(params):
     try:
         r_text = requests.get(searchUrl_text)
     except:
+        print "search_url_exception"
         return
     text = (r_text.json())
     search_list = text["items"]
@@ -1898,13 +1899,16 @@ def do_search_task(params):
             r_text = requests.get(apiUrl_text)
             text = (r_text.json())["text"]
         except:
+            print "r_text_exception"
             continue
         if text:
             text = trim_new_line_character(text)
         if len(img)==0:
             try:
                 img = GetImgByUrl(search_url)['img']
+
             except:
+                print "img_exception"
                 continue
         # if not img:
         #     print "url:%s" % search_url, " : img is None"
