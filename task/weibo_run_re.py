@@ -1882,11 +1882,11 @@ def do_search_task(params):
         img = ""
 
     searchUrl_text = "http://60.28.29.37:8080/search?key=" + topic
-    try:
-        r_text = requests.get(searchUrl_text)
-    except:
-        print "search_url_exception"
-        return
+    # try:
+    r_text = requests.get(searchUrl_text)
+    # except:
+    #     print "search_url_exception"
+    #     return
     text = (r_text.json())
     search_list = text["items"]
     search_doc_num = 0
