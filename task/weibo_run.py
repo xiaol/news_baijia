@@ -1557,19 +1557,19 @@ def bingSearch():
             else:
                 continue
 
-            try:
-                topic = topic.encode('utf8').decode("utf8")
-                no_error_pattern = re.compile(u'[\u4e00-\u9fa5_0-9]+')
-                if re.search(no_error_pattern, topic):
-                    params = {"topic": topic, "img": img_after}
-                    print "topic,%s"%topic
-                    print "search_start"
-                    do_search_task(params)
-                    print "search_end"
-                else:
-                    continue
-            except:
+                # try:
+            topic = topic.encode('utf8').decode("utf8")
+            no_error_pattern = re.compile(u'[\u4e00-\u9fa5_0-9]+')
+            if re.search(no_error_pattern, topic):
+                params = {"topic": topic, "img": img_after}
+                print "topic,%s"%topic
+                print "search_start"
+                do_search_task(params)
+                print "search_end"
+            else:
                 continue
+            # except:
+            #     continue
 
     else:
         return ""
