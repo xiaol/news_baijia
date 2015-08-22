@@ -1861,13 +1861,25 @@ def get_compression_result(raw_sentence):
 
 
 def do_search_task(params):
-    url = params["url"]
-    title = params["title"]
-    # regex = ur"[：]"
-    title = title.encode('utf8').decode("utf8")
-    regex = ur"[,|，].*称[,|，]|“|”| |‘|’|《|》|%|\[|]|-|·|:|："
-    title = re.sub(regex, "", title)
-    topic = title[:len(title)/3*2]
+    if "url" in params.keys():
+        url = params["url"]
+    else:
+        url = ""
+
+    if "topic" in params.keys():
+        topic = params["topic"]
+    else:
+        title = params["title"]
+        # regex = ur"[：]"
+        title = title.encode('utf8').decode("utf8")
+        regex = ur"[,|，].*称[,|，]|“|”| |‘|’|《|》|%|\[|]|-|·|:|："
+        title = re.sub(regex, "", title)
+        topic = title[:len(title)/3*2]
+
+    if "img" in params.keys():
+        img = params["img"]
+    else:
+        img = ""
 
     searchUrl_text = "http://60.28.29.37:8080/search?key=" + topic
     try:
@@ -1889,13 +1901,14 @@ def do_search_task(params):
             continue
         if text:
             text = trim_new_line_character(text)
-        try:
-            img = GetImgByUrl(search_url)['img']
-        except:
-            continue
-        if not img:
-            print "url:%s" % search_url, " : img is None"
-            continue
+        if len(img)==0:
+            try:
+                img = GetImgByUrl(search_url)['img']
+            except:
+                continue
+        # if not img:
+        #     print "url:%s" % search_url, " : img is None"
+        #     continue
         if not text:
             print "url:%s" % search_url, " : text is None"
             continue
@@ -1911,12 +1924,13 @@ def do_search_task(params):
         result_elem["createTime"] = getDefaultTimeStr()
         result_elem["channel"] = "融合搜索"
         result_elem["root_class"] = "40度"
-        result_elem["relate_url"] = url
+        if len(url)>0:
+            result_elem["relate_url"] = url
         result_elem["keyword"] = topic
         result_elem["imgUrls"] = img
         result_elem["content"] = text
         result_elem["text"]= text
-        title=result_elem['title']
+        title = result_elem['title']
         titleItem={'title': search_title}
 
         if conn["news_ver2"]["googleNewsItem"].find_one(titleItem):
@@ -1924,7 +1938,25 @@ def do_search_task(params):
             continue
         conn["news_ver2"]["googleNewsItem"].save(dict(result_elem))
         search_doc_num = search_doc_num + 1
-        if search_doc_num >= 10:
+        if "img" in params.keys():
+            Task = {}
+            Task['url'] = search_url
+            Task['title'] = search_title
+            Task['updateTime'] = getDefaultTimeStr()
+            Task['contentOk'] = 1
+            Task['sourceSiteName'] = '百家'
+            Task['weiboOk']=0
+            Task['zhihuOk']=0
+            Task['abstractOk']=0
+            Task['nerOk']=0
+            Task['baikeOk']=0
+            Task['baiduSearchOk']=0
+            Task['doubanOk']=0
+            Task['relateImgOk']=0
+            Task['isOnline']=0
+            conn["news_ver2"]["Task"].save(dict(Task))
+            break
+        if search_doc_num >= 3:
             break
 
 

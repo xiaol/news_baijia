@@ -10,13 +10,15 @@ import re
 import subprocess
 import time
 import lxml.etree as etree
+import lxml.html
 import sys
 import logging
 import os
 from PIL import Image
 import datetime
 from requests.exceptions import Timeout
-from weibo_run_re import set_googlenews_by_url_with_field_and_value
+from weibo_run_re import set_googlenews_by_url_with_field_and_value, do_search_task
+
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -1532,6 +1534,40 @@ def getDefaultTimeStr():
     return defaultTimeStr
 
 
+def bingSearch():
+    apiUrl ='http://cn.bing.com/hpm?'
+    response = requests.get(apiUrl)
+    if response.status_code == 200:
+        print "content,%s"%response.text
+        content = etree.HTML(response.text)
+        # content = lxml.html.fromstring(response.content)
+        pages_arr = content.xpath('//div[@id="crs_scroll"]/ul/li')
+        # re.compile(r'<div id="crs_scroll" role="complementary"><ul id="crs_pane"><li.*?</li>')
+        # pages_arr = re.findall
+        for pages in pages_arr:
+            img = pages.xpath('./a/span/img/@src')[0]
+            img_after = conver_small_to_larger(img)
+            topic_pattern = re.compile(r'<div class="hp_text">(.*?)</div>')
+            # pages_str = ET.tostring(pages, encoding='utf8', method='xml')
+            pages_str = etree.tostring(pages, encoding='utf-8')
+            topic_search_result = re.search(topic_pattern, pages_str)
+            if topic_search_result:
+                topic = topic_search_result.group(1)
+            else:
+                continue
+            # topic = pages.xpath('./a/span/div')[0]
+            params = {"topic": topic, "img": img_after}
+            do_search_task(params)
+    else:
+        return ""
+
+def conver_small_to_larger(img):
+    return "http://s.cn.bing.net" + re.sub("&","&amp;", img)
+
+
+
+
+
 if __name__ == '__main__':
 
     # ImgMeetCondition_ver2("111")
@@ -1620,6 +1656,15 @@ if __name__ == '__main__':
                 getBaiduHotWord()
                 logging.warn("===============this round of content complete====================")
                 time.sleep(3600*2)
+
+        elif arg == "bingSearch":
+            while True:
+                # time.sleep(30)
+                bingSearch()
+                logging.warn("===============this round of content complete====================")
+                time.sleep(3600*2)
+
+
 
 
         elif arg=='help':
