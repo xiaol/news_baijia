@@ -1672,7 +1672,7 @@ if __name__ == '__main__':
                 # time.sleep(30)
                 bingSearch()
                 logging.warn("===============this round of content complete====================")
-                time.sleep(3600*2)
+                time.sleep(3600*0.5)
 
 
 
