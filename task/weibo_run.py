@@ -1544,6 +1544,7 @@ def bingSearch():
         pages_arr = content.xpath('//div[@id="crs_scroll"]/ul/li')
         # re.compile(r'<div id="crs_scroll" role="complementary"><ul id="crs_pane"><li.*?</li>')
         # pages_arr = re.findall
+
         for pages in pages_arr:
             img = pages.xpath('./a/span/img/@src')[0]
             img_after = conver_small_to_larger(img)
@@ -1555,9 +1556,18 @@ def bingSearch():
                 topic = topic_search_result.group(1)
             else:
                 continue
-            # topic = pages.xpath('./a/span/div')[0]
-            params = {"topic": topic, "img": img_after}
-            do_search_task(params)
+
+            try:
+                topic = topic.encode('utf8').decode("utf8")
+                no_error_pattern = re.compile(u'[\u4e00-\u9fa5_0-9]+')
+                if re.search(no_error_pattern, topic):
+                    params = {"topic": topic, "img": img_after}
+                    do_search_task(params)
+                else:
+                    continue
+            except:
+                continue
+
     else:
         return ""
 
