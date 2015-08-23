@@ -20,7 +20,7 @@ from PIL import Image
 import datetime
 from requests.exceptions import Timeout, ConnectionError
 from text_classifier import get_category_by_hack
-
+import urllib
 
 import gensim
 from math import sqrt
@@ -1882,7 +1882,8 @@ def do_search_task(params):
     else:
         img = ""
 
-    searchUrl_text = "http://60.28.29.37:8080/search?key=" + topic
+    searchUrl_text = "http://60.28.29.37:8080/search?key=" + str(topic)
+    # searchUrl_text = urllib.quote_plus(searchUrl_text)
     # try:
     r_text = r.get(searchUrl_text)
     # except:
