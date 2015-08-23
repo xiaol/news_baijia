@@ -7,6 +7,7 @@ from pymongo.read_preferences import ReadPreference
 import json
 from requests.exceptions import ConnectionError
 import requests_with_sleep as requests
+import requests as r
 import re
 import cStringIO,urllib
 import subprocess
@@ -1883,7 +1884,7 @@ def do_search_task(params):
 
     searchUrl_text = "http://60.28.29.37:8080/search?key=" + topic
     # try:
-    r_text = requests.get(searchUrl_text)
+    r_text = r.get(searchUrl_text)
     # except:
     #     print "search_url_exception"
     #     return
