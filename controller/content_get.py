@@ -246,7 +246,7 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
             for aggre in aggre_items:
                 ls = {}
                 for (k,v) in aggre.items():
-                    ls["img"] = k
+                    ls["title"] = k
                     ls["sourceSitename"] = v
                     ls['height'] = 75
                     ls['width'] = 121
