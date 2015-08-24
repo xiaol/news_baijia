@@ -15,6 +15,7 @@ import task.requests_with_sleep as requests
 from AI_funcs.sen_compr.text_handler import SentenceCompressor
 import re
 import tornado.gen
+from task.weibo_run_re import is_error_code
 
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
@@ -981,6 +982,9 @@ def extratInfoInUndocs(undocs):
             img = ""
         title = doc["title"]
         eventId = doc["eventId"]
+        if 'text' in doc.keys():
+            if is_error_code(doc["text"]):
+                continue
         if 'text' not in doc.keys():
             undocs_list.append({"url": url, "sourceSitename": sourceSitename, "img": img, "title": title, "eventId": eventId, 'similarity': doc["similarity"], 'unit_vec': doc["unit_vec"]})
         elif 'gist' not in doc.keys():
@@ -1025,7 +1029,12 @@ def delete_duplicate_sulist(sublist):
                 continue
             elem_unit_vec = sublist_elem["unit_vec"]
             compare_elem_unit_vec = compare_elem["unit_vec"]
-            sims = calculate_sim(elem_unit_vec, compare_elem_unit_vec)
+            try:
+                sims = calculate_sim(elem_unit_vec, compare_elem_unit_vec)
+            except:
+                sims = 1
+                print "elem_unit_vec_url,%s"%sublist_elem["url"]
+                print "compare_elem_unit_vec_url,%s"%compare_elem["url"]
             if sims > 0.9:
                 is_filter_flag = 1
                 break
@@ -1035,6 +1044,7 @@ def delete_duplicate_sulist(sublist):
     return result_list
 
 def calculate_sim(elem_unit_vec, compare_elem_unit_vec):
+
     sims_value = sum([elem_unit_vec[i]*compare_elem_unit_vec[i] for i in range(len(elem_unit_vec))])
     same_word_num = sum([(1 if elem_unit_vec[i]>0 else 0)*(1 if compare_elem_unit_vec[i]>0 else 0) for i in range(len(elem_unit_vec))])
     if same_word_num>=2:

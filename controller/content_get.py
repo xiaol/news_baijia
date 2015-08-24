@@ -258,7 +258,10 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
     result = getContentJson()
 
     result['imgUrl'] = getImg(doc)
-    result['abs'] = getText(doc)
+    # result['abs'] = getText(doc)
+
+    if "abs" in doc.keys():
+        result["abs"] = doc["abs"]
 
     if allrelate:
         for relate_elem in allrelate:

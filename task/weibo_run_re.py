@@ -7,6 +7,7 @@ from pymongo.read_preferences import ReadPreference
 import json
 from requests.exceptions import ConnectionError
 import requests_with_sleep as requests
+import requests as r
 import re
 import cStringIO,urllib
 import subprocess
@@ -19,7 +20,7 @@ from PIL import Image
 import datetime
 from requests.exceptions import Timeout, ConnectionError
 from text_classifier import get_category_by_hack
-
+import urllib
 
 import gensim
 from math import sqrt
@@ -114,27 +115,44 @@ def total_task():
 
     docs = fetch_unrunned_docs_by_date()
     # docs = fetch_unrunned_docs()
-
     url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
-
     docs_online = fetch_unrunned_docs_by_date(isOnline = True)
+    docs_online_search_ok = fetch_unrunned_docs_by_date(isOnline = True, aggreSearchOk = True)
     url_title_lefturl_sourceSite_pairs_online = fetch_url_title_lefturl_pairs(docs_online)
-
+    url_title_lefturl_sourceSite_pairs_online_serach_ok = fetch_url_title_lefturl_pairs(docs_online_search_ok)
     start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
     end_time = end_time + datetime.timedelta(days=-2)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
     now = datetime.datetime.now()
     now_time = now.strftime('%Y-%m-%d %H:%M:%S')
-    logging.warning("##################### online_event_task start ********************")
 
-    # for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online:
-    #     params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
-    #     do_event_task(params, end_time, now_time)
-    #
-    # logging.warning("##################### online_event_task complete ********************")
+    logging.warning("##################### online_search_task start ********************")
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online_serach_ok:
+
+        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        do_search_task(params)
+        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"aggreSearchOk": 1}})
+
+
+    logging.warning("##################### online_search_task complete ********************")
+
+    logging.warning("##################### online_event_task start ********************")
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online:
+        # if url == "http://www.techweb.com.cn/ihealth/2015-08-17/2189753.shtml":
+        #     print 1
+        # else:
+        #     continue
+        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        do_event_task(params, end_time, now_time)
+
+    logging.warning("##################### online_event_task complete ********************")
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
+        # if url == "http://world.yam.com/post.php?id=4440":
+            # print 1
+        # else:
+        #     continue
         doc_num += 1
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
         try:
@@ -641,6 +659,9 @@ def do_content_img_task(params):
     text = (r_text.json())["text"]
     if text:
         text = trim_new_line_character(text)
+        if is_error_code(text):
+            return False
+            # continue
     if text:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
         gist = Gist().get_gist_str(text)
@@ -663,6 +684,15 @@ def do_content_img_task(params):
         return True
 
     return False
+
+def is_error_code(text):
+    pattern = re.compile(ur'script')
+    text = text.decode('utf-8')
+    result = re.search(pattern, text)
+    if result:
+        return True
+    else:
+        return False
 
 
 def trim_new_line_character(text):
@@ -719,7 +749,7 @@ def GetImgByUrl(url):
 
         img_result = find_first_img_meet_condition(img_result)
 
-        result['img'] = img_result
+        result['img'] = img_result.strip()
     else:
         result['img'] = ''
 
@@ -916,6 +946,7 @@ def do_event_task(params, start_time, end_time):
         events = conn["news_ver2"]["googleNewsItem"].find({"title": {'$in': re_tags},
                             "createTime": {"$gte": start_time, '$lte': end_time}}).sort([("createTime", pymongo.DESCENDING)])
         domain_dict = {}
+
 
         events=filter_unrelate_news(events, doc)
         domain_dict = {-1:events}
@@ -1264,12 +1295,15 @@ def fetch_unrunned_docs():
     return un_runned_docs
 
 
-def fetch_unrunned_docs_by_date(lastUpdate=False,isOnline=False,update_direction=pymongo.ASCENDING):
+def fetch_unrunned_docs_by_date(lastUpdate=False,isOnline=False, aggreSearchOk=False, update_direction=pymongo.ASCENDING):
     start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
     if isOnline:
-        docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
+        if aggreSearchOk:
+            docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "aggreSearchOk": {"$exists": 0}, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
+        else:
+            docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
         return docs
 
     if not lastUpdate:
@@ -1557,10 +1591,10 @@ def duplicate_docs_check(domain_events):
             if url == event_elem["_id"]:
                 continue
             else:
-                if len(event_elem["self_opinion"])>=10:
-                    result["self_opinion"].append({"self_opinion": event_elem["self_opinion"], "url": event_elem["title"]})
-                if len(event_elem["common_opinion"])>10:
-                    result["common_opinion"].append({"common_opinion": event_elem["common_opinion"], "url": event_elem["title"]})
+                if len(event_elem["self_opinion"])>=20:
+                    result["self_opinion"].append({"self_opinion": event_elem["self_opinion"], "url": event_elem["_id"], "title": event_elem["title"]})
+                if len(event_elem["common_opinion"])>20:
+                    result["common_opinion"].append({"common_opinion": event_elem["common_opinion"], "url": event_elem["_id"], "title": event_elem["title"]})
 
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"relate_opinion": result}})
 
@@ -1615,7 +1649,8 @@ def extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph):
     paragraph = main_event["paragraph"]
     min_match_ratio = 1
     min_paragraph_key = '0'
-
+    title = main_event["title"]
+    tags = extract_tags_helper(title)
 
     for paragraph_key, paragraph_value in paragraph.items():
         total_paragraph_by_article[paragraph_key] = {}
@@ -1624,9 +1659,10 @@ def extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph):
             total_paragraph_by_article[paragraph_key]["match_ratio"] = duplicate_result_by_paragraph[paragraph_key]
         else:
             total_paragraph_by_article[paragraph_key]["match_ratio"] = 1
-        if  total_paragraph_by_article[paragraph_key]["match_ratio"] < min_match_ratio:
+        if  total_paragraph_by_article[paragraph_key]["match_ratio"] < min_match_ratio and is_normal_info(paragraph[paragraph_key]) and is_tags_in_paragraph(tags, paragraph[paragraph_key]):
             min_match_ratio = total_paragraph_by_article[paragraph_key]["match_ratio"]
             min_paragraph_key = paragraph_key
+            print "min_paragraph_key_change"
 
     one_paragraph_by_article = paragraph[min_paragraph_key]
 
@@ -1635,13 +1671,21 @@ def extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph):
 
 
 
+def is_normal_info(paragraph):
+    paragraph = paragraph.decode('utf-8')
+    pattern=re.compile(ur'http[:：]|[[【]|[]】]|扫描二维码|来源[:：]|编辑[:：]|作者[:：]|发布[:：]|正文已结束|字号[:：]|未经授权禁止转载')
+    result = re.search(pattern, paragraph)
+    if result:
+        return False
+    else:
+        return True
 
+def is_tags_in_paragraph(tags,paragraph):
+    for tag in tags:
+        if tag in paragraph:
+            return True
 
-
-
-
-
-
+    return False
 
 
 def compute_match_ratio_sentence_to_paragraph(result):
@@ -1662,24 +1706,6 @@ def compute_match_ratio_sentence_to_paragraph(result):
 
         duplicate_result_by_paragraph[paragraph_key] = avg_match_ratio_by_paragraph
     return duplicate_result_by_paragraph
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def compare_doc_is_duplicate(main_event, event_elem, duplicate_result, result):
@@ -1835,6 +1861,121 @@ def get_compression_result(raw_sentence):
     return get_last_sen
 
 
+def do_search_task(params):
+    if "url" in params.keys():
+        url = params["url"]
+    else:
+        url = ""
+
+    if "topic" in params.keys():
+        topic = params["topic"]
+    else:
+        title = params["title"]
+        # regex = ur"[：]"
+        title = title.encode('utf8').decode("utf8")
+        regex = ur"[,|，].*称[,|，]|“|”| |‘|’|《|》|%|\[|]|-|·|:|："
+        title = re.sub(regex, "", title)
+        topic = title[:len(title)/3*2]
+
+    if "img" in params.keys():
+        img = params["img"]
+    else:
+        img = ""
+
+    searchUrl_text = "http://60.28.29.37:8080/search?key=" + str(topic)
+    # searchUrl_text = urllib.quote_plus(searchUrl_text)
+    # try:
+    r_text = r.get(searchUrl_text)
+    # except:
+    #     print "search_url_exception"
+    #     return
+    text = (r_text.json())
+    search_list = text["items"]
+    search_doc_num = 0
+    for search_elem in search_list:
+        result_elem = {}
+        search_url = search_elem["url"]
+        search_title = search_elem["title"]
+        try:
+            apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + search_url
+            r_text = requests.get(apiUrl_text)
+            text = (r_text.json())["text"]
+        except:
+            print "r_text_exception"
+            continue
+        if text:
+            text = trim_new_line_character(text)
+        if len(img)==0:
+            try:
+                img = GetImgByUrl(search_url)['img']
+
+            except:
+                print "img_exception"
+                continue
+        # if not img:
+        #     print "url:%s" % search_url, " : img is None"
+        #     continue
+        if not text:
+            print "url:%s" % search_url, " : text is None"
+            continue
+
+        result_elem["_id"] = search_url
+        result_elem["originsourceSiteName"] = "百家"
+        result_elem["updateTime"] = getDefaultTimeStr()
+        result_elem["sourceUrl"] = search_url
+        result_elem["description"] = ""
+        result_elem["title"] = search_title
+        result_elem["relate"] = {}
+        result_elem["sourceSiteName"] = "百家"
+        result_elem["createTime"] = getDefaultTimeStr()
+        result_elem["channel"] = "融合搜索"
+        result_elem["root_class"] = "40度"
+        if len(url)>0:
+            result_elem["relate_url"] = url
+        result_elem["keyword"] = topic
+        result_elem["imgUrls"] = img
+        result_elem["content"] = text
+        result_elem["text"]= text
+        title = result_elem['title']
+        titleItem={'title': search_title}
+
+        if conn["news_ver2"]["googleNewsItem"].find_one(titleItem):
+            logging.warn("Item %s alread exists in  database " %(result_elem['_id']))
+            continue
+        print "google_news_save_start"
+        conn["news_ver2"]["googleNewsItem"].save(dict(result_elem))
+        print "google_news_save_end"
+        search_doc_num = search_doc_num + 1
+        if "img" in params.keys():
+            Task = {}
+            Task['url'] = search_url
+            Task['title'] = search_title
+            Task['updateTime'] = getDefaultTimeStr()
+            Task['contentOk'] = 1
+            Task['sourceSiteName'] = '百家'
+            Task['weiboOk']=0
+            Task['zhihuOk']=0
+            Task['abstractOk']=0
+            Task['nerOk']=0
+            Task['baikeOk']=0
+            Task['baiduSearchOk']=0
+            Task['doubanOk']=0
+            Task['relateImgOk']=0
+            Task['isOnline']=0
+            conn["news_ver2"]["Task"].save(dict(Task))
+            break
+        if search_doc_num >= 3:
+            break
+
+
+def getDefaultTimeStr():
+    format='%Y-%m-%d %H:%M:%S'
+    timeDelta=datetime.timedelta(milliseconds=3600*1000)
+    defaultTime=(datetime.datetime.now()-timeDelta)
+    defaultTimeStr=defaultTime.strftime(format)
+    return defaultTimeStr
+
+
 
 def set_googlenews_by_url_with_field_and_value_dict(url, condition_dict):
 
@@ -1919,7 +2060,9 @@ if __name__ == '__main__':
     # text ='''<script type="text/javascript"> var m=Math.random(); document.write('<script type="text/javascript" src="http://cast.ra.icast.cn/p/?id=2084&rnd='+m+'"><\/script>'); </script> <script> var timestamp = Date.parse(new Date()); var src = "http://statistic.dvsend.china.com/cc/00S4K?adcrm?v="+timestamp; var s = document.createElement("SCRIPT"); document.getElementsByTagName("HEAD")[0].appendChild(s); s.src = src; </script><script type="text/javascript"> /*内页通发流媒体300*250 创建于 2015-04-02*/ var cpro_id = "u2024173"; </script> <script src="http://cpro.baidustatic.com/cpro/ui/f.js" type="text/javascript"></script> <script> var timestamp = Date.parse(new Date()); var src = "http://statistic.dvsend.china.com/cc/00UYZ?adcrm?v="+timestamp; var s = document.createElement("SCRIPT"); document.getElementsByTagName("HEAD")[0].appendChild(s); s.src = src; </script><script type="text/javascript"> mx_as_id =3006801; mx_server_base_url ="mega.mlt01.com/"; </script> <script type="text/javascript" src="http://static.mlt01.com/b.js"></script> <script> var timestamp = Date.parse(new Date()); var src = "http://statistic.dvsend.china.com/cc/00W2W?adcrm?v="+timestamp; var s = document.createElement("SCRIPT"); document.getElementsByTagName("HEAD")[0].appendChild(s); s.src = src; </script>'''
 
     # keyword = list(extract_tags_helper(text))
-
+    # is_normal_info("2015-08-12 08:47:32  | 来源：")
+    # is_error_code('scriptdddd')
+    # do_search_task({"url":'http://www.guancha.cn/society/2015_08_19_331204.shtml', "title":'天津爆炸最新消息：瑞海操控人看守所透露公司“政商关系网”'})
     while True:
         doc_num = total_task()
         if doc_num == "no_doc":
