@@ -13,6 +13,8 @@ pwd_2 = pwd.split('/')
 pwd_2 = pwd_2[:-1]
 pwd_2 = '/'.join(pwd_2)
 
+
+
 try:
     with open(os.path.join(pwd,'controller/config/config.ini'),'r') as configfile:
         cf.readfp(configfile)
