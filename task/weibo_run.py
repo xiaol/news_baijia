@@ -1575,7 +1575,10 @@ def bingSearch():
         return ""
 
 def conver_small_to_larger(img):
-    return "http://s.cn.bing.net" + re.sub("&","&amp;", img)
+    if re.sub("&","&amp;", img).startswith("http://s.cn.bing.net"):
+        return re.sub("&","&amp;", img)
+    else:
+        return "http://s.cn.bing.net" + re.sub("&","&amp;", img)
 
 
 
