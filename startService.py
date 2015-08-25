@@ -523,7 +523,8 @@ class GistHandler(tornado.web.RequestHandler):
         article = str(self.get_argument("article"))
         gist_obj = Gist()
         gist = gist_obj.get_gist(article)
-        self.write(gist)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(gist))
 
 
 class Application(tornado.web.Application):
