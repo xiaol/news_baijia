@@ -63,7 +63,7 @@ conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replic
                                                              read_preference=ReadPreference.SECONDARY)
 HOST_NER = "60.28.29.47"
 
-not_need_copy_content_news = ["网易新闻图片", "观察者网",'地球图辑队']
+not_need_copy_content_news = ["网易新闻图片", "观察者网",'地球图辑队','bing热点']
 
 
 g_time_filter = ["今天","明天","后天"]
@@ -149,8 +149,8 @@ def total_task():
     logging.warning("##################### online_event_task complete ********************")
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
-        # if url == "http://world.yam.com/post.php?id=4440":
-            # print 1
+        # if url == "http://tech.ifeng.com/a/20150825/41462978_0.shtml":
+        #     print 1
         # else:
         #     continue
         doc_num += 1
@@ -1884,9 +1884,9 @@ def do_search_task(params):
 
     params_key = {"key": topic}
     data = urllib.urlencode(params_key)
-    url ="http://192.168.0.37:8080/search?"+data
+    search_url ="http://192.168.0.37:8080/search?"+data
     # url ="http://60.28.29.37:8080/search?"+data
-    r_text = r.get(url)
+    r_text = r.get(search_url)
     text = (r_text.json())
     search_list = text["items"]
     # try:
@@ -1924,7 +1924,10 @@ def do_search_task(params):
             continue
 
         result_elem["_id"] = search_url
-        result_elem["originsourceSiteName"] = "百家"
+        if "img" in params.keys():
+            result_elem["originsourceSiteName"] = "bing热点"
+        else:
+            result_elem["originsourceSiteName"] = "百家"
         result_elem["updateTime"] = getDefaultTimeStr()
         result_elem["sourceUrl"] = search_url
         result_elem["description"] = ""
