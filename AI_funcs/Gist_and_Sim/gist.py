@@ -43,21 +43,23 @@ class Gist:
             return self.presult
 
     def get_gist(self, text_dict={}):
-        self.gresult = {}
+        gresult = {}
         for key, value in text_dict.iteritems():
-            self.tr4s = TextRank4Sentence(self.stop_words_file)
-            # 使用词性过滤，文本小写，使用words_all_filters生成句子之间的相似性
-            self.tr4s.train(text=value, speech_tag_filter=True, lower=True, source = 'all_filters')
-            self.gresult.update({key: (' '.join(self.tr4s.get_key_sentences(num=1)))})
-            print key+":"+(self.gresult[key])
+            value = value.replace(' ', '')
+            quotes = get_quote_text(value)
+            if quotes:
+                sims = cal_sim(value, quotes)
+                for a, s in zip(quotes, sims):
+                    if s == max(sims):
+                        gresult[key] = a
+            else:
+                # print('No Quote Sentence Found. Use TextRank algorithm to get gist.')
+                tr4s = TextRank4Sentence(self.stop_words_file)
+                # 使用词性过滤，文本小写，使用words_all_filters生成句子之间的相似性
+                tr4s.train(text=value, speech_tag_filter=True, lower=True, source = 'all_filters')
+                gresult.update({key: (' '.join(tr4s.get_key_sentences(num=1)))})
 
-        return self.gresult
-
-    def get_new_gist(self, article='', sentences=[]):
-        sims = cal_sim(article, sentences)
-        for a, s in zip(sentences, sims):
-            if s == max(sims):
-                return a
+        return gresult
 
 
 #query is a string, textList is a list of strings.
@@ -89,6 +91,13 @@ if __name__ == "__main__":
         print('@@@@@@@@@@@Event@@@@@@@@@@@@@@@@')
         print('Event ID: ' + key)
         print('================================')
+        gis = gist.get_gist(value)
+        for kk, vv in gis.iteritems():
+            print('~~~~~~~~~~Article~~~~~~~~~~~~~')
+            print(value[kk])
+            print('          Gist                 ')
+            print(vv)
+        """
         for ke, va in value.iteritems():
             print('~~~~~~~~~~Article~~~~~~~~~~~~~')
             print('Article ID: ' + ke)
@@ -124,8 +133,9 @@ if __name__ == "__main__":
                 for para in paragraphs:
                     print('paragraph')
                     print(para)
+                    """
 
-                """
+"""
                 ca_sens = co.extract_causal_sen(va)
                 as_sens = co.extract_assumption_sentences(va)
                 ts_sens = co.extract_transition_sentences(va)
