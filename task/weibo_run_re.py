@@ -1882,15 +1882,19 @@ def do_search_task(params):
     else:
         img = ""
 
-    searchUrl_text = "http://60.28.29.37:8080/search?key=" + str(topic)
-    # searchUrl_text = urllib.quote_plus(searchUrl_text)
+    params_key = {"key": topic}
+    data = urllib.urlencode(params_key)
+    url ="http://192.168.0.37:8080/search?"+data
+    # url ="http://60.28.29.37:8080/search?"+data
+    r_text = r.get(url)
+    text = (r_text.json())
+    search_list = text["items"]
     # try:
-    r_text = r.get(searchUrl_text)
+
+    # r_text = r.get(searchUrl_text)
     # except:
     #     print "search_url_exception"
     #     return
-    text = (r_text.json())
-    search_list = text["items"]
     search_doc_num = 0
     for search_elem in search_list:
         result_elem = {}
