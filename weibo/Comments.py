@@ -117,7 +117,7 @@ class Comments(object):
     def format_comments(cls, comments, comment_id):
         """
         :param comments: comments get from weibo API
-        :return: formated comments as same as the data struct in mongodb["news_ver2"]["commentItems"]._"comments":
+        :return: formated comments as same as the data struct in pymong_test["news_ver2"]["commentItems"]._"comments":
         """
         comments_result = []
         for comment in comments:

@@ -246,7 +246,7 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
             for aggre in aggre_items:
                 ls = {}
                 for (k,v) in aggre.items():
-                    ls["img"] = k
+                    ls["title"] = k
                     ls["sourceSitename"] = v
                     ls['height'] = 75
                     ls['width'] = 121
@@ -258,7 +258,10 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
     result = getContentJson()
 
     result['imgUrl'] = getImg(doc)
-    result['abs'] = getText(doc)
+    # result['abs'] = getText(doc)
+
+    if "abs" in doc.keys():
+        result["abs"] = doc["abs"]
 
     if allrelate:
         for relate_elem in allrelate:
