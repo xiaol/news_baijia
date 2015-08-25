@@ -8,20 +8,17 @@ import tornado.ioloop
 import tornado.web
 import tornado.httpserver
 import tornado.httpclient
-
 import sys
-
 import tornado.netutil
 import json
 from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get, point_get, \
     praise_post, start_page_post, dredge_up_post, elementary_post, tags_get
 from controller.push import push_message
-
 import abstract
-
 from tornado.options import define, options
 import tornado.gen
 import tornado.concurrent
+from AI_funcs.Gist_and_Sim.gist import Gist
 
 # define("port", default=9999, help="run on the given port", type=int)
 define("host", default="127.0.0.1", help="run on the given host", type=str)
@@ -520,6 +517,15 @@ class FetchTagsHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+#Weiliang Guo start
+class GistHandler(tornado.web.RequestHandler):
+    def post(self):
+        article = str(self.get_argument("article"))
+        gist_obj = Gist()
+        gist = gist_obj.get_gist(article)
+        self.write(gist)
+
+
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
@@ -547,7 +553,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/FetchChannelList", FetchChannelListHandler),
             (r"/news/baijia/praise", PraiseHandler),
             (r"/news/baijia/fetchTags", FetchTagsHandler),
-            (r"/news/baijia/uploadUmengPushId", uploadUmengPushId)
+            (r"/news/baijia/uploadUmengPushId", uploadUmengPushId),
+            (r"/news/baijia/fetchGist", GistHandler)
 
 
         ]
