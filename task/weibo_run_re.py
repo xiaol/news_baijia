@@ -56,6 +56,7 @@ except ImportError:
     print "import error"
 from abstract import KeywordExtraction
 from para_sim.TextRank4ZH.gist import Gist
+from extract_time import time_match
 
 
 
@@ -1888,7 +1889,7 @@ def do_search_task(params):
     params_key = {"key": topic}
     data = urllib.urlencode(params_key)
     search_url ="http://192.168.0.37:8080/search?"+data
-    # url ="http://60.28.29.37:8080/search?"+data
+    # search_url ="http://60.28.29.37:8080/search?"+data
     r_text = r.get(search_url)
     text = (r_text.json())
     search_list = text["items"]
@@ -1930,13 +1931,14 @@ def do_search_task(params):
         if "img" in params.keys():
             result_elem["originsourceSiteName"] = "bing热点"
         else:
-            result_elem["originsourceSiteName"] = "百家"
-        result_elem["updateTime"] = getDefaultTimeStr()
+            result_elem["originsourceSiteName"] = "百家热点新闻"
+        # result_elem["updateTime"] = getDefaultTimeStr()
+        result_elem["updateTime"] = time_match(search_url)
         result_elem["sourceUrl"] = search_url
         result_elem["description"] = ""
         result_elem["title"] = search_title
         result_elem["relate"] = {}
-        result_elem["sourceSiteName"] = "百家"
+        result_elem["sourceSiteName"] = "百家热点新闻"
         result_elem["createTime"] = getDefaultTimeStr()
         result_elem["channel"] = "融合搜索"
         result_elem["root_class"] = "40度"
@@ -1951,7 +1953,10 @@ def do_search_task(params):
 
         if conn["news_ver2"]["googleNewsItem"].find_one(titleItem):
             logging.warn("Item %s alread exists in  database " %(result_elem['_id']))
-            continue
+            if "img" in params.keys():
+                break
+            else:
+                continue
         print "google_news_save_start"
         conn["news_ver2"]["googleNewsItem"].save(dict(result_elem))
         print "google_news_save_end"
