@@ -1890,15 +1890,19 @@ def do_search_task(params):
     data = urllib.urlencode(params_key)
     search_url ="http://192.168.0.37:8080/search?"+data
     # search_url ="http://60.28.29.37:8080/search?"+data
-    r_text = r.get(search_url)
-    text = (r_text.json())
-    search_list = text["items"]
+    try:
+        r_text = r.get(search_url)
+        text = (r_text.json())
+        search_list = text["items"]
     # try:
 
     # r_text = r.get(searchUrl_text)
     # except:
     #     print "search_url_exception"
     #     return
+    except:
+        print "search_url_exception"
+        return
     search_doc_num = 0
     for search_elem in search_list:
         result_elem = {}
