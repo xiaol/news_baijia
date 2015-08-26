@@ -144,7 +144,10 @@ def total_task():
         # else:
         #     continue
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
-        do_event_task(params, end_time, now_time)
+        try:
+            do_event_task(params, end_time, now_time)
+        except:
+            continue
 
     logging.warning("##################### online_event_task complete ********************")
 
