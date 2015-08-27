@@ -1479,7 +1479,7 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
             for sims_elem in sims:
                 if sims_elem[0]=="doc":
                     continue
-                elif sims_elem[1]>=0.7 or same_word[sims_elem[0]]>=keyword_num*0.2:
+                elif sims_elem[1]>=0.7 or (same_word[sims_elem[0]]>=keyword_num*0.2 and keyword_num>=10):
                     paragraphIndex_dict[sims_elem[0]] = { "similarity": sims_elem[1]
                                                          , "unit_vec" : unit_vec[sims_elem[0]]
                                                          , "keyword": keyword}
