@@ -668,7 +668,7 @@ def do_content_img_task(params):
             # continue
     if text:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
-        gist = Gist().get_gist_str(text)
+        gist = Gist().get_gist(text)
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"gist": gist}})
         compress = get_compression_result(gist)
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"compress": compress}})
