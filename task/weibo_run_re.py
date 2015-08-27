@@ -56,6 +56,7 @@ except ImportError:
     print "import error"
 from abstract import KeywordExtraction
 from para_sim.TextRank4ZH.gist import Gist
+from extract_time import time_match
 
 
 
@@ -63,7 +64,7 @@ conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replic
                                                              read_preference=ReadPreference.SECONDARY)
 HOST_NER = "60.28.29.47"
 
-not_need_copy_content_news = ["网易新闻图片", "观察者网",'地球图辑队']
+not_need_copy_content_news = ["网易新闻图片", "观察者网",'地球图辑队','bing热点']
 
 
 g_time_filter = ["今天","明天","后天"]
@@ -144,13 +145,16 @@ def total_task():
         # else:
         #     continue
         params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
-        do_event_task(params, end_time, now_time)
+        try:
+            do_event_task(params, end_time, now_time)
+        except:
+            continue
 
     logging.warning("##################### online_event_task complete ********************")
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
-        # if url == "http://world.yam.com/post.php?id=4440":
-            # print 1
+        # if url == "http://tech.ifeng.com/a/20150825/41462978_0.shtml":
+        #     print 1
         # else:
         #     continue
         doc_num += 1
@@ -1475,7 +1479,7 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
             for sims_elem in sims:
                 if sims_elem[0]=="doc":
                     continue
-                elif sims_elem[1]>=0.7 or same_word[sims_elem[0]]>=keyword_num*0.2:
+                elif sims_elem[1]>=0.7 or (same_word[sims_elem[0]]>=keyword_num*0.2 and keyword_num>=10):
                     paragraphIndex_dict[sims_elem[0]] = { "similarity": sims_elem[1]
                                                          , "unit_vec" : unit_vec[sims_elem[0]]
                                                          , "keyword": keyword}
@@ -1882,20 +1886,29 @@ def do_search_task(params):
     else:
         img = ""
 
-    searchUrl_text = "http://60.28.29.37:8080/search?key=" + str(topic)
-    # searchUrl_text = urllib.quote_plus(searchUrl_text)
+    params_key = {"key": topic}
+    data = urllib.urlencode(params_key)
+    search_url ="http://192.168.0.37:8080/search?"+data
+    # search_url ="http://60.28.29.37:8080/search?"+data
+    try:
+        r_text = r.get(search_url)
+        text = (r_text.json())
+        search_list = text["items"]
     # try:
-    r_text = r.get(searchUrl_text)
+
+    # r_text = r.get(searchUrl_text)
     # except:
     #     print "search_url_exception"
     #     return
-    text = (r_text.json())
-    search_list = text["items"]
+    except:
+        print "search_url_exception"
+        return
     search_doc_num = 0
     for search_elem in search_list:
         result_elem = {}
         search_url = search_elem["url"]
         search_title = search_elem["title"]
+        search_title = trim_bracket(search_title)
         try:
             apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + search_url
             r_text = requests.get(apiUrl_text)
@@ -1920,28 +1933,40 @@ def do_search_task(params):
             continue
 
         result_elem["_id"] = search_url
-        result_elem["originsourceSiteName"] = "百家"
-        result_elem["updateTime"] = getDefaultTimeStr()
+        if "img" in params.keys():
+            result_elem["originsourceSiteName"] = "bing热点"
+        else:
+            result_elem["originsourceSiteName"] = "百家热点新闻"
+        # result_elem["updateTime"] = getDefaultTimeStr()
+        result_elem["updateTime"] = time_match(search_url)
         result_elem["sourceUrl"] = search_url
         result_elem["description"] = ""
-        result_elem["title"] = search_title
+        result_elem["title"] = str(search_title)
         result_elem["relate"] = {}
-        result_elem["sourceSiteName"] = "百家"
+        result_elem["sourceSiteName"] = "百家热点新闻"
         result_elem["createTime"] = getDefaultTimeStr()
         result_elem["channel"] = "融合搜索"
         result_elem["root_class"] = "40度"
         if len(url)>0:
             result_elem["relate_url"] = url
-        result_elem["keyword"] = topic
+        result_elem["keyword"] = str(topic)
         result_elem["imgUrls"] = img
         result_elem["content"] = text
         result_elem["text"]= text
         title = result_elem['title']
         titleItem={'title': search_title}
 
+        imgUrlsItem={'imgUrls': img}
+
+        if "img" in params.keys():
+            if conn["news_ver2"]["googleNewsItem"].find_one(imgUrlsItem):
+                logging.warn("Item %s imgUrls alread exists in  database " %(result_elem['_id']))
+                break
+
         if conn["news_ver2"]["googleNewsItem"].find_one(titleItem):
             logging.warn("Item %s alread exists in  database " %(result_elem['_id']))
             continue
+
         print "google_news_save_start"
         conn["news_ver2"]["googleNewsItem"].save(dict(result_elem))
         print "google_news_save_end"
@@ -1964,7 +1989,7 @@ def do_search_task(params):
             Task['isOnline']=0
             conn["news_ver2"]["Task"].save(dict(Task))
             break
-        if search_doc_num >= 3:
+        if search_doc_num >= 6:
             break
 
 
@@ -1975,6 +2000,13 @@ def getDefaultTimeStr():
     defaultTimeStr=defaultTime.strftime(format)
     return defaultTimeStr
 
+def trim_bracket(title):
+    print "title,%s"%title
+    bracket_pat=re.compile(r'\(.*?\)')
+    title=re.sub(bracket_pat, '', title)
+    bracket_pat_1=re.compile(r'（.*?）')
+    title=re.sub(bracket_pat_1, '', title)
+    return title
 
 
 def set_googlenews_by_url_with_field_and_value_dict(url, condition_dict):
@@ -2063,6 +2095,7 @@ if __name__ == '__main__':
     # is_normal_info("2015-08-12 08:47:32  | 来源：")
     # is_error_code('scriptdddd')
     # do_search_task({"url":'http://www.guancha.cn/society/2015_08_19_331204.shtml', "title":'天津爆炸最新消息：瑞海操控人看守所透露公司“政商关系网”'})
+    # trim_bracket("夏克立否认夏天退出爸爸3 暂由夫人黄嘉千替代(图)")
     while True:
         doc_num = total_task()
         if doc_num == "no_doc":
