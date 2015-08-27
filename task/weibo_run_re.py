@@ -55,7 +55,8 @@ except ImportError:
     import Comments
     print "import error"
 from abstract import KeywordExtraction
-from para_sim.TextRank4ZH.gist import Gist
+# from para_sim.TextRank4ZH.gist import Gist
+from AI_funcs.Gist_and_Sim.gist import Gist
 from extract_time import time_match
 
 
@@ -289,7 +290,7 @@ def doImgGetAndSave(k, relate, url):
         r_text = requests.get(apiUrl_text)
         text = (r_text.json())["text"]
         e["text"] = text
-        gist = Gist().get_gist_str(text)
+        gist = Gist().get_gist(text)
         e["gist"] = gist
         compress = get_compression_result(gist)
         e["compress"] = compress
