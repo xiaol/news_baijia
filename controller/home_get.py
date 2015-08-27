@@ -377,6 +377,8 @@ def homeContentFetch(options):
 
         if "sentence" in doc.keys():
             del doc["sentence"]
+        if "page" in doc.keys():
+            del doc["page"]
 
         # if timefeedback:
         #     doc["timefeedback"]=timefeedback_dict
