@@ -147,7 +147,12 @@ class FetchContentHandler(tornado.web.RequestHandler):
         self.set_header("Access-Control-Allow-Origin",
                         "*")  # TODO should change to exact domain after test in localhost
         self.set_header("Content-Type", "Application/json")
-        url = self.get_argument("url", None)
+        args = self.request.uri
+        url = args.split("url=")[1]
+        url = url.split("&uuid=")[0]
+        url = url.split("&filterurls")[0]
+        url = url.split("&userId")[0]
+        url = url.split("&platformType")[0]
         filter_urls = self.get_arguments("filterurls")
         uuid = self.get_argument("uuid", None)
         result = {}
