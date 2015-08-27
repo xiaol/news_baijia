@@ -1940,7 +1940,7 @@ def do_search_task(params):
         result_elem["updateTime"] = time_match(search_url)
         result_elem["sourceUrl"] = search_url
         result_elem["description"] = ""
-        result_elem["title"] = search_title
+        result_elem["title"] = str(search_title)
         result_elem["relate"] = {}
         result_elem["sourceSiteName"] = "百家热点新闻"
         result_elem["createTime"] = getDefaultTimeStr()
@@ -1948,7 +1948,7 @@ def do_search_task(params):
         result_elem["root_class"] = "40度"
         if len(url)>0:
             result_elem["relate_url"] = url
-        result_elem["keyword"] = topic
+        result_elem["keyword"] = str(topic)
         result_elem["imgUrls"] = img
         result_elem["content"] = text
         result_elem["text"]= text
