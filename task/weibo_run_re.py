@@ -1956,12 +1956,17 @@ def do_search_task(params):
         title = result_elem['title']
         titleItem={'title': search_title}
 
+        imgUrlsItem={'imgUrls': img}
+
+        if "img" in params.keys():
+            if conn["news_ver2"]["googleNewsItem"].find_one(imgUrlsItem):
+                logging.warn("Item %s imgUrls alread exists in  database " %(result_elem['_id']))
+                break
+
         if conn["news_ver2"]["googleNewsItem"].find_one(titleItem):
             logging.warn("Item %s alread exists in  database " %(result_elem['_id']))
-            if "img" in params.keys():
-                break
-            else:
-                continue
+            continue
+
         print "google_news_save_start"
         conn["news_ver2"]["googleNewsItem"].save(dict(result_elem))
         print "google_news_save_end"
@@ -1984,7 +1989,7 @@ def do_search_task(params):
             Task['isOnline']=0
             conn["news_ver2"]["Task"].save(dict(Task))
             break
-        if search_doc_num >= 3:
+        if search_doc_num >= 6:
             break
 
 
