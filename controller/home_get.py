@@ -181,7 +181,8 @@ def homeContentFetch(options):
             doc["special"] = 400
             special_flag = False
 
-        if "sourceSiteName" in doc.keys():
+
+        if "category" not in doc.keys() and "sourceSiteName" in doc.keys():
             sourceSitename = doc["sourceSiteName"]
             if sourceSitename == "地球图辑队":
                 doc["category"] = "社会"

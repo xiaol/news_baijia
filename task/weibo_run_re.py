@@ -154,6 +154,10 @@ def total_task():
     logging.warning("##################### online_event_task complete ********************")
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
+        # if sourceSiteName == "热点":
+        #     print 1
+        # else:
+        #     continue
         # if url == "http://tech.ifeng.com/a/20150825/41462978_0.shtml":
         #     print 1
         # else:
@@ -1937,14 +1941,14 @@ def do_search_task(params):
         if "img" in params.keys():
             result_elem["originsourceSiteName"] = "bing热点"
         else:
-            result_elem["originsourceSiteName"] = "百家热点新闻"
+            result_elem["originsourceSiteName"] = "热点"
         # result_elem["updateTime"] = getDefaultTimeStr()
         result_elem["updateTime"] = time_match(search_url)
         result_elem["sourceUrl"] = search_url
         result_elem["description"] = ""
         result_elem["title"] = str(search_title)
         result_elem["relate"] = {}
-        result_elem["sourceSiteName"] = "百家热点新闻"
+        result_elem["sourceSiteName"] = "百家热点"
         result_elem["createTime"] = getDefaultTimeStr()
         result_elem["channel"] = "融合搜索"
         result_elem["root_class"] = "40度"
@@ -1954,6 +1958,7 @@ def do_search_task(params):
         result_elem["imgUrls"] = img
         result_elem["content"] = text
         result_elem["text"]= text
+        result_elem["category"] = "热点"
         title = result_elem['title']
         titleItem={'title': search_title}
 
@@ -1972,24 +1977,28 @@ def do_search_task(params):
         conn["news_ver2"]["googleNewsItem"].save(dict(result_elem))
         print "google_news_save_end"
         search_doc_num = search_doc_num + 1
+
+        Task = {}
+        Task['url'] = search_url
+        Task['title'] = search_title
+        Task['updateTime'] = getDefaultTimeStr()
+        Task['sourceSiteName'] = '百家'
+        Task['weiboOk']=0
+        Task['zhihuOk']=0
+        Task['abstractOk']=0
+        Task['nerOk']=0
+        Task['baikeOk']=0
+        Task['baiduSearchOk']=0
+        Task['doubanOk']=0
+        Task['relateImgOk']=0
+        Task['isOnline']=0
         if "img" in params.keys():
-            Task = {}
-            Task['url'] = search_url
-            Task['title'] = search_title
-            Task['updateTime'] = getDefaultTimeStr()
             Task['contentOk'] = 1
-            Task['sourceSiteName'] = '百家'
-            Task['weiboOk']=0
-            Task['zhihuOk']=0
-            Task['abstractOk']=0
-            Task['nerOk']=0
-            Task['baikeOk']=0
-            Task['baiduSearchOk']=0
-            Task['doubanOk']=0
-            Task['relateImgOk']=0
-            Task['isOnline']=0
             conn["news_ver2"]["Task"].save(dict(Task))
             break
+        else:
+            Task['contentOk'] = 0
+            conn["news_ver2"]["Task"].save(dict(Task))
         if search_doc_num >= 6:
             break
 
