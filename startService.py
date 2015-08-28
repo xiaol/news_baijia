@@ -525,7 +525,7 @@ class GistHandler(tornado.web.RequestHandler):
         gist = gist_obj.get_gist(article)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(gist))
-
+#Weiliang Guo end
 
 class Application(tornado.web.Application):
     def __init__(self):

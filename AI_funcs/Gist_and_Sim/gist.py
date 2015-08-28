@@ -30,7 +30,7 @@ stopwords = pwd + '/AI_funcs/Gist_and_Sim/TextRank4ZH/stopword.data'
 
 class Gist:
 
-    def __init__(self, stop_words_file=stopwords):
+    def __init__(self, stop_words_file='TextRank4ZH/stopword.data'):
             self.stop_words_file=stop_words_file
             self.tr4w = TextRank4Keyword(self.stop_words_file)  # Import stopwords
 
