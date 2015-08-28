@@ -302,6 +302,8 @@ def homeContentFetch(options):
         for sublist_elem in sublist:
             if "text" in sublist_elem.keys():
                 del sublist_elem["text"]
+            if "unit_vec" in sublist_elem.keys():
+                del sublist_elem["unit_vec"]
 
         doc["sublist"] = sublist
         # doc["otherNum"] = otherNum + baidu_news_num + reorganize_num
@@ -377,6 +379,8 @@ def homeContentFetch(options):
 
         if "sentence" in doc.keys():
             del doc["sentence"]
+        if "page" in doc.keys():
+            del doc["page"]
 
         # if timefeedback:
         #     doc["timefeedback"]=timefeedback_dict
