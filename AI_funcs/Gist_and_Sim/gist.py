@@ -23,14 +23,16 @@ pwd = os.getcwd()
 # pwd = pwd.split('/')
 # pwd = pwd[:-1]
 # abs_path = '/'.join(pwd)
-print(pwd)
+# print(pwd)
 
-stopwords = pwd + '/AI_funcs/Gist_and_Sim/TextRank4ZH/stopword.data'
-
+# stopwords = pwd + '/AI_funcs/Gist_and_Sim/TextRank4ZH/stopword.data'
+stopwords = os.path.join(os.path.dirname(__file__), 'TextRank4ZH/stopword.data')
+print(stopwords)
 
 class Gist:
 
-    def __init__(self, stop_words_file='TextRank4ZH/stopword.data'):
+    def __init__(self, stop_words_file=stopwords):
+
             self.stop_words_file=stop_words_file
             self.tr4w = TextRank4Keyword(self.stop_words_file)  # Import stopwords
 
