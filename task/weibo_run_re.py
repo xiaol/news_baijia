@@ -1942,8 +1942,8 @@ def do_search_task(params):
             result_elem["originsourceSiteName"] = "bing热点"
         else:
             result_elem["originsourceSiteName"] = "热点"
-        # result_elem["updateTime"] = getDefaultTimeStr()
-        result_elem["updateTime"] = time_match(search_url)
+        result_elem["updateTime"] = getDefaultTimeStr()
+        # result_elem["updateTime"] = time_match(search_url)
         result_elem["sourceUrl"] = search_url
         result_elem["description"] = ""
         result_elem["title"] = str(search_title)
@@ -1970,6 +1970,10 @@ def do_search_task(params):
                 break
 
         if conn["news_ver2"]["googleNewsItem"].find_one(titleItem):
+            logging.warn("Item %s alread exists in  database " %(result_elem['_id']))
+            continue
+
+        if conn["news_ver2"]["Task"].find_one(titleItem):
             logging.warn("Item %s alread exists in  database " %(result_elem['_id']))
             continue
 
