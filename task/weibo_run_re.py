@@ -1973,10 +1973,10 @@ def do_search_task(params):
             logging.warn("Item %s alread exists in  database " %(result_elem['_id']))
             continue
 
-        if conn["news_ver2"]["Task"].find_one(titleItem):
+        if conn["news_ver2"]["Task"].find_one({'url': search_url}):
             logging.warn("Item %s alread exists in  database " %(result_elem['_id']))
             continue
-
+  
         print "google_news_save_start"
         conn["news_ver2"]["googleNewsItem"].save(dict(result_elem))
         print "google_news_save_end"
