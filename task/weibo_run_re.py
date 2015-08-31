@@ -681,9 +681,10 @@ def do_content_img_task(params):
     text = (r_text.json())["text"]
     if text:
         text = trim_new_line_character(text)
-        if is_error_code(text):
+        if is_error_code(text) or not len(text)>10:
             return False
             # continue
+
     text=text.encode('utf-8')
     text = text.replace(' ', '')
 
