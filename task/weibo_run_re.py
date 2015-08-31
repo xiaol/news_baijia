@@ -55,8 +55,8 @@ except ImportError:
     import Comments
     print "import error"
 from abstract import KeywordExtraction
-# from para_sim.TextRank4ZH.gist import Gist
-from AI_funcs.Gist_and_Sim.gist import Gist
+from para_sim.TextRank4ZH.gist import Gist
+#from AI_funcs.Gist_and_Sim.gist import Gist
 from extract_time import time_match
 
 
@@ -129,29 +129,29 @@ def total_task():
     now = datetime.datetime.now()
     now_time = now.strftime('%Y-%m-%d %H:%M:%S')
 
-    logging.warning("##################### online_search_task start ********************")
-    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online_serach_ok:
+    # logging.warning("##################### online_search_task start ********************")
+    # for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online_serach_ok:
 
-        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
-        do_search_task(params)
-        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"aggreSearchOk": 1}})
+        # params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        # do_search_task(params)
+        # conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"aggreSearchOk": 1}})
 
 
-    logging.warning("##################### online_search_task complete ********************")
+    # logging.warning("##################### online_search_task complete ********************")
 
-    logging.warning("##################### online_event_task start ********************")
-    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online:
+    # logging.warning("##################### online_event_task start ********************")
+    # for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online:
         # if url == "http://www.techweb.com.cn/ihealth/2015-08-17/2189753.shtml":
         #     print 1
         # else:
         #     continue
-        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
-        try:
-            do_event_task(params, end_time, now_time)
-        except:
-            continue
+        # params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        # try:
+            # do_event_task(params, end_time, now_time)
+        # except:
+            # continue
 
-    logging.warning("##################### online_event_task complete ********************")
+    # logging.warning("##################### online_event_task complete ********************")
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
         # if sourceSiteName == "热点":
@@ -294,7 +294,7 @@ def doImgGetAndSave(k, relate, url):
         r_text = requests.get(apiUrl_text)
         text = (r_text.json())["text"]
         e["text"] = text
-        gist = Gist().get_gist(text)
+        gist = Gist().get_gist_str(text)
         e["gist"] = gist
         compress = get_compression_result(gist)
         e["compress"] = compress
@@ -673,7 +673,7 @@ def do_content_img_task(params):
             # continue
     if text:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
-        gist = Gist().get_gist(text)
+        gist = Gist().get_gist_str(text) 
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"gist": gist}})
         compress = get_compression_result(gist)
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"compress": compress}})
@@ -1973,7 +1973,8 @@ def do_search_task(params):
             logging.warn("Item %s alread exists in  database " %(result_elem['_id']))
             continue
 
-        if conn["news_ver2"]["Task"].find_one(titleItem):
+
+        if conn["news_ver2"]["Task"].find_one({'url': search_url}):
             logging.warn("Item %s alread exists in  database " %(result_elem['_id']))
             continue
 
