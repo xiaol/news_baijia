@@ -47,6 +47,8 @@ import numpy as np
 import math
 from config import dbConn
 
+from weibo_run_re import fetch_unrunned_docs_by_date, fetch_url_title_lefturl_pairs, do_event_task
+
 g_time_filter = ["今天","明天","后天"]
 g_gpes_filter = ["中国"]
 
@@ -1581,6 +1583,39 @@ def conver_small_to_larger(img):
         return "http://s.cn.bing.net" + re.sub("&","&amp;", img)
 
 
+def aggreSearch():
+
+    docs_online_search_ok = fetch_unrunned_docs_by_date(isOnline = True, aggreSearchOk = True)
+    url_title_lefturl_sourceSite_pairs_online_search_ok = fetch_url_title_lefturl_pairs(docs_online_search_ok)
+
+    logging.warning("##################### online_search_task start ********************")
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online_search_ok:
+
+        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        do_search_task(params)
+        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"aggreSearchOk": 1}})
+
+    logging.warning("##################### online_search_task complete ********************")
+
+def onlineEvent():
+    start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+    end_time = end_time + datetime.timedelta(days=-2)
+    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+    now = datetime.datetime.now()
+    now_time = now.strftime('%Y-%m-%d %H:%M:%S')
+
+    docs_online = fetch_unrunned_docs_by_date(isOnline = True)
+    url_title_lefturl_sourceSite_pairs_online = fetch_url_title_lefturl_pairs(docs_online)
+
+    logging.warning("##################### online_event_task start ********************")
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online:
+        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        try:
+            do_event_task(params, end_time, now_time)
+        except:
+            continue
+
+    logging.warning("##################### online_event_task complete ********************")
 
 
 
@@ -1680,6 +1715,19 @@ if __name__ == '__main__':
                 logging.warn("===============this round of content complete====================")
                 time.sleep(3600*0.5)
 
+        elif arg == "aggreSearch":
+            while True:
+                # time.sleep(30)
+                aggreSearch()
+                logging.warn("===============this round of content complete====================")
+                time.sleep(3600*0.5)
+
+        elif arg == "onlineEvent":
+            while True:
+                # time.sleep(30)
+                onlineEvent()
+                logging.warn("===============this round of content complete====================")
+                time.sleep(3600*0.5)
 
 
 

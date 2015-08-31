@@ -118,10 +118,7 @@ def total_task():
     docs = fetch_unrunned_docs_by_date()
     # docs = fetch_unrunned_docs()
     url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
-    docs_online = fetch_unrunned_docs_by_date(isOnline = True)
-    docs_online_search_ok = fetch_unrunned_docs_by_date(isOnline = True, aggreSearchOk = True)
-    url_title_lefturl_sourceSite_pairs_online = fetch_url_title_lefturl_pairs(docs_online)
-    url_title_lefturl_sourceSite_pairs_online_serach_ok = fetch_url_title_lefturl_pairs(docs_online_search_ok)
+
     start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
     end_time = end_time + datetime.timedelta(days=-2)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -129,29 +126,6 @@ def total_task():
     now = datetime.datetime.now()
     now_time = now.strftime('%Y-%m-%d %H:%M:%S')
 
-    # logging.warning("##################### online_search_task start ********************")
-    # for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online_serach_ok:
-
-        # params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
-        # do_search_task(params)
-        # conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"aggreSearchOk": 1}})
-
-
-    # logging.warning("##################### online_search_task complete ********************")
-
-    # logging.warning("##################### online_event_task start ********************")
-    # for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online:
-        # if url == "http://www.techweb.com.cn/ihealth/2015-08-17/2189753.shtml":
-        #     print 1
-        # else:
-        #     continue
-        # params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
-        # try:
-            # do_event_task(params, end_time, now_time)
-        # except:
-            # continue
-
-    # logging.warning("##################### online_event_task complete ********************")
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
         # if sourceSiteName == "热点":
@@ -294,7 +268,11 @@ def doImgGetAndSave(k, relate, url):
         r_text = requests.get(apiUrl_text)
         text = (r_text.json())["text"]
         e["text"] = text
-        gist = Gist().get_gist_str(text)
+
+        try:
+            gist = fetch_gist_result(text)
+        except:
+            gist = Gist().get_gist_str(text)
         e["gist"] = gist
         compress = get_compression_result(gist)
         e["compress"] = compress
@@ -305,6 +283,17 @@ def doImgGetAndSave(k, relate, url):
         print "save relate." + k, " error, the url====> ", url
         return
     set_task_ok_by_url_and_field(url, "relateimgOk")
+
+
+def fetch_gist_result(text):
+    params_key = {"article": text}
+    data = urllib.urlencode(params_key)
+    search_url = "http://121.40.34.56/news/baijia/fetchGist?" + data
+    r_text = r.post(search_url)
+    text = (r_text.json())
+    return text
+
+
 
 def get_relate_news_by_url(url):
 
@@ -673,7 +662,11 @@ def do_content_img_task(params):
             # continue
     if text:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
-        gist = Gist().get_gist_str(text) 
+        try:
+            gist = fetch_gist_result(text)
+        except:
+            gist = Gist().get_gist_str(text)
+
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"gist": gist}})
         compress = get_compression_result(gist)
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"compress": compress}})
@@ -1914,6 +1907,8 @@ def do_search_task(params):
         search_url = search_elem["url"]
         search_title = search_elem["title"]
         search_title = trim_bracket(search_title)
+        if not (search_url.endswith('html') or search_url.endswith('shtml') or search_url.endswith('htm')):
+            continue
         try:
             apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + search_url
             r_text = requests.get(apiUrl_text)
@@ -2000,7 +1995,7 @@ def do_search_task(params):
         Task['doubanOk']=0
         Task['relateImgOk']=0
         Task['isOnline']=0
-        if "img" in params.keys():
+        if "img" in params.keys() or len(img)>0:
             Task['contentOk'] = 1
             conn["news_ver2"]["Task"].save(dict(Task))
             break
@@ -2114,6 +2109,7 @@ if __name__ == '__main__':
     # is_error_code('scriptdddd')
     # do_search_task({"url":'http://www.guancha.cn/society/2015_08_19_331204.shtml', "title":'天津爆炸最新消息：瑞海操控人看守所透露公司“政商关系网”'})
     # trim_bracket("夏克立否认夏天退出爸爸3 暂由夫人黄嘉千替代(图)")
+    # gist = fetch_gist_result("王平解释说，根据我国宪法和相关法律的规定，特赦应当由全国人民代表大会常务委员会作出决定，由中华人民共和国主席发布特赦令，由人民法院裁定，人民检察院予以监督，司法行政机关和公安机关予以执行。具体来说，在监狱和看守所服刑人员由监狱和看守所向服刑人员所在地的中级以上法院，提起特赦建议；社区矫正人员则由相应的社区矫正机构，提出建议。法院根据提出的特赦建议，排查审核，作出特赦裁定，并公示特赦罪犯名单。")
     while True:
         doc_num = total_task()
         if doc_num == "no_doc":
