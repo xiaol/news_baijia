@@ -18,14 +18,7 @@ from AI_funcs.Extraction.extractor import ConjExtraction
 from AI_funcs.Extraction.extractor import get_quote_text
 import os
 
-pwd = os.getcwd()
-# print(pwd)
-# pwd = pwd.split('/')
-# pwd = pwd[:-1]
-# abs_path = '/'.join(pwd)
-# print(pwd)
 
-# stopwords = pwd + '/AI_funcs/Gist_and_Sim/TextRank4ZH/stopword.data'
 stopwords = os.path.join(os.path.dirname(__file__), 'TextRank4ZH/stopword.data')
 print(stopwords)
 
@@ -122,9 +115,35 @@ if __name__ == "__main__":
 今年全国两会期间，楼继伟再次表示，今年将配合做好房地产税立法工作，加快房地产税立法并适时推进改革。
 “房地产税是一个复杂的立法过程。”7月23日，中原地产首席分析师张大伟接受《华夏时报》记者采访时说。事实上，房地产税的立法推进工作非常谨慎，“研究与意见工作主要是国务院研究机构与国税局、财政部的专家参加。”谢逸枫说。
 谢逸枫的说法与今年早些时候财政部副部长朱光耀的观点吻合。朱光耀当时表示，目前由全国人大牵头、财政部配合的房地产税立法工作正在研究过程中，还没有立法的具体时间表，但他表示全国人大会有一个科学的安排，“怎么开征房地产税，总的说来由人大牵头，财政部配合”。"""
+    docs = docs()
     gist_obj = Gist()
-    gist = gist_obj.get_gist(doc)
-    print(gist)
+    num_articles = 0
+    for key, value in docs.iteritems():
+        print('@@@@@@@@@@@Event@@@@@@@@@@@@@@@@')
+        print('Event ID: ' + key)
+        print('================================')
+        for ke, va in value.iteritems():
+            print('~~~~~~~~~~Article~~~~~~~~~~~~~')
+            print('Article ID: ' + ke)
+        #     for v in va:
+        #         v = v.decode('utf8')
+        #         print('~~~~~~~~~~~~~~~~~~~~~~~')
+        #         #print sentence
+
+            if not va:
+                print('Oops! Empty article!')
+            else:
+                num_articles += 1
+                va = va.replace(' ', '')
+
+                #.replace("\r","").replace("\n","")
+                print('ooooooooooooARTICLEoooooooooooooooo')
+                print(va)
+                print('Gist')
+                gist = gist_obj.get_gist(va)
+                print(gist)
+    print('Number of articles: ' + str(num_articles))
+
 
     """
     for ke, va in value.iteritems():
