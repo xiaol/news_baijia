@@ -398,9 +398,9 @@ def homeContentFetch(options):
     result_dict = {"content":docs_return}
     tem_dict=dict(result_dict)
     conn['news_ver2']['resultItem'].save(tem_dict)
-    raise tornado.gen.Return(docs_return)
+    # raise tornado.gen.Return(docs_return)
     # r.hmset("googleNewsItems",{"googleNewsItems":docs_return})
-    # return docs_return
+    return docs_return
 
 
 def newsHomeContentFetch(options):

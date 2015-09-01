@@ -67,7 +67,7 @@ class FetchHomeHandler(tornado.web.RequestHandler):
             # options["updateTime"] = updateTime
         # result = yield home_get.homeContentFetch(options)
 
-        result = home_get.homeContentFetch(options)
+        # result = home_get.homeContentFetch(options)
         result = conn['news_ver2']['resultItem'].find_one()["content"]
         # print result
         # result = yield coroutine_fetch()
