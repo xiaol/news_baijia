@@ -1618,6 +1618,24 @@ def onlineEvent():
     logging.warning("##################### online_event_task complete ********************")
 
 
+def unOnlineEvent():
+    logging.warning("##################### unOnline_event_task start ********************")
+    docs = fetch_unrunned_docs_by_date()
+    url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
+    start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+    end_time = end_time + datetime.timedelta(days=-2)
+    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+    now = datetime.datetime.now()
+    now_time = now.strftime('%Y-%m-%d %H:%M:%S')
+
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
+        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        print "*****************************task start, the url is %s, sourceSiteName: %s " \
+                  "*****************************" % (url, sourceSiteName)
+        do_event_task(params, end_time, now_time)
+
+    logging.warning("##################### unOnline_event_task complete ********************")
 
 if __name__ == '__main__':
 
@@ -1728,6 +1746,14 @@ if __name__ == '__main__':
                 onlineEvent()
                 logging.warn("===============this round of content complete====================")
                 time.sleep(3600*0.5)
+
+        elif arg == "unOnlineEvent":
+            while True:
+                # time.sleep(30)
+                unOnlineEvent()
+                logging.warn("===============this round of content complete====================")
+                time.sleep(3600*0.5)
+
 
 
 

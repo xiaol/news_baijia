@@ -130,6 +130,7 @@ def homeContentFetch(options):
         undocs = conn["news_ver2"]["googleNewsItem"].find(
             {"$or": [{"isOnline": 0}, {"isOnline": {"$exists": 0}}], "createTime": {"$gte": start_time_yes},
              "eventId": {"$exists": 1}}).sort([("createTime", -1)])
+
         t02 = time.time()
         print "third ts: ", t02
         undocs_list = extratInfoInUndocs(undocs)
@@ -148,7 +149,6 @@ def homeContentFetch(options):
         isZhihuFlag = 0
         isImgWallFlag = 0
         isCommentsFlag = 0
-
         sublist = []
         reorganize_num = 0
         filter_url = []
@@ -159,17 +159,13 @@ def homeContentFetch(options):
             for subelem in sublist:
                 filter_url.append(subelem["url"])
             del doc["sublist"]
-
         if "sourceUrl" not in doc.keys():
             print "error"
             continue
-
         url = doc['sourceUrl']
         title = doc["title"]
         sourceSiteName = doc["sourceSiteName"]
-
         # baidu_news_num = count_relate_baidu_news(url)
-
         relate = []
         special_flag = True
         # 标记放到前边的新闻
@@ -181,28 +177,24 @@ def homeContentFetch(options):
             doc["special"] = 400
             special_flag = False
 
-
-        if "category" not in doc.keys() and "sourceSiteName" in doc.keys():
-            sourceSitename = doc["sourceSiteName"]
-            if sourceSitename == "地球图辑队":
-                doc["category"] = "社会"
+        if "category" not in doc.keys():
+            if "sourceSiteName" in doc.keys():
+                sourceSitename = doc["sourceSiteName"]
+                if sourceSitename == "地球图辑队":
+                    doc["category"] = "社会"
+                else:
+                    doc["category"] = sourceSitename[2:4]
             else:
-                doc["category"] = sourceSitename[2:4]
-        else:
-            continue
+                continue
         # 不取没有相关的
         # if not relate:
         #     continue
-
-
-
         if "imgUrls" in doc.keys():
             if not doc["imgUrls"]:
                 continue
             if len(doc["imgUrls"]) > 0:
                 doc["imgUrl"] = doc["imgUrls"]
                 del doc["imgUrls"]
-
         if "content" in doc.keys():
             del doc["content"]
 

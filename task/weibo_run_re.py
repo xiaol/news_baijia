@@ -131,7 +131,7 @@ def total_task():
         #     print 1
         # else:
         #     continue
-        # if url == "http://news.163.com/api/15/0830/10/B28SBIS200014AED_all.html":
+        # if url == "http://news.qq.com/a/20150901/009817.htm":
         #     print 1
         # else:
         #     continue
@@ -147,7 +147,7 @@ def total_task():
                   "*****************************" % (url, sourceSiteName)
             do_ner_task(params)
             do_weibo_task(params)
-            do_event_task(params, end_time, now_time)
+            # do_event_task(params, end_time, now_time)
             do_zhihu_task(params)
             do_baike_task(params)
             do_douban_task(params)
@@ -701,6 +701,11 @@ def do_content_img_task(params):
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"gist": gist}})
         compress = get_compression_result(gist)
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"compress": compress}})
+
+    content_status = conn["news_ver2"]["Task"].find_one({"url": url})
+    if content_status:
+        if content_status["contentOk"] == 1:
+            return True
 
     if lefturl:
         url_use_to_fetch_content_img = lefturl
