@@ -395,7 +395,7 @@ def homeContentFetch(options):
     # return docs_return
     t04 = time.time()
     print "fifth ts: ", t04
-    result_dict = {"_id":docs_return}
+    result_dict = {"content":docs_return}
     tem_dict=dict(result_dict)
     conn['news_ver2']['resultItem'].save(tem_dict)
     raise tornado.gen.Return(docs_return)
