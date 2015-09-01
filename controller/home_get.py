@@ -91,7 +91,7 @@ def homeContentFetch(options):
         docs = []
         for day_night_elem in day_night:
             start_time = day_night_elem[0]
-            start_time_yes = start_time + datetime.timedelta(days=-2)
+            start_time_yes = start_time + datetime.timedelta(days=0)
             end_time = day_night_elem[1]
             start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
             end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -117,7 +117,7 @@ def homeContentFetch(options):
     else:
         # start_time, end_time = get_start_end_time()
         start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
-        start_time_yes = start_time + datetime.timedelta(days=-2)
+        start_time_yes = start_time + datetime.timedelta(days=0)
         start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
         end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
         start_time_yes = start_time_yes.strftime('%Y-%m-%d %H:%M:%S')
