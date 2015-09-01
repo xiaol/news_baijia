@@ -25,10 +25,15 @@ r = redis.Redis('localhost','6379',db=1)
 # define("port", default=9999, help="run on the given port", type=int)
 define("host", default="127.0.0.1", help="run on the given host", type=str)
 
+@tornado.gen.coroutine
+def coroutine_fetch():
+    result = r.hmget("googleNewsItems","googleNewsItems")
+    raise tornado.gen.Return(result)
+
 
 class FetchHomeHandler(tornado.web.RequestHandler):
-    # @tornado.web.asynchronous
-    # @tornado.gen.coroutine
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
     def get(self):
         # updateTime = self.get_argument("updateTime", None)
         limit = self.get_argument("limit", 10)
@@ -62,7 +67,7 @@ class FetchHomeHandler(tornado.web.RequestHandler):
         # result = yield home_get.homeContentFetch(options)
         # result = home_get.homeContentFetch(options)
         # print result
-        result = r.hmget("googleNewsItems","googleNewsItems")
+        result = yield coroutine_fetch()
         result = result[0]
         result = eval(result)
 
