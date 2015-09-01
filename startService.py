@@ -19,14 +19,16 @@ from tornado.options import define, options
 import tornado.gen
 import tornado.concurrent
 from AI_funcs.Gist_and_Sim.gist import Gist
+import redis
+r = redis.Redis('localhost','6379',db=1)
 
 # define("port", default=9999, help="run on the given port", type=int)
 define("host", default="127.0.0.1", help="run on the given host", type=str)
 
 
 class FetchHomeHandler(tornado.web.RequestHandler):
-    @tornado.web.asynchronous
-    @tornado.gen.coroutine
+    # @tornado.web.asynchronous
+    # @tornado.gen.coroutine
     def get(self):
         # updateTime = self.get_argument("updateTime", None)
         limit = self.get_argument("limit", 10)
@@ -57,8 +59,12 @@ class FetchHomeHandler(tornado.web.RequestHandler):
 
             # if updateTime:
             # options["updateTime"] = updateTime
-        result = yield home_get.homeContentFetch(options)
+        # result = yield home_get.homeContentFetch(options)
+        # result = home_get.homeContentFetch(options)
         # print result
+        result = r.hmget("googleNewsItems","googleNewsItems")
+        result = result[0]
+        result = eval(result)
 
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
