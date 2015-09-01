@@ -28,13 +28,13 @@ mapOfSourceName = {"weibo": "微博",
 
 DBStore = dbConn.GetDateStore()
 
-import redis
-r = redis.Redis(host='localhost', port=6379, db=1)
+# import redis
+# r = redis.Redis(host='121.40.34.56', port=6379, db=1)
 
 special_source = ["观察", "网易","地球"]
 
 
-# @tornado.gen.coroutine
+@tornado.gen.coroutine
 def homeContentFetch(options):
     """
 
@@ -133,7 +133,6 @@ def homeContentFetch(options):
         undocs = conn["news_ver2"]["googleNewsItem"].find(
             {"$or": [{"isOnline": 0}, {"isOnline": {"$exists": 0}}], "createTime": {"$gte": start_time_yes},
              "eventId": {"$exists": 1}}).sort([("createTime", -1)])
-
         t02 = time.time()
         print "third ts: ", t02
         undocs_list = extratInfoInUndocs(undocs)
@@ -396,9 +395,9 @@ def homeContentFetch(options):
     # return docs_return
     t04 = time.time()
     print "fifth ts: ", t04
-    # raise tornado.gen.Return(docs_return)
-    r.hmset("googleNewsItems",{"googleNewsItems":docs_return})
-    return docs_return
+    raise tornado.gen.Return(docs_return)
+    # r.hmset("googleNewsItems",{"googleNewsItems":docs_return})
+    # return docs_return
 
 
 def newsHomeContentFetch(options):
