@@ -68,7 +68,7 @@ class FetchHomeHandler(tornado.web.RequestHandler):
         # result = yield home_get.homeContentFetch(options)
 
         result = home_get.homeContentFetch(options)
-        result = conn['news_ver2']['resultItem'].find_one()["_id"]
+        result = conn['news_ver2']['resultItem'].find_one()["content"]
         # print result
         # result = yield coroutine_fetch()
         # result = result[0]
