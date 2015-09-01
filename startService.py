@@ -73,7 +73,13 @@ class FetchHomeHandler(tornado.web.RequestHandler):
         # result = yield home_get.homeContentFetch(options)
 
         # result = home_get.homeContentFetch(options)
-        result = conn['news_ver2']['resultItem'].find_one()["content"]
+        # result = conn['news_ver2']['resultItem'].find_one()["content"]
+        result_list = conn['news_ver2']['resultItem'].find().sort([("createTime", pymongo.DESCENDING)]).limit(1)
+
+        for result_elem  in result_list:
+            result = result_elem["content"]
+            break
+
         # print result
         # result = yield coroutine_fetch()
         # result = result[0]
