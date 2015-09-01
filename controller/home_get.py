@@ -15,7 +15,7 @@ import task.requests_with_sleep as requests
 from AI_funcs.sen_compr.text_handler import SentenceCompressor
 import re
 import tornado.gen
-from task.weibo_run_re import is_error_code
+from task.weibo_run_re import is_error_code, getDefaultTimeStr
 
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
@@ -395,7 +395,9 @@ def homeContentFetch(options):
     # return docs_return
     t04 = time.time()
     print "fifth ts: ", t04
-    result_dict = {"content":docs_return}
+
+    result_time = getDefaultTimeStr()
+    result_dict = {"content":docs_return,"createTime":result_time}
     tem_dict=dict(result_dict)
     conn['news_ver2']['resultItem'].save(tem_dict)
     # raise tornado.gen.Return(docs_return)

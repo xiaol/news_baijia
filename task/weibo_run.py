@@ -48,6 +48,7 @@ import math
 from config import dbConn
 
 from weibo_run_re import fetch_unrunned_docs_by_date, fetch_url_title_lefturl_pairs, do_event_task
+from controller.home_get import homeContentFetch
 
 g_time_filter = ["今天","明天","后天"]
 g_gpes_filter = ["中国"]
@@ -1754,6 +1755,14 @@ if __name__ == '__main__':
                 logging.warn("===============this round of content complete====================")
                 time.sleep(3600*0.5)
 
+        elif arg == "homeGet":
+            while True:
+                # time.sleep(30)
+                options = {}
+                options["timing"] = 1
+                homeContentFetch(options)
+                logging.warn("===============this round of content complete====================")
+                time.sleep(3600*1)
 
 
 
