@@ -19,11 +19,16 @@ from tornado.options import define, options
 import tornado.gen
 import tornado.concurrent
 from AI_funcs.Gist_and_Sim.gist import Gist
+import pymongo
+from pymongo.read_preferences import ReadPreference
 # import redis
 # r = redis.Redis('121.40.34.56','6379',db=1)
 
 # define("port", default=9999, help="run on the given port", type=int)
 define("host", default="127.0.0.1", help="run on the given host", type=str)
+
+conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
+                                     read_preference=ReadPreference.SECONDARY)
 
 @tornado.gen.coroutine
 def coroutine_fetch():
