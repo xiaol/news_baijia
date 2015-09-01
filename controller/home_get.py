@@ -34,7 +34,7 @@ DBStore = dbConn.GetDateStore()
 special_source = ["观察", "网易","地球"]
 
 
-@tornado.gen.coroutine
+# @tornado.gen.coroutine
 def homeContentFetch(options):
     """
 
@@ -395,6 +395,9 @@ def homeContentFetch(options):
     # return docs_return
     t04 = time.time()
     print "fifth ts: ", t04
+    dict = {"_id":docs_return}
+    tem_dict=dict(dict)
+    conn['news_ver2']['resultItem'].save(tem_dict)
     raise tornado.gen.Return(docs_return)
     # r.hmset("googleNewsItems",{"googleNewsItems":docs_return})
     # return docs_return

@@ -32,8 +32,8 @@ def coroutine_fetch():
 
 
 class FetchHomeHandler(tornado.web.RequestHandler):
-    @tornado.web.asynchronous
-    @tornado.gen.coroutine
+    # @tornado.web.asynchronous
+    # @tornado.gen.coroutine
     def get(self):
         # updateTime = self.get_argument("updateTime", None)
         limit = self.get_argument("limit", 10)
@@ -62,10 +62,13 @@ class FetchHomeHandler(tornado.web.RequestHandler):
             options["channelId"] = channelId
 
 
+
             # if updateTime:
             # options["updateTime"] = updateTime
-        result = yield home_get.homeContentFetch(options)
-        # result = home_get.homeContentFetch(options)
+        # result = yield home_get.homeContentFetch(options)
+
+        result = home_get.homeContentFetch(options)
+        result = conn['news_ver2']['resultItem'].find_one()["_id"]
         # print result
         # result = yield coroutine_fetch()
         # result = result[0]
