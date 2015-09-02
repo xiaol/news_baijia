@@ -22,6 +22,7 @@ import os
 stopwords = os.path.join(os.path.dirname(__file__), 'TextRank4ZH/stopword.data')
 print(stopwords)
 
+
 class Gist:
 
     def __init__(self, stop_words_file=stopwords):
