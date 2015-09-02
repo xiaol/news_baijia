@@ -542,7 +542,7 @@ def do_abs_task(params):
             try:
                 text=text.encode('utf-8')
             except:
-                continue
+                return False
             # text = text.replace(' ', '')
             # text = "".join(text.split('\n'))
             try:
@@ -693,7 +693,7 @@ def do_content_img_task(params):
     try:
         text=text.encode('utf-8')
     except:
-        continue
+        return False
     # text = text.replace(' ', '')
 
     if text:
