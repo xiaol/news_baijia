@@ -267,7 +267,7 @@ def doImgGetAndSave(k, relate, url):
         r_text = requests.get(apiUrl_text)
         text = (r_text.json())["text"]
         e["text"] = text
-        # text=text.encode('utf-8')
+        text=text.encode('utf-8')
         # text = text.replace(' ', '')
 
         try:
@@ -537,10 +537,9 @@ def do_abs_task(params):
                 conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
                 # print type(text)
 
-            # text=text.encode('utf-8')
+            text=text.encode('utf-8')
             # text = text.replace(' ', '')
-            text = "".join(text.split('\n'))
-
+            # text = "".join(text.split('\n'))
             try:
                 # gist = fetch_gist_result(text)
                 gist = g().get_gist(text)
@@ -686,7 +685,7 @@ def do_content_img_task(params):
             # continue
     print text
     print type(text)
-    # text=text.encode('utf-8')
+    text=text.encode('utf-8')
     # text = text.replace(' ', '')
 
     if text:
