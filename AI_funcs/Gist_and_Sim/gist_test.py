@@ -17,16 +17,39 @@ from AI_funcs.Extraction.extractor import docs
 from AI_funcs.Extraction.extractor import ConjExtraction
 from AI_funcs.Extraction.extractor import get_quote_text
 import os
+import pymongo
+from pymongo.read_preferences import ReadPreference
+import datetime
+import urllib
+import requests
 
-pwd = os.getcwd()
-pwd = pwd.split('/')
-pwd = pwd[:-1]
-abs_path = '/'.join(pwd)
-print(abs_path)
+
+conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",read_preference=ReadPreference.SECONDARY)
+
+docs_find = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": "http://it.people.com.cn/n/2015/0902/c1009-27539987.html"})
+# for kk, vv in docs_find.iteritems():
+#     print('----------')
+#     print(kk)
+#     print('~~~~~~~~~~~')
+#     print(vv)
+# text = "".join(docs_find['description'].split('\n'))
+# text = text.replace(" ","")
+# params_key = {"article": text.encode('utf-8')}
+# data = urllib.urlencode(params_key)
+# search_url = "http://121.40.34.56/news/baijia/fetchGist?" + data
+# text = requests.post(search_url)
+# text = (text.json())
+# print text
+
+
+stopwords = os.path.join(os.path.dirname(__file__), 'TextRank4ZH/stopword.data')
+print(stopwords)
+
 
 class Gist:
 
-    def __init__(self, stop_words_file=abs_path+'/Gist_and_Sim/TextRank4ZH/stopword.data'):
+    def __init__(self, stop_words_file=stopwords):
+
             self.stop_words_file=stop_words_file
             self.tr4w = TextRank4Keyword(self.stop_words_file)  # Import stopwords
 
@@ -64,25 +87,7 @@ class Gist:
             gresult = ' '.join(tr4s.get_key_sentences(num=1))
 
         return gresult
-        """
-        gresult = {}
-        for key, value in text_dict.iteritems():
-            value = value.replace(' ', '')
-            quotes = get_quote_text(value)
-            if quotes:
-                sims = cal_sim(value, quotes)
-                for a, s in zip(quotes, sims):
-                    if s == max(sims):
-                        gresult[key] = a
-            else:
-                # print('No Quote Sentence Found. Use TextRank algorithm to get gist.')
-                tr4s = TextRank4Sentence(self.stop_words_file)
-                # 使用词性过滤，文本小写，使用words_all_filters生成句子之间的相似性
-                tr4s.train(text=value, speech_tag_filter=True, lower=True, source = 'all_filters')
-                gresult.update({key: (' '.join(tr4s.get_key_sentences(num=1)))})
 
-        return gresult
-        """
 
 #query is a string, textList is a list of strings.
 #If a query only compares itself against itself or only one another document, the result is always 1.
@@ -101,34 +106,34 @@ def cal_sim(query, text_list):
     return sims
 
 
-
-
-
-
 if __name__ == "__main__":
-    doc = """财政部部长楼继伟6月28日在向十二届全国人大常委会第十五次会议作2014年中央决算报告时称：“要配合做好房地产税立法工作。”随后，有专家就透露，房地产税立法初稿已基本成型，现阶段应在全国人大、财政部内部征求意见，进行完善。
-但据《华夏时报》记者多方了解，房地产税改革这项工作今年一直在进行，只是至今改革的路径还不明晰。最新的说法是，房地产税是把现有的房产税和城镇土地使用税合并起来，也就是增加房地产保有环节的税负，而且是以房地产的评估值为征税基础，其他诸如土地增值税、契税等暂不纳入。
-“市场所传‘房地产税立法初稿’，既非官方文件所发，又无官方代表所讲，基本可以判断不靠谱。”7月23日，住建部政策咨询专家、亚太城市房地产研究院院长谢逸枫接受《华夏时报》记者采访时直言。记者当天两次致电国家税务总局财产行为税司的综合处、业务处两个处室，均未获得房地产税初稿成型的确切消息，而财政部则未予回应。
-“还不好说，这项工作一直在开展，我们最多也只是配合。”国家税务总局财产行为税司业务处一位工作人员面对记者的求证时说。多位受访专家均表示，房地产税立法初稿已基本成型的消息还不靠谱。
-之所以不靠谱，谢逸枫有四点理由：一是房地产税立法初稿的形成，一般是由国税局、财政部、人大法工委汇合相关专家组成一个小组，如未形成统一意见，基本是不会公布的；二是房地产税的立法初稿意见是内部意见，肯定不会外透；三是初稿意见形成统一后，才会通过国务院发布公开咨询意见；四是最后才由全国人大或人大常委会决定是否通过立法案，并由国税局、财政部统一实施。
-据谢逸枫分析，作为国家财税制度的一项改革，目前并未实质性全面开展立法工作，仅仅是房地产税的理论研究与立法意见的内部讨论而已，“房地产税立法没有提交到立法规划层面，人大法工委、国税局和财政部都不会发布有关房地产税的消息”。
-据悉，房产税改革从2011年1月底正式启动，其标志就是上海、重庆开始房产税改革试点。随后，在国务院发布的《关于深化收入分配制度改革若干意见的通知》、《关于2013年深化经济体制改革重点工作意见的通知》等指导性文件均提出要“扩大个人住房房产税改革试点范围”。
-今年全国两会期间，楼继伟再次表示，今年将配合做好房地产税立法工作，加快房地产税立法并适时推进改革。
-“房地产税是一个复杂的立法过程。”7月23日，中原地产首席分析师张大伟接受《华夏时报》记者采访时说。事实上，房地产税的立法推进工作非常谨慎，“研究与意见工作主要是国务院研究机构与国税局、财政部的专家参加。”谢逸枫说。
-谢逸枫的说法与今年早些时候财政部副部长朱光耀的观点吻合。朱光耀当时表示，目前由全国人大牵头、财政部配合的房地产税立法工作正在研究过程中，还没有立法的具体时间表，但他表示全国人大会有一个科学的安排，“怎么开征房地产税，总的说来由人大牵头，财政部配合”。"""
+    doc = """中新网9月2日电 互联网公司奇虎360正式公布2015年第二季度未经审计的财务数据。二季度的净利润同比增长一倍多；PC端和无线端的产品和服务继续保持增长势头，主要产品持续保持领先优势；四大新领域强势推进、进展顺利，智能硬件、手机、搜索和无线业务商业化、企业安全表现抢眼。\n图1：奇虎360公司总部\n二季度收入达到4.38亿美元，比去年同期的3.18亿美元增长37.9%。二季度净利润为8135万美元，去年同期为3912万美元，同比增长108.0%。非美国会计准则下，二季度净利润约为1.17亿美元，去年同期为6925万美元，同比增长69.0%。\n图2：360公司主要的安全类软件产品\n主要产品持续增长势头\n2015年6月，公司PC端产品和服务的月活跃用户数到达5.14亿，去年同期该数据为4.96亿。PC端的产品和服务在2015年6月的市场渗透率为96.6%，去年同期的市场渗透率为93.9%。\n在移动端，使用360手机卫士的智能手机用户总数在2015年6月达约7.99亿，2014年6月为6.41亿，同比增长24.6%。\n图3：奇虎360公司2011年在美国上市\n公司总裁齐向东表示：“企业安全业务发展也很顺利，不断获得新的大客户。”\n智能硬件是未来万物互联时代的主要入口，公司董事长兼CEO周鸿?t就认为：“智能硬件和万物互联的设备将是紧密链接广大移动终端用户的重要契机。”\n在智能硬件领域，360早就发力，如360随身wifi等智能硬件早在2013年就已开始销售，都取得不俗甚至是令业界惊叹的战绩。进入今年二季度，360更是发布了行车记录仪和儿童卫士智能手表第三代等智能硬件，受到市场热烈追捧，产品供不应求。\n如果说智能硬件是万物互联时代的主要入口，那么智能手机则是最重要入口之一。上周，360旗下奇酷手机发布了三款智能手机，新手机无论设计还是工艺都十分优秀，其创新功能得到业内一致好评，也获得市场强烈认可，开启预约后，预约火爆。\n周鸿?t表示：“奇酷手机拥有的安全的硬件，加上内置的安全功能将360的安全服务再次从线上拓展到线下，从虚拟拓展到现实感受中。360认为手机和智能硬件将是公司长期移动发展战略中的重要组成部分。”\n"""
+    docs = docs()
     gist_obj = Gist()
     gist = gist_obj.get_gist(doc)
     print(gist)
+    """
+    num_articles = 0
+    for key, value in docs.iteritems():
+        print('@@@@@@@@@@@Event@@@@@@@@@@@@@@@@')
+        print('Event ID: ' + key)
+        print('================================')
+        for ke, va in value.iteritems():
+            print('~~~~~~~~~~Article~~~~~~~~~~~~~')
+            print('Article ID: ' + ke)
 
+            if not va:
+                print('Oops! Empty article!')
+            else:
+                num_articles += 1
+                va = va.replace(' ', '')
 
-
-
-
-
-
-
-
-
-
-
+                #.replace("\r","").replace("\n","")
+                print('ooooooooooooARTICLEoooooooooooooooo')
+                print(va)
+                print('Gist')
+                gist = gist_obj.get_gist(va)
+                print(gist)
+    print('Number of articles: ' + str(num_articles))
+"""
 

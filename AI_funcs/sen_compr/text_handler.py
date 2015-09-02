@@ -67,7 +67,7 @@ class SentenceCompressor:
 
 
 if __name__ == '__main__':
-    a_sample_sentence_to_compress = '买房只需要20%-30%的投入就可以撬动100%的资金'
+    a_sample_sentence_to_compress = '收到各方好友和媒体的祝福，在此表示感谢。'
     sencom = SentenceCompressor()
     sencom = sencom.get_compression_result(raw_sentence=a_sample_sentence_to_compress)
     result = sencom["result"]
