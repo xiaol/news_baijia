@@ -1743,17 +1743,27 @@ if __name__ == '__main__':
 
         elif arg == "onlineEvent":
             while True:
+                t00 = datetime.datetime.now()
+                t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content start====================%s"%(t00))
                 # time.sleep(30)
                 onlineEvent()
-                logging.warn("===============this round of content complete====================")
-                time.sleep(3600*0.5)
+                t01 = datetime.datetime.now()
+                t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content complete====================%s"%(t01))
+                # time.sleep(3600*0.5)
 
         elif arg == "unOnlineEvent":
             while True:
+                t00 = datetime.datetime.now()
+                t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content start====================%s"%(t00))
                 # time.sleep(30)
                 unOnlineEvent()
-                logging.warn("===============this round of content complete====================")
-                time.sleep(3600*0.5)
+                t01 = datetime.datetime.now()
+                t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content complete====================%s"%(t01))
+                # time.sleep(3600*0.5)
 
         elif arg == "homeGet":
             while True:
