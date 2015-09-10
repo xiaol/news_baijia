@@ -1075,41 +1075,41 @@ def calculate_sim(elem_unit_vec, compare_elem_unit_vec):
 def Get_Relate_docs(doc, docs_relate, filterurls):
     allrelate = []
 
-    if "reorganize" in doc.keys() and doc["reorganize"]:
-        allrelate.extend(doc["reorganize"])
-
-    if "relate" in doc.keys() and doc["relate"]:
-        relate = doc["relate"]
-        if "reorganize" in doc.keys() and doc["reorganize"]:
-            relate = del_dup_relatedoc(relate, doc["reorganize"])
-        left_relate = relate["left"]
-        mid_relate = relate["middle"]
-        bottom_relate = relate["bottom"]
-        opinion = relate["opinion"]
-        deep_relate = relate["deep_report"]
-
-        allList = [left_relate, mid_relate, bottom_relate, opinion, deep_relate]
-
-        for ones in allList:
-
-            for e in ones:
-
-                relate_url = e["url"]
-                # title 为空 跳过
-                if 'title' in e.keys():
-                    if not e['title']:
-                        continue
-
-                if relate_url in filterurls:
-                    continue
-
-                # ct_img = Get_by_url(relate_url)
-                # #
-                # e["img"] = ct_img['img']
-                if not "img" in e.keys():
-                    e["img"] = ""
-
-                allrelate.append(e)
+    # if "reorganize" in doc.keys() and doc["reorganize"]:
+    #     allrelate.extend(doc["reorganize"])
+    #
+    # if "relate" in doc.keys() and doc["relate"]:
+    #     relate = doc["relate"]
+    #     if "reorganize" in doc.keys() and doc["reorganize"]:
+    #         relate = del_dup_relatedoc(relate, doc["reorganize"])
+    #     left_relate = relate["left"]
+    #     mid_relate = relate["middle"]
+    #     bottom_relate = relate["bottom"]
+    #     opinion = relate["opinion"]
+    #     deep_relate = relate["deep_report"]
+    #
+    #     allList = [left_relate, mid_relate, bottom_relate, opinion, deep_relate]
+    #
+    #     for ones in allList:
+    #
+    #         for e in ones:
+    #
+    #             relate_url = e["url"]
+    #             # title 为空 跳过
+    #             if 'title' in e.keys():
+    #                 if not e['title']:
+    #                     continue
+    #
+    #             if relate_url in filterurls:
+    #                 continue
+    #
+    #             # ct_img = Get_by_url(relate_url)
+    #             # #
+    #             # e["img"] = ct_img['img']
+    #             if not "img" in e.keys():
+    #                 e["img"] = ""
+    #
+    #             allrelate.append(e)
 
     for one in docs_relate:
         ls = {}
