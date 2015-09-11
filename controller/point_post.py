@@ -32,5 +32,7 @@ def AddPoint(sourceUrl, srcText, desText, paragraphIndex, type, uuid, userIcon, 
     point['commentId'] = guid('news_baijia')
     conn['news_ver2']['pointItem'].insert(point)
 
-    result = {'response': 200, 'commentId': point['commentId']}
+    result = point
+    result['response'] = 200
+    # result = {'response': 200, 'commentId': point['commentId']}
     return result
