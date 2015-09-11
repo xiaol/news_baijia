@@ -33,6 +33,9 @@ def AddPoint(sourceUrl, srcText, desText, paragraphIndex, type, uuid, userIcon, 
     conn['news_ver2']['pointItem'].insert(point)
 
     result = point
+    result.pop('_id', None)
+    result.pop('createTime', None)
+
     result['response'] = 200
     # result = {'response': 200, 'commentId': point['commentId']}
     return result
