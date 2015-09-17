@@ -43,6 +43,7 @@ def homeContentFetch(options):
     # updateTime = ''
     t00 = datetime.datetime.now()
     t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+    logging.warn("===============this round of content start====================%s"%(t00))
     # t00 = time.time()
     print "first ts: ", t00
     page = 1
@@ -134,6 +135,8 @@ def homeContentFetch(options):
         t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
         # t01 = time.time()
         print "second ts: ", t01
+        logging.warn("===============this round of content start====================%s"%(t01))
+
 
         undocs = conn["news_ver2"]["googleNewsItem"].find(
             {"$or": [{"isOnline": 0}, {"isOnline": {"$exists": 0}}], "createTime": {"$gte": start_time_yes},
@@ -141,6 +144,7 @@ def homeContentFetch(options):
 
         t02 = datetime.datetime.now()
         t02 = t02.strftime("%Y-%m-%d %H:%M:%S")
+        logging.warn("===============this round of content start====================%s"%(t02))
         # t02 = time.time()
         print "third ts: ", t02
         undocs_list = extratInfoInUndocs(undocs)
@@ -148,6 +152,7 @@ def homeContentFetch(options):
         t03 = t03.strftime("%Y-%m-%d %H:%M:%S")
         # t03 = time.time()
         print "fourth ts: ", t03
+        logging.warn("===============this round of content start====================%s"%(t03))
         # db.googleNewsItem.find({'isOnline':{"$exists": 0},'createTime':{"$gte": '2015-05-15 18:00:00',"$lt": '2015-05-16 06:00:00'}, "eventId": {"$exists": 1} }).sort( { createTime: -1 } ).count()
 
     special_list = []
@@ -407,17 +412,21 @@ def homeContentFetch(options):
     t04 = t04.strftime("%Y-%m-%d %H:%M:%S")
     # t04 = time.time()
     print "fifth ts: ", t04
+    logging.warn("===============this round of content start====================%s"%(t04))
 
     result_time = getDefaultTimeStr()
     if 'timing' in options.keys():
+        logging.warn("===============timing====================")
         result_dict = {"content":docs_return,"createTime": result_time}
         tem_dict=dict(result_dict)
         conn['news_ver2']['resultItem'].save(tem_dict)
+        logging.warn("===============timing_save_end====================")
     elif 'date' in options.keys():
+        logging.warn("===============date====================")
         result_dict = {"content": docs_return, "createTime": result_time, "date": options["date"], "type": options["type"]}
         tem_dict=dict(result_dict)
         conn['news_ver2']['resultItemByDate'].save(tem_dict)
-
+        logging.warn("===============date_save_end====================")
     # raise tornado.gen.Return(docs_return)
     # r.hmset("googleNewsItems",{"googleNewsItems":docs_return})
     return docs_return

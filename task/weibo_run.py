@@ -1769,9 +1769,10 @@ if __name__ == '__main__':
         elif arg == "homeGet":
             while True:
                 # time.sleep(30)
+                logging.warning("##################### this round of content start ********************")
                 options = {}
                 options["timing"] = 1
-                # homeContentFetch(options)
+                homeContentFetch(options)
                 result = timeContentFetch({'timefeedback': 1})
                 result_date = result["history_date"]
                 result_type = ['0', '1']
