@@ -74,8 +74,10 @@ class FetchHomeHandler(tornado.web.RequestHandler):
 
         # result = home_get.homeContentFetch(options)
         # result = conn['news_ver2']['resultItem'].find_one()["content"]
-        result_list = conn['news_ver2']['resultItem'].find().sort([("createTime", pymongo.DESCENDING)]).limit(1)
-
+        if "timing" in options.keys():
+            result_list = conn['news_ver2']['resultItem'].find().sort([("createTime", pymongo.DESCENDING)]).limit(1)
+        elif "date" in options.keys():
+            result_list = conn['news_ver2']['resultItemByDate'].find({"date": options["date"], "type": options["type"]}).sort([("createTime", pymongo.DESCENDING)]).limit(1)
         for result_elem  in result_list:
             result = result_elem["content"]
             break
