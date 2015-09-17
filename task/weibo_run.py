@@ -1773,20 +1773,35 @@ if __name__ == '__main__':
                 options = {}
                 options["timing"] = 1
                 homeContentFetch(options)
-                result = timeContentFetch({'timefeedback': 1})
-                result_date = result["history_date"]
-                result_type = ['0', '1']
-                for date in result_date:
-                    for type in result_type:
-                        options = {}
-                        options["timefeedback"] = 1
-                        options["date"] = date
-                        options["type"] = type
-                        homeContentFetch(options)
+                # result = timeContentFetch({'timefeedback': 1})
+                # result_date = result["history_date"]
+                # result_type = ['0', '1']
+                # for date in result_date:
+                #     for type in result_type:
+                now = datetime.datetime.now()
+                format = '%Y-%m-%d'
+                tommorow = now + datetime.timedelta(days=1)
+                hour = now.hour
+                if hour in range(0,6):
+                    date = now.strftime(format)
+                    type = '0'
+                    logging.warn("===============today type =0 ====================")
+                elif hour in range(6,18):
+                    date = now.strftime(format)
+                    type = '1'
+                    logging.warn("===============today type =1 ====================")
+                else:
+                    date = tommorow.strftime(format)
+                    type = '0'
+                    logging.warn("===============tommorow type =0 ====================")
+                options = {}
+                options["timefeedback"] = 1
+                options["date"] = date
+                options["type"] = type
+                homeContentFetch(options)
 
                 logging.warn("===============this round of content complete====================")
                 time.sleep(3600*1)
-
 
 
         elif arg=='help':
