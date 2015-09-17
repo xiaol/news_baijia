@@ -18,6 +18,7 @@ from PIL import Image
 import datetime
 from requests.exceptions import Timeout
 from weibo_run_re import set_googlenews_by_url_with_field_and_value, do_search_task
+from controller.time_get import timeContentFetch
 
 
 reload(sys)
@@ -1770,7 +1771,18 @@ if __name__ == '__main__':
                 # time.sleep(30)
                 options = {}
                 options["timing"] = 1
-                homeContentFetch(options)
+                # homeContentFetch(options)
+                result = timeContentFetch({'timefeedback': 1})
+                result_date = result["history_date"]
+                result_type = ['0', '1']
+                for date in result_date:
+                    for type in result_type:
+                        options = {}
+                        options["timefeedback"] = 1
+                        options["date"] = date
+                        options["type"] = type
+                        homeContentFetch(options)
+
                 logging.warn("===============this round of content complete====================")
                 time.sleep(3600*1)
 

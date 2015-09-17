@@ -409,9 +409,15 @@ def homeContentFetch(options):
     print "fifth ts: ", t04
 
     result_time = getDefaultTimeStr()
-    result_dict = {"content":docs_return,"createTime":result_time}
-    tem_dict=dict(result_dict)
-    conn['news_ver2']['resultItem'].save(tem_dict)
+    if 'timing' in options.keys():
+        result_dict = {"content":docs_return,"createTime": result_time}
+        tem_dict=dict(result_dict)
+        conn['news_ver2']['resultItem'].save(tem_dict)
+    elif 'date' in options.keys():
+        result_dict = {"content": docs_return, "createTime": result_time, "date": options["date"], "type": options["type"]}
+        tem_dict=dict(result_dict)
+        conn['news_ver2']['resultItemByDate'].save(tem_dict)
+
     # raise tornado.gen.Return(docs_return)
     # r.hmset("googleNewsItems",{"googleNewsItems":docs_return})
     return docs_return
