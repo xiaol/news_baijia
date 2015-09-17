@@ -16,6 +16,7 @@ from AI_funcs.sen_compr.text_handler import SentenceCompressor
 import re
 import tornado.gen
 from task.weibo_run_re import is_error_code, getDefaultTimeStr
+import logging
 
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
