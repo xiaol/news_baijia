@@ -559,6 +559,16 @@ class GistHandler(tornado.web.RequestHandler):
         self.write(json.dumps(gist))
 #Weiliang Guo end
 
+#api for caimaotiyu
+class caimaotiyuHandler(tornado.web.RequestHandler):
+    def get(self):
+        docs = conn.news_ver2.caimaotiyu.find()
+        result = []
+        for doc in docs:
+           result.append(doc)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
@@ -587,7 +597,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/praise", PraiseHandler),
             (r"/news/baijia/fetchTags", FetchTagsHandler),
             (r"/news/baijia/uploadUmengPushId", uploadUmengPushId),
-            (r"/news/baijia/fetchGist", GistHandler)
+            (r"/news/baijia/fetchGist", GistHandler),
+            (r"/news/baijia/caimaotiyu", caimaotiyuHandler)
 
 
         ]
