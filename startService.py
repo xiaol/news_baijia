@@ -30,9 +30,10 @@ define("host", default="127.0.0.1", help="run on the given host", type=str)
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                      read_preference=ReadPreference.SECONDARY)
 
+
 @tornado.gen.coroutine
 def coroutine_fetch():
-    result = r.hmget("googleNewsItems","googleNewsItems")
+    result = r.hmget("googleNewsItems", "googleNewsItems")
     raise tornado.gen.Return(result)
 
 
@@ -77,8 +78,9 @@ class FetchHomeHandler(tornado.web.RequestHandler):
         if "timing" in options.keys():
             result_list = conn['news_ver2']['resultItem'].find().sort([("createTime", pymongo.DESCENDING)]).limit(1)
         elif "date" in options.keys():
-            result_list = conn['news_ver2']['resultItemByDate'].find({"date": options["date"], "type": options["type"]}).sort([("createTime", pymongo.DESCENDING)]).limit(1)
-        for result_elem  in result_list:
+            result_list = conn['news_ver2']['resultItemByDate'].find(
+                {"date": options["date"], "type": options["type"]}).sort([("createTime", pymongo.DESCENDING)]).limit(1)
+        for result_elem in result_list:
             result = result_elem["content"]
             break
 
@@ -290,6 +292,36 @@ class CreateAlbumHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+class CreateAlbumListHandler(tornado.web.RequestHandler):
+    def post(self):
+        args = self.request.arguments
+        albums = json.loads(self.get_argument("album", None))
+        result = []
+        if len(args) < 0:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            for album in albums:
+                if "user_id" in album.keys():
+                    user_id = album['user_id']
+                if "album_id" in album.keys():
+                    album_id = album['album_id']
+                if "create_time" in album.keys():
+                    create_time = album['create_time']
+                if "album_title" in album.keys():
+                    album_title = album['album_title']
+                if "album_des" in album.keys():
+                    album_des = album['album_des']
+                if "album_img" in album.keys():
+                    album_img = album['album_img']
+                if "album_news_count" in album.keys():
+                    album_news_count = album['album_news_count']
+                result.append(
+                    dredge_up_post.createAlbum(user_id, album_id, album_title, album_des, album_img, album_news_count,
+                                               create_time))
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
 class UpdateAlbumHandler(tornado.web.RequestHandler):
     def post(self):
         args = self.request.arguments
@@ -454,7 +486,6 @@ class uploadUmengPushId(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
-
 class FetchImContentHandler(tornado.web.RequestHandler):
     def get(self):
         jpushId = self.get_argument("jpushId", None)
@@ -549,7 +580,7 @@ class FetchTagsHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
-#Weiliang Guo start
+# Weiliang Guo start
 class GistHandler(tornado.web.RequestHandler):
     def post(self):
         article = str(self.get_argument("article"))
@@ -557,17 +588,20 @@ class GistHandler(tornado.web.RequestHandler):
         gist = gist_obj.get_gist(article)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(gist))
-#Weiliang Guo end
 
-#api for caimaotiyu
+
+# Weiliang Guo end
+
+# api for caimaotiyu
 class caimaotiyuHandler(tornado.web.RequestHandler):
     def get(self):
         docs = conn.news_ver2.caimaotiyu.find()
         result = []
         for doc in docs:
-           result.append(doc)
+            result.append(doc)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
+
 
 class Application(tornado.web.Application):
     def __init__(self):
@@ -582,6 +616,7 @@ class Application(tornado.web.Application):
             (r"/news/baijia/dredgeUpStatus", FetchDredgeUpStatusHandler),
             (r"/news/baijia/startPage", StartPageHandler),
             (r"/news/baijia/createAlbum", CreateAlbumHandler),
+            (r"/news/baijia/createAlbumList", CreateAlbumListHandler),
             (r"/news/baijia/updateAlbum", UpdateAlbumHandler),
             (r"/news/baijia/removeAlbum", RemoveAlbumHandler),
             (r"/news/baijia/fetchAlbumList", FetchAlbumListHandler),
@@ -600,7 +635,6 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchGist", GistHandler),
             (r"/news/baijia/caimaotiyu", caimaotiyuHandler)
 
-
         ]
 
         settings = {
@@ -613,8 +647,8 @@ class Application(tornado.web.Application):
 if __name__ == "__main__":
     # sched = SchedulerAll()
     # sched.start()
-    # port = sys.argv[1]
-    port = 9999
+    port = sys.argv[1]
+    # port = 9999
     tornado.options.parse_command_line()
     # sockets = tornado.netutil.bind_sockets(options.port)
     # tornado.process.fork_processes(0)
