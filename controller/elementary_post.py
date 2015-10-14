@@ -13,6 +13,8 @@ def getElementary():
     results_docs = []
     for doc in docs:
         if "_id" in doc.keys():
+            if len(doc["title"]) > 9:
+                continue
             doc.pop('_id')
             results_docs.append(doc)
     return results_docs
