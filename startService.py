@@ -182,6 +182,8 @@ class FetchTimeHandler(tornado.web.RequestHandler):
 
 
 class FetchContentHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
     def get(self):
         self.set_header("Access-Control-Allow-Origin",
                         "*")  # TODO should change to exact domain after test in localhost
@@ -204,12 +206,14 @@ class FetchContentHandler(tornado.web.RequestHandler):
             self.write(json.dumps(result))
             return
 
-        result = content_get.fetchContent(url, filter_urls, userId, platformType)
+        result = yield content_get.fetchContent(url, filter_urls, userId, platformType)
 
         self.write(json.dumps(result))
 
 
 class NewsFetchContentHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
     def get(self):
         self.set_header("Content-Type", "Application/json")
         url = self.get_argument("url", None)
@@ -224,10 +228,12 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
             result["msg"] = "need url"
             self.write(json.dumps(result))
             return
-        result = content_get.newsFetchContent(news_id, url, filter_urls, userId, platformType, deviceType)
+        result = yield content_get.newsFetchContent(news_id, url, filter_urls, userId, platformType, deviceType)
 
         self.write(json.dumps(result))
 
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
     def post(self):
         self.set_header("Access-Control-Allow-Origin",
                         "*")  # TODO should change to exact domain after test in localhost
@@ -241,7 +247,7 @@ class NewsFetchContentHandler(tornado.web.RequestHandler):
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
-            result = content_get.newsFetchContent(news_id, url, filter_urls, userId, platformType, deviceType)
+            result = yield content_get.newsFetchContent(news_id, url, filter_urls, userId, platformType, deviceType)
 
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
