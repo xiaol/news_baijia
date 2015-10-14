@@ -38,8 +38,8 @@ def coroutine_fetch():
 
 
 class FetchHomeHandler(tornado.web.RequestHandler):
-    # @tornado.web.asynchronous
-    # @tornado.gen.coroutine
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
     def get(self):
         # updateTime = self.get_argument("updateTime", None)
         limit = self.get_argument("limit", 10)
@@ -75,11 +75,12 @@ class FetchHomeHandler(tornado.web.RequestHandler):
 
         # result = home_get.homeContentFetch(options)
         # result = conn['news_ver2']['resultItem'].find_one()["content"]
-        if "timing" in options.keys():
-            result_list = conn['news_ver2']['resultItem'].find().sort([("createTime", pymongo.DESCENDING)]).limit(1)
-        elif "date" in options.keys():
-            result_list = conn['news_ver2']['resultItemByDate'].find(
-                {"date": options["date"], "type": options["type"]}).sort([("createTime", pymongo.DESCENDING)]).limit(1)
+        #if "timing" in options.keys():
+        #    result_list = yield conn['news_ver2']['resultItem'].find().sort([("createTime", pymongo.DESCENDING)]).limit(1)
+        #elif "date" in options.keys():
+        #    result_list = yield conn['news_ver2']['resultItemByDate'].find(
+        #        {"date": options["date"], "type": options["type"]}).sort([("createTime", pymongo.DESCENDING)]).limit(1)
+        result_list = yield feedstream(options)
         for result_elem in result_list:
             result = result_elem["content"]
             break
@@ -93,6 +94,15 @@ class FetchHomeHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
         # self.finish()
 
+#zuoyuan
+@tornado.gen.coroutine
+def feedstream(options):
+    if "timing" in options.keys():
+        result_list = conn['news_ver2']['resultItem'].find().sort([("createTime", pymongo.DESCENDING)]).limit(1)
+    elif "date" in options.keys():
+        result_list = conn['news_ver2']['resultItemByDate'].find({"date": options["date"], "type": options["type"]}).sort([("createTime", pymongo.DESCENDING)]).limit(1)
+    raise tornado.gen.Return(result_list)
+#zuoyuan
 
 class NewsFetchHomeHandler(tornado.web.RequestHandler):
     def get(self):
@@ -526,9 +536,10 @@ class FetchChannel(tornado.web.RequestHandler):
 
 
 class FetchChannelListHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
     def get(self):
-        result = im_get.searchChannelList()
-        print result
+        result = yield im_get.searchChannelList()
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
