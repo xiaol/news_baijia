@@ -2,10 +2,11 @@
 
 from config import dbConn
 import pymongo
+import tornado
 
 DBStore = dbConn.GetDateStore()
 
-
+@tornado.gen.coroutine
 def getStartPageContent():
     conn = DBStore._connect_news
     docs = conn['news_ver2']['googleNewsItem'].find(
@@ -33,4 +34,4 @@ def getStartPageContent():
             if (doc['sourceUrl'] != img_url):
                 news_dict.append(doc['sourceUrl'])
     results_docs['news_url_list'] = news_dict
-    return results_docs
+    raise tornado.gen.Return(results_docs)

@@ -545,8 +545,10 @@ class FetchChannelListHandler(tornado.web.RequestHandler):
 
 
 class StartPageHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
     def post(self):
-        result = start_page_post.getStartPageContent()
+        result = yield start_page_post.getStartPageContent()
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
