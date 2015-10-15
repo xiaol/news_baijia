@@ -1606,7 +1606,7 @@ def onlineEvent():
     now = datetime.datetime.now()
     now_time = now.strftime('%Y-%m-%d %H:%M:%S')
 
-    docs_online = fetch_unrunned_docs_by_date(isOnline = True)
+    docs_online = fetch_unrunned_docs_by_date(isOnline = True, cluster = True)
     url_title_lefturl_sourceSite_pairs_online = fetch_url_title_lefturl_pairs(docs_online)
 
     logging.warning("##################### online_event_task start ********************")
@@ -1769,6 +1769,7 @@ if __name__ == '__main__':
         elif arg == "homeGet":
             while True:
                 # time.sleep(30)
+                onlineEvent()
                 logging.warning("##################### this round of content start ********************")
                 options = {}
                 options["timing"] = 1

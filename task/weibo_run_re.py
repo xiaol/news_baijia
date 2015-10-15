@@ -1349,15 +1349,18 @@ def fetch_unrunned_docs():
     return un_runned_docs
 
 
-def fetch_unrunned_docs_by_date(lastUpdate=False,isOnline=False, aggreSearchOk=False, update_direction=pymongo.ASCENDING):
+def fetch_unrunned_docs_by_date(lastUpdate=False,isOnline=False,cluster=False,aggreSearchOk=False, update_direction=pymongo.ASCENDING):
     start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
     if isOnline:
-        if aggreSearchOk:
-            docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "aggreSearchOk": {"$exists": 0}, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
+        if cluster:
+            docs = conn["news_ver2"]["Task"].find({"isOnline": 1}).sort([("updateTime", pymongo.DESCENDING)]).limit(50)
         else:
-            docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
+            if aggreSearchOk:
+                docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "aggreSearchOk": {"$exists": 0}, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
+            else:
+                docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
         return docs
 
     if not lastUpdate:
@@ -1941,12 +1944,12 @@ def do_search_task(params):
 
     params_key = {"key": topic}
     data = urllib.urlencode(params_key)
-    search_url ="http://192.168.0.37:8080/search?"+data
-    # search_url ="http://60.28.29.37:8080/search?"+data
+    search_url ="http://192.168.0.37:8083/search?"+data
+    # search_url ="http://60.28.29.37:8083/search?"+data
     try:
         r_text = r.get(search_url)
         text = (r_text.json())
-        search_list = text["items"]
+        search_list = text["searchItems"]
     # try:
 
     # r_text = r.get(searchUrl_text)
@@ -1963,6 +1966,8 @@ def do_search_task(params):
         search_title = search_elem["title"]
         search_title = trim_bracket(search_title)
         if not (search_url.endswith('html') or search_url.endswith('shtml') or search_url.endswith('htm')):
+            continue
+        if search_url.split('/')[-1].find('index')>=0:
             continue
         try:
             apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + search_url
@@ -1994,8 +1999,15 @@ def do_search_task(params):
             result_elem["originsourceSiteName"] = "bing热点"
         else:
             result_elem["originsourceSiteName"] = "热点"
-        result_elem["updateTime"] = getDefaultTimeStr()
-        # result_elem["updateTime"] = time_match(search_url)
+        # result_elem["updateTime"] = getDefaultTimeStr()
+        updateTime = time_match(search_url)
+        if updateTime[0:4]<>'2015':
+            print "updateTime year no equal 2015"
+            print "updateTime,%s"%updateTime
+            print "sourceUrl,%s"%search_url
+            continue
+        result_elem["updateTime"] = updateTime
+        print "updateTime,%s"%updateTime
         result_elem["sourceUrl"] = search_url
         result_elem["description"] = ""
         result_elem["title"] = replace_html(str(search_title))

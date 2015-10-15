@@ -102,7 +102,7 @@ def get_page(url, cookiejar = None, post_data = None, max_retry = 10, need_proxy
 
 #2015-04-06 14:46:04
 
-a = re.compile(u'\d{4}-\d{1,2}-\d{1,2}\s\d{1,2}:\d{1,2}:\d{1,2}')
+a = re.compile(u'\d{4}[-/]\d{1,2}[-/]\d{1,2}\s\d{1,2}:\d{1,2}:\d{1,2}')
 
 #2015-01-01
 
@@ -124,6 +124,10 @@ e = re.compile(u'\d{4}-\d{1,2}-\d{1,2}\s\d{1,2}:\d{1,2}')
 
 f = re.compile(ur'\d{4}[\u4e00-\u9fa5]\d{1,2}[\u4e00-\u9fa5]\d{1,2}[\u4e00-\u9fa5]')
 
+#2015/9/12 22:14:01
+
+# g = re.compile(u'\d{4}/\d{1,2}/\d{1,2}\s\d{1,2}:\d{1,2}:\d{1,2}')
+
 list = [a, c, d, e, b, f]
 
 def time_match(url):
@@ -138,7 +142,8 @@ def time_match(url):
             continue
         # except:
         #     return getDefaultTimeStr()
-    return getDefaultTimeStr()
+    return u'9999-10-15 07:21:00'
+    # return getDefaultTimeStr()
 
 
 def formatTime(timeStr):
@@ -192,7 +197,10 @@ def getDefaultTimeStr():
 
 if __name__ == "__main__":
     # print time_match('http://news.163.com/15/0823/20/B1NRLMK000014SEH.html')
-    print time_match('http://www.chinanews.com/ty/2015/08-26/7490736.shtml')
+    # print time_match('http://www.chinanews.com/ty/2015/08-26/7490736.shtml')
+
+    # print time_match('http://news.ifeng.com/a/20151015/44973865_0.shtml')
+    # print time_match('http://bbs.tiexue.net/post2_9544426_1.html')
     # print time_match(u"2015-04-06 14:46:04 123456")
     # print time_match(u"2015-01-01eee")
     # print time_match(u"2015年04月06日20:36wwww")
