@@ -1,6 +1,6 @@
 # coding=utf-8
-from PIL import Image
-
+#from PIL import Image
+import Image
 from config import dbConn
 from home_get import del_dup_relatedoc
 import jieba
@@ -10,10 +10,11 @@ from math import sqrt
 import numpy as np
 import math
 import bson
+import tornado
 
 DBStore = dbConn.GetDateStore()
 
-
+@tornado.gen.coroutine
 def fetchContent(url, filterurls, userId, platformType, updateTime=None):
     conn = DBStore._connect_news
 
@@ -186,8 +187,8 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
         sourceSitename = doc["sourceSiteName"]
         result["category"] = sourceSitename[2:4]
 
-    return result
-
+    #return result
+    raise tornado.gen.Return(result)
 
 def get_points(points, praise_list, userId, platformType):
     result_points = []
@@ -218,7 +219,7 @@ def get_points(points, praise_list, userId, platformType):
 
     return result_points
 
-
+@tornado.gen.coroutine
 def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType, updateTime=None):
     conn = DBStore._connect_news
     if news_id:
@@ -246,7 +247,8 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
             for aggre in aggre_items:
                 ls = {}
                 for (k,v) in aggre.items():
-                    ls["title"] = k
+                    ls["title"] = v
+                    ls["url"] = k
                     ls["sourceSitename"] = v
                     ls['height'] = 75
                     ls['width'] = 121
@@ -428,8 +430,8 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
             del doc["relate_opinion"]["common_opinion"]
         result["relate_opinion"] = doc["relate_opinion"]
 
-    return result
-
+    #return result
+    raise tornado.gen.Return(result)
 
 def getImg(doc):
     if "content" in doc.keys():
