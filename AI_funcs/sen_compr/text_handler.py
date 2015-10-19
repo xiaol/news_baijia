@@ -56,18 +56,32 @@ class SentenceCompressor:
         # raw_sentence = raw_sentence.decode('utf-8')
         # refined_text = self.text_preprocess(raw_sentence)
         raw_sentence = raw_sentence.replace('、', '和').replace('+', '加').replace('“', '').replace('”', '')\
-            .replace("‘", "").replace("’", '').replace('%', '').replace('-', '_')
-        last_sen_seg = re.split(",|，", raw_sentence)[-1]
-        sentence_ready_to_compress = last_sen_seg
+            .replace("‘", "").replace("’", '').replace('%', '').replace('-', '_').replace('。', '')
+
         if len(raw_sentence) <= 12:
             return raw_sentence
+
+        sen_seg = re.split(",|，", raw_sentence)
+        len_sen_seg = len(sen_seg)
+        last_sen_seg = sen_seg[-1]
+
+        # We use a cycle to ensure the sentence to have more than 6 characters, one chinese character equal 3 ascii charaters.
+        reverse_idx = 2
+        while( len(last_sen_seg) <=6 and len_sen_seg >= reverse_idx):
+            tmp_seg = sen_seg[-reverse_idx]
+            tmp_seg += last_sen_seg
+            last_sen_seg = tmp_seg
+            reverse_idx += 1
+
+        sentence_ready_to_compress = last_sen_seg
         compr_result = requests.get(self.api_url + sentence_ready_to_compress)
         compr_result = compr_result.json()
         return compr_result
 
 
 if __name__ == '__main__':
-    a_sample_sentence_to_compress = '收到各方好友和媒体的祝福，在此表示感谢。'
+    #a_sample_sentence_to_compress = '收到各方好友和媒体的祝福，在此表示感谢。'
+    a_sample_sentence_to_compress = '收到各方好友和媒体的祝福，在此，感谢。'
     sencom = SentenceCompressor()
     sencom = sencom.get_compression_result(raw_sentence=a_sample_sentence_to_compress)
     result = sencom["result"]
