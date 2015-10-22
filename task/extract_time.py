@@ -195,7 +195,7 @@ def getDefaultTimeStr():
     return defaultTimeStr
 
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
     # print time_match('http://news.163.com/15/0823/20/B1NRLMK000014SEH.html')
     # print time_match('http://www.chinanews.com/ty/2015/08-26/7490736.shtml')
 
