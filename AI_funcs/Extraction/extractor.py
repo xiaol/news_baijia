@@ -53,6 +53,7 @@ def get_quote_text(txt_str=''):
                 else:
                     sen += '。'
                     quotes.append(sen)
+                break
                 # print(sen)
                 # print('oooooooooooooooooooooooooooooooooooooooooooooooooo')
     return quotes
