@@ -15,7 +15,6 @@ from itertools import combinations
 from AI_funcs.snownlp.snownlp import SnowNLP
 from AI_funcs.sen_compr.text_handler import SentenceCompressor
 
-
 def docs():
     dbstore = dbConn.GetDateStore()
     conn = dbstore._connect_news
@@ -47,15 +46,16 @@ def get_quote_text(txt_str=''):
     for sen in sentences:
         for sign in signs:
             if sign in sen:
-                if '：“' or '，“' in sign:
+                if ('：“' in sign or '，“' in sign) and ('”' not in sen):
                     sen += '。”'
                     quotes.append(sen)
                 else:
                     sen += '。'
                     quotes.append(sen)
+                print (sign)
+                print(sen)
+                print('oooooooooooooooooooooooooooooooooooooooooooooooooo')
                 break
-                # print(sen)
-                # print('oooooooooooooooooooooooooooooooooooooooooooooooooo')
     return quotes
 
 
