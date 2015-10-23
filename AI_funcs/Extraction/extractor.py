@@ -52,9 +52,9 @@ def get_quote_text(txt_str=''):
                 else:
                     sen += '。'
                     quotes.append(sen)
-                print (sign)
-                print(sen)
-                print('oooooooooooooooooooooooooooooooooooooooooooooooooo')
+                #print (sign)
+                #print(sen)
+                #print('oooooooooooooooooooooooooooooooooooooooooooooooooo')
                 break
     return quotes
 
