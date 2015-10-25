@@ -126,6 +126,9 @@ def total_task():
     now = datetime.datetime.now()
     now_time = now.strftime('%Y-%m-%d %H:%M:%S')
 
+
+    # url_title_lefturl_sourceSite_pairs=[["http://news.xinhuanet.com/local/2015-10/25/c_128355379.htm","浙江叔侄冤案平反推动者：他们遭受的刑讯逼供，让我整晚失眠丨不忘初心"," ","谷歌内地新闻"]]
+
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
         # if sourceSiteName == "热点":
         #     print 1
@@ -1532,7 +1535,7 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
             for sims_elem in sims:
                 if sims_elem[0]=="doc":
                     continue
-                elif sims_elem[1]>=0.7 or (same_word[sims_elem[0]]>=keyword_num*0.2 and keyword_num>=10):
+                elif sims_elem[1]>=0.8 or (same_word[sims_elem[0]]>=keyword_num*0.3 and keyword_num>=10):
                     paragraphIndex_dict[sims_elem[0]] = { "similarity": sims_elem[1]
                                                          , "unit_vec" : unit_vec[sims_elem[0]]
                                                          , "keyword": keyword}
