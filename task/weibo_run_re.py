@@ -60,7 +60,6 @@ from AI_funcs.Gist_and_Sim.gist import Gist as g
 from extract_time import time_match
 
 
-
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                                              read_preference=ReadPreference.SECONDARY)
 HOST_NER = "60.28.29.47"
@@ -207,8 +206,6 @@ def do_isOnline_task(params):
 
     else:
         print "isOnline fail"
-
-
 
 def is_condition_meet(url, must_meet_field_list):
 
@@ -1907,21 +1904,39 @@ def get_last_sen_seg(sen=''):
     print type(sen.decode("utf8"))
     last_sen_seg = re.split(ur",|，|，", sen.decode("utf8"))[-1]    #",|，|，" sen.encode('utf8').decode("utf8")
     return last_sen_seg
+
 def get_compression_result(raw_sentence):
-    raw_sentence = unicode(raw_sentence)
-    refined_text = text_preprocess(raw_sentence)
-    get_last_sen = get_last_sen_seg(refined_text)
-    sentence_ready_to_compress = get_last_sen
-    if len(refined_text) <= 12:
-        return refined_text
+    #raw_sentence = unicode(raw_sentence)
+    #refined_text = text_preprocess(raw_sentence)
+    if len(raw_sentence) <= 12:
+        return raw_sentence
+    
+    raw_sentence = raw_sentence.replace('、', '和').replace('+', '加').replace('“', '').replace('”', '').replace('‘','').replace('’', '').replace('%', '').replace('-', '_')
+    sen_seg = re.split(",|，", raw_sentence)
+    len_sen_seg = len(sen_seg)
+    last_sen_seg = sen_seg[-1]
+    
+    # We simply use a cycle to ensure the result of compresion to have more than 6 chinese word characters.
+
+    reverse_idx = 2
+    while(len(last_sen_seg) <= 9 and len_sen_seg >= reverse_idx):
+        tmp_seg = sen_seg[-reverse_idx]
+        tmp_seg += last_sen_seg
+        last_sen_seg = tmp_seg
+        reverse_idx += 1
+
+    #get_last_sen = get_last_sen_seg(refined_text)
+    sentence_ready_to_compress = last_sen_seg
+    #if len(refined_text) <= 12:
+    #    return refined_text
 
     try:
         compr_result = requests.get("http://60.28.29.37:8080/SentenceCompressor?sentence=" + sentence_ready_to_compress)
         compr_result = (compr_result.json())
         return compr_result["result"]
     except:
-        return get_last_sen
-    return get_last_sen
+        return last_sen_seg
+    return last_sen_seg
 
 
 def do_search_task(params):
@@ -2189,14 +2204,15 @@ if __name__ == '__main__':
     # print gist
     # replace_html("四川&quot;老板&quot;配手机监控乞丐 乞者报警获解救】9月5日，在四川达州张家湾行乞的一名残疾人用手机报警表示“我是被迫行乞”。据报警的行乞残疾人称，")
     # replace_html("广州女白领&quot;卖晚安&quot;赚3千元 短信1元1条")
-    while True:
-        doc_num = total_task()
-        if doc_num == "no_doc":
-            time.sleep(60)
+   # while True:
+   #     doc_num = total_task()
+   #     if doc_num == "no_doc":
+   #         time.sleep(60)
 
     # GetWeibo("孙楠 歌手")
 
-
+    sentence = '收到各方好友和媒体的祝福，在此感谢'
+    print get_compression_result(sentence)
 
 
 

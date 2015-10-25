@@ -75,6 +75,7 @@ class TextRank4Keyword(object):
         
         
         index = 0
+        # vertex_source  is vertex of the textrank algorithm.
         for words in vertex_source:
             for word in words:
                 if not self.word_index.has_key(word):
