@@ -46,16 +46,13 @@ def get_quote_text(txt_str=''):
     for sen in sentences:
         for sign in signs:
             if sign in sen:
-                #if '：“' in sen or '，“' in sen:
-                #if ('：“' in sign or '，“' in sign) and  ('”' not in sen) :
-                #    sen += '。”'
-                #    quotes.append(sen)
-                #else:
-                #    sen += '。'
-                quotes.append(sen)
-                #print (sign)
-                #print(sen)
-                #print('oooooooooooooooooooooooooooooooooooooooooooooooooo')
+                if ('：“' in sen or '，“' in sen):
+                    sen += '。”'
+                    quotes.append(sen)
+                else:
+                    sen += '。'
+                    quotes.append(sen)
+                break
     return quotes
 
 
