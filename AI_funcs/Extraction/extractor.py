@@ -46,15 +46,16 @@ def get_quote_text(txt_str=''):
     for sen in sentences:
         for sign in signs:
             if sign in sen:
-                if ('：“' in sign or '，“' in sign) and ('”' not in sen):
+                #if ('：“' in sign or '，“' in sign) and not ('”' in sen or '"' in sen):
+                if ('：“' in sign or '，“' in sign) and  ('”' not in sen) :
                     sen += '。”'
                     quotes.append(sen)
                 else:
                     sen += '。'
                     quotes.append(sen)
-                #print (sign)
-                #print(sen)
-                #print('oooooooooooooooooooooooooooooooooooooooooooooooooo')
+                print (sign)
+                print(sen)
+                print('oooooooooooooooooooooooooooooooooooooooooooooooooo')
                 break
     return quotes
 
@@ -126,87 +127,89 @@ class ConjExtraction:
 
 
 if __name__ == '__main__':
-    docs = docs()
-    co = ConjExtraction()
-    for key, value in docs.iteritems():
-        print('@@@@@@@@@@@Event@@@@@@@@@@@@@@@@')
-        print('Event ID: ' + key)
-        print('================================')
-        for ke, va in value.iteritems():
-            print('~~~~~~~~~~Article~~~~~~~~~~~~~')
-            print('Article ID: ' + ke)
-        #     for v in va:
-        #         v = v.decode('utf8')
-        #         print('~~~~~~~~~~~~~~~~~~~~~~~')
-        #         #print sentence
+    doc = '另据“苏越号”打捞总监透露，“为防止，目前完成安装”。'
+    get_quote_text(doc)
+   # docs = docs()
+   # co = ConjExtraction()
+   # for key, value in docs.iteritems():
+   #     print('@@@@@@@@@@@Event@@@@@@@@@@@@@@@@')
+   #     print('Event ID: ' + key)
+   #     print('================================')
+   #     for ke, va in value.iteritems():
+   #         print('~~~~~~~~~~Article~~~~~~~~~~~~~')
+   #         print('Article ID: ' + ke)
+   #     #     for v in va:
+   #     #         v = v.decode('utf8')
+   #     #         print('~~~~~~~~~~~~~~~~~~~~~~~')
+   #     #         #print sentence
 
 
-            if not va:
-                print('Oops! Empty article!')
-            else:
-                va = va.replace(' ', '')
+   #         if not va:
+   #             print('Oops! Empty article!')
+   #         else:
+   #             va = va.replace(' ', '')
 
-                #.replace("\r","").replace("\n","")
-                print('ooooooooooooARTICLEoooooooooooooooo')
-                print(va)
-                quotes = get_quote_text(va)
-                if quotes:
-                    for quo in quotes:
-                        print('mmmmmmmmmmmmQUOTEmmmmmmmmmmmmmmmmm')
-                        print(quo)
-                        cquo = (SentenceCompressor().get_compression_result(quo))["result"]
-                        print('------------Compressed------------------')
-                        print(cquo)
-                else:
-                    print('No Quote Sentence Found.')
+   #             #.replace("\r","").replace("\n","")
+   #             print('ooooooooooooARTICLEoooooooooooooooo')
+   #             print(va)
+   #             quotes = get_quote_text(va)
+   #             if quotes:
+   #                 for quo in quotes:
+   #                     print('mmmmmmmmmmmmQUOTEmmmmmmmmmmmmmmmmm')
+   #                     print(quo)
+   #                     cquo = (SentenceCompressor().get_compression_result(quo))["result"]
+   #                     print('------------Compressed------------------')
+   #                     print(cquo)
+   #             else:
+   #                 print('No Quote Sentence Found.')
 
-                paragraphs = va.split()
-                for para in paragraphs:
-                    print('paragraph')
-                    print(para)
+   #             paragraphs = va.split()
+   #             for para in paragraphs:
+   #                 print('paragraph')
+   #                 print(para)
 
-                ca_sens = co.extract_causal_sen(va)
-                as_sens = co.extract_assumption_sentences(va)
-                ts_sens = co.extract_transition_sentences(va)
-                cm_sens = co.extract_comparison_sentences(va)
-                # if ca_sens:
-                #     for cs in ca_sens:
-                #         print('--------Causal-Sentence----------')
-                #         print(cs)
-                #         print('-----------Compressed------------')
-                #         ccs = (SentenceCompressor().get_compression_result(cs))["result"]
-                #         print(ccs)
-                # else:
-                #     print('No Causal Sentence Found.')
-                print('###################################')
-                if as_sens:
-                    for ass in as_sens:
-                        print('--------Assumption-Sentence----------')
-                        print(ass)
-                        print('-----------Compressed------------')
-                        cass = (SentenceCompressor().get_compression_result(ass))["result"]
-                        print(cass)
+   #             ca_sens = co.extract_causal_sen(va)
+   #             as_sens = co.extract_assumption_sentences(va)
+   #             ts_sens = co.extract_transition_sentences(va)
+   #             cm_sens = co.extract_comparison_sentences(va)
+   #             # if ca_sens:
+   #             #     for cs in ca_sens:
+   #             #         print('--------Causal-Sentence----------')
+   #             #         print(cs)
+   #             #         print('-----------Compressed------------')
+   #             #         ccs = (SentenceCompressor().get_compression_result(cs))["result"]
+   #             #         print(ccs)
+   #             # else:
+   #             #     print('No Causal Sentence Found.')
+   #             print('###################################')
+   #             if as_sens:
+   #                 for ass in as_sens:
+   #                     print('--------Assumption-Sentence----------')
+   #                     print(ass)
+   #                     print('-----------Compressed------------')
+   #                     cass = (SentenceCompressor().get_compression_result(ass))["result"]
+   #                     print(cass)
 
-                else:
-                    print('No Assumption Sentence Found.')
-                print('###################################')
-                if ts_sens:
-                    for ts in ts_sens:
-                        print('--------Transition-Sentence----------')
-                        print(ts)
-                        print('-----------Compressed------------')
-                        cts = (SentenceCompressor().get_compression_result(ts))["result"]
-                        print(cts)
+   #             else:
+   #                 print('No Assumption Sentence Found.')
+   #             print('###################################')
+   #             if ts_sens:
+   #                 for ts in ts_sens:
+   #                     print('--------Transition-Sentence----------')
+   #                     print(ts)
+   #                     print('-----------Compressed------------')
+   #                     cts = (SentenceCompressor().get_compression_result(ts))["result"]
+   #                     print(cts)
 
-                else:
-                    print('No Transition Sentence Found.')
-                print('###################################')
-                if cm_sens:
-                    for cm in cm_sens:
-                        print('--------Comparison-Sentence----------')
-                        print(cm)
-                        print('-----------Compressed------------')
-                        ccm = (SentenceCompressor().get_compression_result(cm))["result"]
-                        print(ccm)
-                else:
-                    print('No Comparison Sentence Found.')
+   #             else:
+   #                 print('No Transition Sentence Found.')
+   #             print('###################################')
+   #             if cm_sens:
+   #                 for cm in cm_sens:
+   #                     print('--------Comparison-Sentence----------')
+   #                     print(cm)
+   #                     print('-----------Compressed------------')
+   #                     ccm = (SentenceCompressor().get_compression_result(cm))["result"]
+   #                     print(ccm)
+   #             else:
+   #                 print('No Comparison Sentence Found.')
