@@ -44,6 +44,8 @@ def get_quote_text(txt_str=''):
     quotes = []
 
     for sen in sentences:
+        if sen.find('”') == 0:
+            sen = sen[3:].strip()
         for sign in signs:
             if sign in sen:
                 if '：“' in sen:
