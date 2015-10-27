@@ -49,10 +49,22 @@ def get_quote_text(txt_str=''):
                 if '：“' in sen:
                     sen += '。”'
                     quotes.append(sen)
+                elif '，“' in sen:
+                    index = sen.find('，”')
+                    substring = sen[index +  3:]
+                    left_double_quotes_cnt = substring.count('“')
+                    right_double_quotes_cnt = substring.count('”')
+
+                    if left_double_quotes_cnt != right_double_quotes_cnt:
+                        sen += '。”'
+                    else:
+                        sen += '。'
+                    quotes.append(sen)
                 else:
                     sen += '。'
                     quotes.append(sen)
                 break
+    print (quotes)
     return quotes
 
 
