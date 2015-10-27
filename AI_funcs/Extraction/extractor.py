@@ -48,11 +48,20 @@ def get_quote_text(txt_str=''):
             sen = sen[3:].strip()
         for sign in signs:
             if sign in sen:
-                if '：“' in sen:
-                    sen += '。”'
-                    quotes.append(sen)
-                elif '，“' in sen:
-                    index = sen.find('，“')
+                if '：“' in sen or '，“' in sen:
+                    index1 = sen.find('，“')
+                    index2 = sen.find('：“')
+
+                    if index1 == -1:
+                        index = index2
+                    elif index2 == -1:
+                        index = index1
+                    else:
+                        if index1 < index2:
+                            index = index1
+                        else:
+                            index = index2
+
                     substring = sen[index +  3:]
                     left_double_quotes_cnt = substring.count('“')
                     right_double_quotes_cnt = substring.count('”')
