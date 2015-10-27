@@ -137,7 +137,7 @@ class ConjExtraction:
 
 
 if __name__ == '__main__':
-    doc = '另据“苏越号”打捞总监透露，“为防止，目前完成安装”。'
+    doc = '“了。” 另据“苏越号”打捞总监透露，“为防止，目前完成安装”。'
     get_quote_text(doc)
    # docs = docs()
    # co = ConjExtraction()
