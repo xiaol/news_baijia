@@ -64,7 +64,7 @@ def get_quote_text(txt_str=''):
                     sen += '。'
                     quotes.append(sen)
                 break
-    print (quotes)
+    #print (quotes)
     return quotes
 
 
