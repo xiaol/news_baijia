@@ -2205,13 +2205,13 @@ if __name__ == '__main__':
     # print gist
     # replace_html("四川&quot;老板&quot;配手机监控乞丐 乞者报警获解救】9月5日，在四川达州张家湾行乞的一名残疾人用手机报警表示“我是被迫行乞”。据报警的行乞残疾人称，")
     # replace_html("广州女白领&quot;卖晚安&quot;赚3千元 短信1元1条")
-   # while True:
-   #     doc_num = total_task()
-   #     if doc_num == "no_doc":
-   #         time.sleep(60)
+    while True:
+        doc_num = total_task()
+        if doc_num == "no_doc":
+            time.sleep(60)
 
     # GetWeibo("孙楠 歌手")
-
+    
     sentence = '收到各方好友和媒体的祝福，在此感谢'
     print get_compression_result(sentence)
 
