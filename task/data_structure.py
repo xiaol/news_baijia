@@ -22,7 +22,8 @@ import logging
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                      read_preference=ReadPreference.SECONDARY)
 
-mapOfSourceName = {"weibo": "微博",
+
+mapOfchannel =   {"谷歌今日焦点": "热点",
                    "wangyi": "wangyi",
                    "xinlang": "xinlang",
                    "zhihu": "zhihu"}
@@ -68,17 +69,28 @@ def extractImgUrls(content):
             if "img" in item_doc.keys():
                 return  item_doc['img']
 
+    return ""
+
+def extractCommentNum(url):
+    pointsCursorNum = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).count()
+    docComment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
+    if docComment:
+        docCommentNum = len(docComment["comments"])
+    return pointsCursorNum + docCommentNum
 
 
-# def aggreSearch():
 
-def converGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面包含字典)  输出 统计数据格式(list里面包含字典)
+def convertGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
     result = []
     for doc in docs:
-        del doc["_id"]
-        del doc["originsourceSiteName"]
-        del doc["description"]
-        del doc["page"]
+        if "_id" in doc.keys():
+            del doc["_id"]
+        if "originsourceSiteName" in doc.keys():
+            del doc["originsourceSiteName"]
+        if "description" in doc.keys():
+            del doc["description"]
+        if "page" in doc.keys():
+            del doc["page"]
         if "category" not in doc.keys():
             if "sourceSiteName" in doc.keys():
                 sourceSitename = doc["sourceSiteName"]
@@ -88,7 +100,8 @@ def converGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面�
                     doc["category"] = sourceSitename[2:4]
             else:
                 continue
-        doc["channel"] = "谷歌新闻"
+        doc["channel"] = "谷歌今日焦点"
+
         doc["channelId"] = "99"
         del doc["root_class"]
         if "auto_tags" in doc.keys():
@@ -111,8 +124,8 @@ def converGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面�
             del doc["tag"]
         if "gist" in doc.keys():
             del doc["gist"]
+        doc["commentNum"] = extractCommentNum(doc["sourceUrl"])
         result.append(doc)
-
 
     return result
 #输出示例： 多出relate|category
@@ -199,38 +212,46 @@ def converGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面�
 #     "url": "http://baike.baidu.com/view/3647.htm",
 #     “abstract”（算法算出百科摘要）: "加拿大(Canada),为北美洲最北的国家,西抵太平洋,东迄大西洋,北至北冰洋,东北部和丹麦领地格陵兰岛相望,东部和法属圣皮埃尔和密克隆群岛相望,南方与美国本土接壤,...          ",
 #     "title": "加拿大_百度百科
+#     “commentNum”:评论数量
 #
 # }
 
-def converNewsItems(docs = []):  #输入NewsItems数据(list里面包含字典)  输出 统计数据格式(list里面包含字典)
+def convertNewsItems(docs = []):  #输入NewsItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
     result = []
     for doc in docs:
         del doc["_id"]
-        doc["updateTime"] = doc["update_time"]
-        del doc["update_time"]
-        del doc["author"]
-        del doc["tags"]
-        del doc["url"]
-        del doc["imgnum"]
-        doc["sourceUrl"] = doc["source_url"]
-        del doc["source_url"]
-
-
+        if "update_time" in doc.keys():
+            doc["updateTime"] = doc["update_time"]
+            del doc["update_time"]
+        if "author" in doc.keys():
+            del doc["author"]
+        if "tags" in doc.keys():
+            del doc["tags"]
+        if "url" in doc.keys():
+            del doc["url"]
+        if "imgnum" in doc.keys():
+            del doc["imgnum"]
+        if "source_url" in doc.keys():
+            doc["sourceUrl"] = doc["source_url"]
+            del doc["source_url"]
         if 'content' in doc.keys():
             doc["imgUrls"] = extractImgUrls(doc["content"])
             doc["content"] = extractContent(doc["content"])
-        del doc["source"]
-        del doc["start_url"]
-        doc["sourceSiteName"] = doc["start_title"]
-        del doc["start_title"]
-        doc["channelId"] = doc["channel_id"]
-        del doc["channel_id"]
+        if "source" in doc.keys():
+            del doc["source"]
+        if "start_url" in doc.keys():
+            del doc["start_url"]
+        if "start_title" in doc.keys():
+            doc["sourceSiteName"] = doc["start_title"]
+            del doc["start_title"]
+        if "channel_id" in doc.keys():
+            doc["channelId"] = doc["channel_id"]
+            del doc["channel_id"]
+        doc["commentNum"] = extractCommentNum(doc["sourceUrl"])
         result.append(doc)
         if "create_time" in doc.keys():
             doc["createTime"] = doc["create_time"]
             del doc["create_time"]
-
-
 
 
     return result
@@ -259,8 +280,11 @@ def converNewsItems(docs = []):  #输入NewsItems数据(list里面包含字典) 
 #   "channel": "头条焦点",
 #   "channelId": "0"
 #   "createTime":(可能没有该字段)
-#
+#   “commentNum”:评论数量
 # }
+
+
+
 
 
 
@@ -279,9 +303,9 @@ if __name__ == '__main__':
     #                                                                                                      pymongo.DESCENDING).skip((page - 1) * limit).limit(limit)
     #
     #
-    # result = converNewsItems(docs_newsItem)
+    # result = convertNewsItems(docs_newsItem)
 
-    doc = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1}).sort([("createTime", -1)]).limit(5)
+    doc = conn["news_ver2"]["googleNewsItem"].find({"sourceUrl": "http://news.163.com/photoview/00AP0001/101834.html"}).sort([("createTime", -1)]).limit(1)
 
-    result = converGoogleNewsItems(doc)
+    result = convertGoogleNewsItems(doc)
     print "eof"
