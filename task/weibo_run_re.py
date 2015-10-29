@@ -1909,7 +1909,8 @@ def get_last_sen_seg(sen=''):
 def get_compression_result(raw_sentence):
     #raw_sentence = unicode(raw_sentence)
     #refined_text = text_preprocess(raw_sentence)
-    if len(raw_sentence) <= 12:
+    # We ensure that we have at least have 10 chinese characters.
+    if len(raw_sentence) <= 30:
         return raw_sentence
     
     raw_sentence = raw_sentence.replace('、', '和').replace('+', '加').replace('“', '').replace('”', '').replace('‘','').replace('’', '').replace('%', '').replace('-', '_')
@@ -1920,8 +1921,8 @@ def get_compression_result(raw_sentence):
     # We simply use a cycle to ensure the result of compresion to have more than 6 chinese word characters.
 
     reverse_idx = 2
-    while(len(last_sen_seg) <= 9 and len_sen_seg >= reverse_idx):
-        tmp_seg = sen_seg[-reverse_idx]
+    while(len(last_sen_seg) <= 24 and len_sen_seg >= reverse_idx):
+        tmp_seg = sen_seg[-reverse_idx] + '，'
         tmp_seg += last_sen_seg
         last_sen_seg = tmp_seg
         reverse_idx += 1
