@@ -1160,7 +1160,8 @@ def set_task_ok_by_url_and_field(url, field):
 def GetWeibo(title):
 
     # weibos = weibo_relate_docs_get.search_relate_docs(title, 1)
-    weibos = weibo_relate_docs_get.baidusearch_relate_docs(title,1)
+    # weibos = weibo_relate_docs_get.baidusearch_relate_docs(title,1)
+    weibos = weibo_relate_docs_get.baidusearch_relate_weibo(title)
     # weibos = json.loads(weibos)
 
     if isinstance(weibos, list) and len(weibos) <= 0:
