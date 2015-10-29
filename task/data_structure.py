@@ -24,9 +24,23 @@ conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replic
 
 
 mapOfchannel =   {"谷歌今日焦点": "热点",
-                   "wangyi": "wangyi",
-                   "xinlang": "xinlang",
-                   "zhihu": "zhihu"}
+                   "热门专题": "精选",
+                   "今日焦点": "社会",
+                   "社会观察家": "社会",
+                   "外媒观光团": "外媒",
+                   "贵圈乱不乱": "娱乐",
+                   "科技嗨起来": "科技",
+                   "直男常备": "体育",
+                   "股往今来": "财经",
+                   "高逼格Get": "时尚",
+                   "围观大奇葩": "搞笑",
+                   "追剧看片": "影视",
+                   "音痴恐惧症":"音乐",
+                   "重口味":"重口味",
+                   "X星人沦陷区":"萌宠",
+                   "萌师强化班":"二次元"
+
+                   }
 
 DBStore = dbConn.GetDateStore()
 
@@ -100,7 +114,7 @@ def convertGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面
                     doc["category"] = sourceSitename[2:4]
             else:
                 continue
-        doc["channel"] = "谷歌今日焦点"
+        doc["channel"] = mapOfchannel["谷歌今日焦点"]
 
         doc["channelId"] = "99"
         del doc["root_class"]
@@ -244,6 +258,8 @@ def convertNewsItems(docs = []):  #输入NewsItems数据(list里面包含字典)
         if "start_title" in doc.keys():
             doc["sourceSiteName"] = doc["start_title"]
             del doc["start_title"]
+        if "channel" in doc.keys():
+            doc["channel"] = mapOfchannel(doc["channel"])
         if "channel_id" in doc.keys():
             doc["channelId"] = doc["channel_id"]
             del doc["channel_id"]
