@@ -88,6 +88,7 @@ def extractImgUrls(content):
 def extractCommentNum(url):
     pointsCursorNum = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).count()
     docComment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
+    docCommentNum = 0
     if docComment:
         docCommentNum = len(docComment["comments"])
     return pointsCursorNum + docCommentNum
