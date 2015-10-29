@@ -3,8 +3,10 @@ __author__ = 'jianghao'
 import pymongo
 from pymongo.read_preferences import ReadPreference
 
-from controller.config.getConfig import getcfg
-
+try:
+    from controller.config.getConfig import getcfg
+except:
+    from config.getConfig import getcfg
 
 class GetDateStore(object):
     def __init__(self):
