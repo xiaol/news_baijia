@@ -58,8 +58,9 @@ class SentenceCompressor:
         # refined_text = self.text_preprocess(raw_sentence)
         raw_sentence = raw_sentence.replace('、', '和').replace('+', '加').replace('“', '').replace('”', '')\
             .replace("‘", "").replace("’", '').replace('%', '').replace('-', '_')
-
-        if len(raw_sentence) <= 12:
+            
+        # We ensure that the comments have at least 8 chinese characters.
+        if len(raw_sentence) <= 24:
             return raw_sentence
 
         sen_seg = re.split(",|，", raw_sentence)
@@ -68,23 +69,23 @@ class SentenceCompressor:
 
         # We use a cycle to ensure the sentence to have more than 6 characters, one chinese character equal 3 ascii charaters.
         reverse_idx = 2
-        while(len(last_sen_seg) <=9 and len_sen_seg >= reverse_idx):
-            tmp_seg = sen_seg[-reverse_idx] 
+        while(len(last_sen_seg) <=18 and len_sen_seg >= reverse_idx):
+            tmp_seg = sen_seg[-reverse_idx] + '，'
             tmp_seg += last_sen_seg
             last_sen_seg = tmp_seg
-            print (last_sen_seg)
-            print ('length of last sen seg : ' + str(len(last_sen_seg)))
+            #print (last_sen_seg)
+            #print ('length of last sen seg : ' + str(len(last_sen_seg)))
             reverse_idx += 1
 
         sentence_ready_to_compress = last_sen_seg
         compr_result = requests.get(self.api_url + sentence_ready_to_compress)
         compr_result = compr_result.json()
-        if reverse_idx > 2:   
-            print ('last_sen_seg' + last_sen_seg)
-            print ('length of last_sen_seg ' + str(len(last_sen_seg)))
-            print (100 *'-')
-            print ('_Result_' +  compr_result['result'] + '\t' + compr_result['sentence'])
-            print (100 *'^')
+        #if reverse_idx > 2:   
+        #    print ('last_sen_seg' + last_sen_seg)
+        #    print ('length of last_sen_seg ' + str(len(last_sen_seg)))
+        #    print (100 *'-')
+        #    print ('_Result_' +  compr_result['result'] + '\t' + compr_result['sentence'])
+        #    print (100 *'^')
         return compr_result
 
 
