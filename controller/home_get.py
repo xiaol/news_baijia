@@ -14,6 +14,7 @@ import task.requests_with_sleep as requests
 # from content_get import Get_Relate_docs
 from AI_funcs.sen_compr.text_handler import SentenceCompressor
 import re
+import tornado
 import tornado.gen
 from task.weibo_run_re import is_error_code, getDefaultTimeStr
 import logging
@@ -432,7 +433,7 @@ def homeContentFetch(options):
     # r.hmset("googleNewsItems",{"googleNewsItems":docs_return})
     return docs_return
 
-
+@tornado.gen.coroutine
 def newsHomeContentFetch(options):
     """
 
@@ -721,9 +722,10 @@ def newsHomeContentFetch(options):
     # docs_return = sorted(docs_return, key=operator.itemgetter("special"))
 
     # print docs_return
-    return docs_return
+    #return docs_return
+    raise tornado.gen.Return(docs_return)
 
-
+@tornado.gen.coroutine
 def LoadMoreNewsContent(options):
     if "type" in options.keys():
         type = options["type"]
@@ -736,8 +738,8 @@ def LoadMoreNewsContent(options):
     if 'id' in options.keys():
         id = options['id']
     docs = loadMoreFetchContent(int(channel_id), type, time, limit,id)
-    return docs
-
+    #return docs
+    raise tornado.gen.Return(docs)
 
 def count_relate_baidu_news(url):
     conn = DBStore._connect_news

@@ -13,6 +13,7 @@ import tornado.netutil
 import json
 from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get, point_get, \
     praise_post, start_page_post, dredge_up_post, elementary_post, tags_get
+from controller import search
 from controller.push import push_message
 import abstract
 from tornado.options import define, options
@@ -30,6 +31,17 @@ define("host", default="127.0.0.1", help="run on the given host", type=str)
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                      read_preference=ReadPreference.SECONDARY)
 
+class SearchHandler(tornado.web.RequestHandler):
+    @tornado.gen.coroutine
+    def post(self):
+        userid = self.get_argument("userid", None)
+        deviceid = self.get_argument("deviceid", None)
+        keyword = self.get_argument("keyword", None)
+        start = self.get_argument("start", None)
+         
+        result = yield search.search(keyword, start)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result)) 
 
 @tornado.gen.coroutine
 def coroutine_fetch():
@@ -105,6 +117,8 @@ def feedstream(options):
 #zuoyuan
 
 class NewsFetchHomeHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
     def get(self):
         # updateTime = self.get_argument("updateTime", None)
         limit = self.get_argument("limit", 10)
@@ -135,14 +149,14 @@ class NewsFetchHomeHandler(tornado.web.RequestHandler):
 
             # if updateTime:
             # options["updateTime"] = updateTime
-        result = home_get.newsHomeContentFetch(options)
-        print result
+        result = yield home_get.newsHomeContentFetch(options)
 
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
 
 class LoadMoreNewsContentHandler(tornado.web.RequestHandler):
+    @tornado.gen.coroutine
     def post(self):
         args = self.request.arguments
         type = self.get_argument("type", 0)
@@ -161,7 +175,7 @@ class LoadMoreNewsContentHandler(tornado.web.RequestHandler):
         if len(args) < 3:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
-            result = home_get.LoadMoreNewsContent(options)
+            result = yield home_get.LoadMoreNewsContent(options)
 
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
@@ -274,8 +288,26 @@ class NewsFetchContentListHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
+#zuoyuan
+class FetchDredgeUpStatusforiOSHandler(tornado.web.RequestHandler):
+    @tornado.gen.coroutine
+    def post(self):
+        args = self.request.arguments
+        #user_id = self.get_argument("user_id", None)
+        uid = self.get_argument("uid", None)
+        album = self.get_argument("album", None)
+        key = self.get_argument("key", None)
+        if len(args) < 1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = yield dredge_up_post.dredgeUpStatusforiOS(uid, album, key)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+#zuoyuan
+
 
 class FetchDredgeUpStatusHandler(tornado.web.RequestHandler):
+    @tornado.gen.coroutine
     def post(self):
         args = self.request.arguments
         user_id = self.get_argument("user_id", None)
@@ -284,7 +316,7 @@ class FetchDredgeUpStatusHandler(tornado.web.RequestHandler):
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
-            result = dredge_up_post.dredgeUpStatus(user_id, album_id, is_add)
+            result = yield dredge_up_post.dredgeUpStatus(user_id, album_id, is_add)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
@@ -633,6 +665,7 @@ class Application(tornado.web.Application):
             (r"/news/baijia/newsFetchContentList", NewsFetchContentListHandler),
             (r"/news/baijia/loadMoreFetchContent", LoadMoreNewsContentHandler),
             (r"/news/baijia/dredgeUpStatus", FetchDredgeUpStatusHandler),
+            (r"/news/baijia/dredgeUpStatusforiOS", FetchDredgeUpStatusforiOSHandler),
             (r"/news/baijia/startPage", StartPageHandler),
             (r"/news/baijia/createAlbum", CreateAlbumHandler),
             (r"/news/baijia/createAlbumList", CreateAlbumListHandler),
@@ -652,6 +685,7 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchTags", FetchTagsHandler),
             (r"/news/baijia/uploadUmengPushId", uploadUmengPushId),
             (r"/news/baijia/fetchGist", GistHandler),
+            (r"/news/baijia/search", SearchHandler),
             (r"/news/baijia/caimaotiyu", caimaotiyuHandler)
 
         ]
