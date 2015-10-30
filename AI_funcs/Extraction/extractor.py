@@ -44,8 +44,12 @@ def get_quote_text(txt_str=''):
     quotes = []
 
     for sen in sentences:
-        if sen.find('”') == 0:
-            sen = sen[3:].strip()
+        special_characters = ['”', '〕','〈','〉','《','》','「','」','『','』','〗','】','（','）',
+                '；','？','！','ˉ','ˇ','`','~','～','‖','＂','＇','｀','｜','—',]
+        for special_character in special_characters:
+            if sen.find(special_character) == 0:
+                sen = sen[3:].strip()
+                break
         for sign in signs:
             if sign in sen:
                 if '：“' in sen or '，“' in sen:
@@ -146,7 +150,7 @@ class ConjExtraction:
 
 
 if __name__ == '__main__':
-    doc = '“了。” 另据“苏越号”打捞总监透露，“为防止，目前完成安装”。'
+    doc = ']了。” 另据“苏越号”打捞总监透露，“为防止，目前完成安装”。'
     get_quote_text(doc)
    # docs = docs()
    # co = ConjExtraction()
