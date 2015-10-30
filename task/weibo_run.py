@@ -19,7 +19,7 @@ import datetime
 from requests.exceptions import Timeout
 from weibo_run_re import set_googlenews_by_url_with_field_and_value, do_search_task
 from controller.time_get import timeContentFetch
-
+from data_structure import convertNewsItems, convertGoogleNewsItems
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -1639,6 +1639,37 @@ def unOnlineEvent():
 
     logging.warning("##################### unOnline_event_task complete ********************")
 
+
+def recommend():
+    logging.warning("##################### recommend_event_task start ********************")
+    docs_googleNewsItem = conn["news_ver2"]["googleNewsItem"].find().sort("createTime",pymongo.DESCENDING).limit(1000)
+    docs_googleNewsItem = convertGoogleNewsItems(docs_googleNewsItem)
+    docs_NewsItems = conn["news_ver2"]["NewsItems"].find().sort("create_time", pymongo.DESCENDING).limit(4000)
+    docs_NewsItems = convertNewsItems(docs_NewsItems)
+    doc_list = []
+    i = 0
+
+    for doc in docs_googleNewsItem:
+        doc["_id"] = i
+        tem_dict=dict(doc)
+        conn['news_ver2']['recommendItem'].save(tem_dict)
+        i = i + 1
+    #     doc_list.append(doc)
+    for doc in docs_NewsItems:
+        doc["_id"] =  i
+        tem_dict=dict(doc)
+        conn['news_ver2']['recommendItem'].save(tem_dict)
+        i = i + 1
+        # doc_list.append(doc)
+
+
+    # result_dict = {"content":doc_list,"_id":"1"}
+    # tem_dict=dict(result_dict)
+    # conn['news_ver2']['recommendItem'].save(tem_dict)
+    # conn['news_ver2']['recommendItem'].insert(doc_list)
+    logging.warning("##################### recommend_event_task complete ********************")
+
+
 if __name__ == '__main__':
 
     # ImgMeetCondition_ver2("111")
@@ -1803,6 +1834,18 @@ if __name__ == '__main__':
 
                 logging.warn("===============this round of content complete====================")
                 time.sleep(3600*1)
+
+        elif arg == "recommend":
+            while True:
+                t00 = datetime.datetime.now()
+                t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content start====================%s"%(t00))
+                # time.sleep(30)
+                recommend()
+                t01 = datetime.datetime.now()
+                t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content complete====================%s"%(t01))
+                time.sleep(3600*0.5)
 
 
         elif arg=='help':

@@ -17,33 +17,80 @@ import re
 import tornado.gen
 from task.weibo_run_re import is_error_code, getDefaultTimeStr
 import logging
+from weibo.Comments import guid
 
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                      read_preference=ReadPreference.SECONDARY)
 
 
-mapOfchannel =   {"谷歌今日焦点": "热点",
-                   "热门专题": "精选",
-                   "今日焦点": "社会",
-                   "社会观察家": "社会",
-                   "外媒观光团": "外媒",
-                   "贵圈乱不乱": "娱乐",
-                   "科技嗨起来": "科技",
-                   "直男常备": "体育",
-                   "股往今来": "财经",
-                   "高逼格Get": "时尚",
-                   "围观大奇葩": "搞笑",
-                   "追剧看片": "影视",
-                   "音痴恐惧症":"音乐",
-                   "重口味":"重口味",
-                   "X星人沦陷区":"萌宠",
-                   "萌师强化班":"二次元"
+# mapOfchannel =   {u"谷歌今日焦点": "热点",
+#                    u"热门专题": "精选",
+#                    u"头条焦点": "社会",
+#                    u"社会观察家": "社会",
+#                    u"外媒观光团": "外媒",
+#                    u"贵圈乱不乱": "娱乐",
+#                    u"科技嗨起来": "科技",
+#                    u"直男常备": "体育",
+#                    u"股往今来": "财经",
+#                    u"高逼格get√": "时尚",
+#                    u"围观大奇葩": "搞笑",
+#                    u"追剧看片schedule": "影视",
+#                    u"音痴恐惧症":"音乐",
+#                    u"重口味":"重口味",
+#                    u"X星人沦陷区":"萌宠",
+#                    u"萌师强化班":"二次元"
+#
+#                    }
 
-                   }
+mapOfchannel ={
+u"谷歌今日焦点":"推荐",
+u"今日焦点":"热点",
+u"热门专题":"精选",
+u"Take ground gas":"社会",
+u"外媒观光团":"外媒",
+u"贵圈乱不乱":"娱乐",
+u"科学嗨起来":"科技",
+u"直男常备":"体育",
+u"股往金来":"财经",
+u"高逼格get√":"时尚",
+u"反正我信了":"搞笑",
+u"追剧看片schedule":"影视",
+u"音痴恐惧症":"音乐",
+u"重口味":"重口味",
+u"X星人沦陷区":"萌宠",
+u"萌师强化班":"二次元",
+u"头条焦点":"热点"
+}
+
+mapOfchannelId ={
+u"推荐":"TJ0001",
+u"谷歌今日焦点":"RD0002",
+u"今日焦点":"RD0002",
+u"热门专题":"JX0003",
+u"Take ground gas":"SH0004",
+u"外媒观光团":"WM0005",
+u"贵圈乱不乱":"YL0006",
+u"科学嗨起来":"KJ0007",
+u"直男常备":"TY0008",
+u"股往金来":"CJ0009",
+u"高逼格get√":"SS0010",
+u"反正我信了":"GX0011",
+u"追剧看片schedule":"YS0012",
+u"音痴恐惧症":"YY0013",
+u"重口味":"ZKW0014",
+u"X星人沦陷区":"MC0015",
+u"萌师强化班":"ECY0016",
+u"头条焦点":"RD0002"
+}
 
 DBStore = dbConn.GetDateStore()
 
+def outputField(doc):
+    result = {}
+    for i in ["newsId", "channelId", "type", "sourceSiteName", "title", "updateTime", "imgUrls", "sourceUrl", "relatePointsList", "commentNum"]:
+        result[i] = doc[i]
+    return result
 
 
 
@@ -64,6 +111,7 @@ def extractContent(content):
     return contentlist
 
 def extractContentByGoogle(content):
+
     text_list = content.split('\n')
     result_list = []
     i = 0
@@ -83,14 +131,15 @@ def extractImgUrls(content):
             if "img" in item_doc.keys():
                 return  item_doc['img']
 
-    return ""
+    return u""
 
 def extractCommentNum(url):
     pointsCursorNum = conn["news_ver2"]["pointItem"].find({"sourceUrl": url}).count()
     docComment = conn["news_ver2"]["commentItems"].find_one({"relateUrl": url})
     docCommentNum = 0
     if docComment:
-        docCommentNum = len(docComment["comments"])
+        if docComment["comments"] is not None:
+            docCommentNum = len(docComment["comments"])
     return pointsCursorNum + docCommentNum
 
 
@@ -98,6 +147,9 @@ def extractCommentNum(url):
 def convertGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
     result = []
     for doc in docs:
+        if "content" in doc.keys():
+            if len(doc["content"])<=0:
+                continue
         if "_id" in doc.keys():
             del doc["_id"]
         if "originsourceSiteName" in doc.keys():
@@ -115,9 +167,10 @@ def convertGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面
                     doc["category"] = sourceSitename[2:4]
             else:
                 continue
-        doc["channel"] = mapOfchannel["谷歌今日焦点"]
+        doc["channel"] = mapOfchannel[u"谷歌今日焦点"]
 
-        doc["channelId"] = "99"
+        doc["channelId"] = "0"
+        doc["channelId"] = mapOfchannelId[u"谷歌今日焦点"]
         del doc["root_class"]
         if "auto_tags" in doc.keys():
             del doc["auto_tags"]
@@ -128,9 +181,26 @@ def convertGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面
                 doc["content"] = doc["text"]
             else:
                 doc["content"] = ""
+        if "imgUrls" not in doc.keys():
+            doc["imgUrls"] = u""
 
         if "content" in doc.keys():
-            doc["content"] = extractContentByGoogle(doc["content"])
+            try:
+                doc["content"] = extractContentByGoogle(doc["content"])
+            except:
+                continue
+                print "content is list,url,%s"%doc["sourceUrl"]
+
+
+        doc["newsId"] = guid('googleNewsItem')
+        conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": doc["sourceUrl"]}, {"$set": {"newsId": doc["newsId"]}})
+        if len(doc["imgUrls"]) >0:
+            doc["type"] = "one_pic"
+        else:
+            doc["type"] = "no_pic"
+        doc["relatePointsList"] = []
+
+
         if "text" in doc.keys():
             del doc["text"]
         if "isOnline" in doc.keys():
@@ -140,9 +210,40 @@ def convertGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面
         if "gist" in doc.keys():
             del doc["gist"]
         doc["commentNum"] = extractCommentNum(doc["sourceUrl"])
+        if "paragraph" in doc.keys():
+            del doc["paragraph"]
+        if "keyword" in doc.keys():
+            del doc["keyword"]
+        if "sentence_cut" in doc.keys():
+            del doc["sentence_cut"]
+        if "reorganize" in doc.keys():
+            del doc["reorganize"]
+        if "in_tag_detail" in doc.keys():
+            del doc["in_tag_detail"]
+        if "in_tag" in doc.keys():
+            del doc["in_tag"]
+        if "relate_opinion" in doc.keys():
+            del doc["relate_opinion"]
+        if "similarity" in doc.keys():
+            del doc["similarity"]
+        if "eventId_detail" in doc.keys():
+            del doc["eventId_detail"]
+        if "duplicate_check" in doc.keys():
+            del doc["duplicate_check"]
+        if "unit_vec" in doc.keys():
+            del doc["unit_vec"]
+        if "sentence" in doc.keys():
+            del doc["sentence"]
+
+
+        doc = outputField(doc)
         result.append(doc)
 
     return result
+
+
+
+
 #输出示例： 多出relate|category
         # 如下字段可能有 (|douban|weibo|zhihu|abstract|"imgWall"|”compress“|baike)
 # {
@@ -260,16 +361,27 @@ def convertNewsItems(docs = []):  #输入NewsItems数据(list里面包含字典)
             doc["sourceSiteName"] = doc["start_title"]
             del doc["start_title"]
         if "channel" in doc.keys():
-            doc["channel"] = mapOfchannel(doc["channel"])
+            try:
+                doc["channelId"] = mapOfchannelId[doc["channel"]]
+                doc["channel"] = mapOfchannel[doc["channel"]]
+            except:
+                continue
+                # print doc["channel"]
         if "channel_id" in doc.keys():
-            doc["channelId"] = doc["channel_id"]
             del doc["channel_id"]
         doc["commentNum"] = extractCommentNum(doc["sourceUrl"])
-        result.append(doc)
         if "create_time" in doc.keys():
             doc["createTime"] = doc["create_time"]
             del doc["create_time"]
-
+        doc["newsId"] = guid('NewsItems')
+        conn["news_ver2"]["NewsItems"].update({"source_url": doc["sourceUrl"]}, {"$set": {"newsId": doc["newsId"]}})
+        if len(doc["imgUrls"]) >0:
+            doc["type"] = "one_pic"
+        else:
+            doc["type"] = "no_pic"
+        doc["relatePointsList"] = []
+        doc = outputField(doc)
+        result.append(doc)
 
     return result
 
