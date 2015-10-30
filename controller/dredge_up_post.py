@@ -4,12 +4,67 @@ from config import dbConn
 import datetime
 import pymongo
 import redis, bson
+import tornado
+import urllib2
+import urllib
+import json
 
 DBStore = dbConn.GetDateStore()
 pool = redis.ConnectionPool(host='h213', port=6379)
 r = redis.Redis(connection_pool=pool)
 
+#zuoyuan
+@tornado.gen.coroutine
+def dredgeUpStatusforiOS(uid, album, key):
+    key = urllib.quote(key.encode('utf8'))
+    url = 'http://60.28.29.37:8083/excavator?uid=%s&album=%s&key=%s' % (uid, album, key)
+    try:
+        response = urllib2.urlopen(url, timeout = 10)
+        s = json.loads(response.read())
+        key = s["key"]
+        dict = r.hgetall(key)
+    except:
+        dict = {}
+    result_dict = {}
+    try:
+        result_dict['status'] = dict['status']
+    except:
+        result_dict['status'] = '100'
+    try:
+        result_dict['content'] = json.loads(dict['newsContent'])['content']
+        for i in result_dict['content']:
+            if "src" in i.keys():
+                result_dict['postImg'] = i["src"]
+                break
+        if 'postImg' not in result_dict.keys():
+            result_dict['postImg'] = ''
+    except:
+        result_dict['content'] = ''
+        result_dict['postImg'] = ''
+    try:
+        result_dict['douban'] = json.loads(dict['douban'])
+    except:
+        result_dict['douban'] = ''
+    try:
+        result_dict['zhihu'] = json.loads(dict['zhihu'])
+    except:
+        result_dict['zhihu'] = ''
+    try:
+        result_dict['weibo'] = json.loads(dict['weibo'])
+    except:
+        result_dict['weibo'] = ''
+    try:
+        result_dict['baike'] = json.loads(dict['baike'])
+    except:
+        result_dict['baike'] = ''
+    try:
+        result_dict['searchItems'] = json.loads(dict['searchItems'])
+    except:
+        result_dict['searchItems'] = ''
+    raise tornado.gen.Return(result_dict)
+#zuoyuan
 
+@tornado.gen.coroutine
 def dredgeUpStatus(user_id, album_id, is_add):
     conn = DBStore._connect_news
     db = conn["news_ver2"]["AlbumItems"]
@@ -41,7 +96,7 @@ def dredgeUpStatus(user_id, album_id, is_add):
             l.pop("alid")
         if "completeTime" in l.keys():
             l.pop("completeTime")
-    return result_dict
+    raise tornado.gen.Return(result_dict)
 
 
 def createAlbum(user_id, album_id, album_title, album_des, album_img, album_news_count, create_time):
