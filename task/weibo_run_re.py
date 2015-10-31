@@ -279,6 +279,9 @@ def doImgGetAndSave(k, relate, url):
         except:
             logging.warning("##################### gist_exception ********************")
             gist = Gist().get_gist_str(text)
+        # if the summary is the first sentence which is seperated by comma, then we don't use it.
+        if gist.split('，')[0] == text.split('，')[0]:
+            gist = ""
         e["gist"] = gist
         compress = get_compression_result(gist)
         e["compress"] = compress
@@ -552,7 +555,9 @@ def do_abs_task(params):
             except:
                 logging.warning("##################### gist_exception ********************")
                 gist = Gist().get_gist_str(text)
-
+            # if the summary is the first sentence which is seperated by comma, then we don't use it.
+            if gist.split('，')[0] == text.split('，')[0]:
+                gist = ""
             conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"gist": gist}})
             compress = get_compression_result(gist)
             conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"compress": compress}})
@@ -699,12 +704,15 @@ def do_content_img_task(params):
     if text:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
         try:
+            # News comes from GoogleNewsItem
             gist = g().get_gist(text)
             # gist = fetch_gist_result(text)
         except:
             logging.warning("##################### gist_exception ********************")
             gist = Gist().get_gist_str(text)
-
+        # if the summary is the first sentence which is seperated by comma, then we don't use it.
+        if gist.split('，')[0] == text.split('，')[0]:
+                gist = ""
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"gist": gist}})
         compress = get_compression_result(gist)
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"compress": compress}})
