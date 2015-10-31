@@ -52,6 +52,7 @@ def get_quote_text(txt_str=''):
                 break
         for sign in signs:
             if sign in sen:
+                sen.replace('"', '')
                 if '：“' in sen or '，“' in sen:
                     index1 = sen.find('，“')
                     index2 = sen.find('：“')
