@@ -1845,7 +1845,7 @@ if __name__ == '__main__':
                 t01 = datetime.datetime.now()
                 t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
                 logging.warn("===============this round of content complete====================%s"%(t01))
-                time.sleep(3600*0.5)
+                time.sleep(3600*1)
 
 
         elif arg=='help':
