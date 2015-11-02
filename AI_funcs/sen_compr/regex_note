@@ -51,7 +51,7 @@ class [^a-zA-Z0-9_]
 
 
 >>> pattern = re.compile(r"\W")
->>> pattern.split("hello⇢world")
+>>> pattern.split("hello world")
 ['Hello', 'world']
 In the preceding example, we've defined a pattern to match any non-alphanumeric
 character. So, in this case the match happens in the whitespace. That's why the string

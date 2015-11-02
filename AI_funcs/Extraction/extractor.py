@@ -124,6 +124,8 @@ class ConjExtraction:
         return comparison_sentences
 
 
+
+
 if __name__ == '__main__':
     docs = docs()
     co = ConjExtraction()
