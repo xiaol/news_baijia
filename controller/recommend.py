@@ -26,6 +26,8 @@ def recommend(deviceId, channelId):
     doc_list = []
     i = 0
     for doc in docs:
+        if type(doc["imgUrls"]) != list:
+            doc["imgUrls"] = [doc["imgUrls"]]
         if i>=15:
             break
         del doc["_id"]
