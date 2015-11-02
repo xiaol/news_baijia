@@ -54,6 +54,21 @@ class recommendHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+class fetchDetailHandler(tornado.web.RequestHandler):
+    @tornado.gen.coroutine
+    def post(self):
+        userId = self.get_argument("userid", None)
+        platformType =  self.get_argument("platformtype", None)
+        deviceId = self.get_argument("deviceid", None)
+        deviceType = self.get_argument("devicetype", None)
+        newsId = self.get_argument("newsid", None)
+        collection = self.get_argument("collection", None)
+
+        result = yield recommend.fetchDetail(newsId, collection)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
 
 @tornado.gen.coroutine
 def coroutine_fetch():
@@ -699,7 +714,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchGist", GistHandler),
             (r"/news/baijia/search", SearchHandler),
             (r"/news/baijia/caimaotiyu", caimaotiyuHandler),
-            (r"/news/baijia/recommend", recommendHandler)
+            (r"/news/baijia/recommend", recommendHandler),
+            (r"/news/baijia/fetchDetail", fetchDetailHandler)
 
         ]
 

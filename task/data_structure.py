@@ -250,9 +250,9 @@ def convertGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面
                 continue
                 print "content is list,url,%s"%doc["sourceUrl"]
 
-
-        doc["newsId"] = guid('googleNewsItem')
-        conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": doc["sourceUrl"]}, {"$set": {"newsId": doc["newsId"]}})
+        if "newsId" not in doc.keys():
+            doc["newsId"] = guid('googleNewsItem')
+            conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": doc["sourceUrl"]}, {"$set": {"newsId": doc["newsId"]}})
 
         if sourceSiteName[:2] in special_source:
             doc["type"] = "big_pic"
@@ -434,8 +434,10 @@ def convertNewsItems(docs = []):  #输入NewsItems数据(list里面包含字典)
         if "create_time" in doc.keys():
             doc["createTime"] = doc["create_time"]
             del doc["create_time"]
-        doc["newsId"] = guid('NewsItems')
-        conn["news_ver2"]["NewsItems"].update({"source_url": doc["sourceUrl"]}, {"$set": {"newsId": doc["newsId"]}})
+        if "newsId" not in doc.keys():
+            doc["newsId"] = guid('NewsItems')
+            conn["news_ver2"]["NewsItems"].update({"source_url": doc["sourceUrl"]}, {"$set": {"newsId": doc["newsId"]}})
+
         if len(doc["imgUrls"]) >0:
             doc["type"] = "one_pic"
         else:
