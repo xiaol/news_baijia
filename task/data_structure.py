@@ -202,7 +202,7 @@ def constructEvent(eventList):
 
 
 
-def convertGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
+def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNewItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
     special_source = ["观察", "网易","地球"]
     result = []
     for doc in docs:
@@ -297,7 +297,8 @@ def convertGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面
             del doc["sentence"]
         doc["collection"] = "googleNewsItem"
         doc["imgUrls"] = [doc["imgUrls"]]
-        doc = outputField(doc)
+        if outFieldFilter:
+            doc = outputField(doc)
         result.append(doc)
 
     return result
@@ -393,7 +394,7 @@ def convertGoogleNewsItems(docs = []):    #输入GoogleNewItems数据(list里面
 #
 # }
 
-def convertNewsItems(docs = []):  #输入NewsItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
+def convertNewsItems(docs = [],outFieldFilter = True):  #输入NewsItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
     result = []
     for doc in docs:
         del doc["_id"]
@@ -445,7 +446,8 @@ def convertNewsItems(docs = []):  #输入NewsItems数据(list里面包含字典)
         doc["relatePointsList"] = []
         doc["collection"] = "NewsItem"
         doc["imgUrls"] = [doc["imgUrls"]]
-        doc = outputField(doc)
+        if outFieldFilter:
+            doc = outputField(doc)
         result.append(doc)
 
     return result
