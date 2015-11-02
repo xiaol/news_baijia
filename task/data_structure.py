@@ -206,9 +206,10 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNe
     special_source = ["观察", "网易","地球"]
     result = []
     for doc in docs:
-        if "content" in doc.keys():
-            if len(doc["content"])<=0:
-                continue
+        # if "content" in doc.keys():
+        #     if len(doc["content"])<=0:
+        #         continue
+
         if "_id" in doc.keys():
             del doc["_id"]
         if "originsourceSiteName" in doc.keys():
@@ -240,6 +241,8 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNe
                 doc["content"] = doc["text"]
             else:
                 doc["content"] = ""
+        if len(doc["content"])<=0:
+            continue
         if "imgUrls" not in doc.keys():
             doc["imgUrls"] = ""
 
@@ -254,7 +257,8 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNe
             doc["newsId"] = guid('googleNewsItem')
             conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": doc["sourceUrl"]}, {"$set": {"newsId": doc["newsId"]}})
 
-        if sourceSiteName[:2] in special_source:
+
+        if doc["sourceSiteName"][:2] in special_source:
             doc["type"] = "big_pic"
         elif len(doc["imgUrls"]) >0:
             doc["type"] = "one_pic"

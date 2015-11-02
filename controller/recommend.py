@@ -42,7 +42,7 @@ def recommend(deviceId, channelId):
     raise tornado.gen.Return(doc_list)
 
 @tornado.gen.coroutine
-def fetchDetail(newsId, collection):
+def fetchDetail(newsId, collection, userId, platformType):
     if collection == "NewsItem":
         doc = conn["news_ver2"]["NewsItems"].find_one({"newsId": newsId})
         result = convertNewsItems([doc], outFieldFilter = False)[0]
