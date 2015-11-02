@@ -47,10 +47,10 @@ def recommend(deviceId, channelId):
 def fetchDetail(newsId, collection):
     if collection == "NewsItem":
         doc = conn["news_ver2"]["NewsItems"].find_one({"newsId": newsId})
-        result = convertNewsItems([doc])[0]
+        result = convertNewsItems([doc], outFieldFilter = False)[0]
     elif collection == "googleNewsItem":
         doc = conn["news_ver2"]["googleNewsItem"].find_one({"newsId": newsId})
-        result = convertGoogleNewsItems([doc])[0]
+        result = convertGoogleNewsItems([doc], outFieldFilter = False)[0]
     else:
         return
     if not result:
