@@ -44,7 +44,7 @@ def get_quote_text(txt_str=''):
     quotes = []
 
     for sen in sentences:
-        special_characters = ['”', '〕','〈','〉','《','》','「','」','『','』','〗','】','（','）',
+        special_characters = ['“','”', '〕','〈','〉','《','》','「','」','『','』','〗','】','（','）',
                 '；','？','！','ˉ','ˇ','`','~','～','‖','＂','＇','｀','｜','—',]
         for special_character in special_characters:
             if sen.find(special_character) == 0:
@@ -52,6 +52,7 @@ def get_quote_text(txt_str=''):
                 break
         for sign in signs:
             if sign in sen:
+                sen.replace('"', '')
                 if '：“' in sen or '，“' in sen:
                     index1 = sen.find('，“')
                     index2 = sen.find('：“')
