@@ -143,7 +143,7 @@ def extractCommentNum(url):
     return pointsCursorNum + docCommentNum
 
 
-def reorganize_news(docs, is_channel=False):
+def reorganize_news(docs):
     results_docs = []
     eventId_dict = {}
 
@@ -159,50 +159,45 @@ def reorganize_news(docs, is_channel=False):
     for (eventId, eventList) in eventId_dict.items():
         results_docs.append(constructEvent(eventList))
 
-    results_docs = sorted(results_docs, key=operator.itemgetter("createTime"), reverse=not is_channel)
+    # results_docs = sorted(results_docs, key=operator.itemgetter("createTime"), reverse=not is_channel)
     return results_docs
 
 
 def constructEvent(eventList):
     result_doc = {}
-    sublist = []
+    relatePointsList = []
     imgUrl_ex = []
     is_notin_flag = True
     for eventElement in eventList:
         if eventElement['eventId'] == eventElement["_id"]:
             result_doc = eventElement
-            imgUrl_ex.append(eventElement['imgUrls'])
+            if 'imgUrls' in eventElement.keys():
+                if len(eventElement['imgUrls'])>0:
+                    imgUrl_ex.append(eventElement['imgUrls'])
             is_notin_flag = False
 
         else:
             subElement = {}
-            if 'text' not in eventElement.keys():
-                subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'similarity': eventElement["similarity"], 'unit_vec': eventElement["unit_vec"]}
-            elif 'gist' not in eventElement.keys():
-                subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'text': eventElement['text'], 'similarity': eventElement["similarity"], 'unit_vec': eventElement["unit_vec"]}
-            elif 'compress' not in eventElement.keys():
-                subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'text': eventElement['text'], 'gist': eventElement['gist'], 'similarity': eventElement["similarity"], 'unit_vec': eventElement["unit_vec"]}
-            else:
-                subElement={'sourceSitename': eventElement['originsourceSiteName'], 'url': eventElement['_id'], 'title': eventElement['title'], 'img': eventElement['imgUrls'], 'text': eventElement['text'], 'gist': eventElement['gist'], 'similarity': eventElement["similarity"], 'unit_vec': eventElement["unit_vec"], 'compress': eventElement["compress"]}
-
-
-
-            sublist.append(subElement)
-            result_doc["special"] = 9
-            imgUrl_ex.append(eventElement['imgUrls'])
+            if 'compress' in eventElement.keys() and 'similarity' in eventElement.keys():
+                subElement = {'sourceUrl': eventElement['sourceUrl'], 'sourceSiteName': eventElement['sourceSiteName'], 'compress': eventElement['compress'], 'similarity': eventElement['similarity']}
+                relatePointsList.append(subElement)
+                result_doc["special"] = 9
+                if 'imgUrls' in eventElement.keys():
+                    if len(eventElement['imgUrls'])>0:
+                        imgUrl_ex.append(eventElement['imgUrls'])
 
     if is_notin_flag:
         return eventList[0]
-
     if "special" in result_doc.keys():
-        result_doc["sublist"] = sublist
+        result_doc["relatePointsList"] = relatePointsList
         result_doc["imgUrl_ex"] = imgUrl_ex
-
     return result_doc
 
 
 
 def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNewItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
+    docs = reorganize_news(docs)
+
     special_source = ["观察", "网易","地球"]
     result = []
     for doc in docs:
@@ -264,8 +259,20 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNe
             doc["type"] = "one_pic"
         else:
             doc["type"] = "no_pic"
-        doc["relatePointsList"] = []
-
+        if "imgUrl_ex" in doc.keys():
+            doc["imgUrls"] = doc["imgUrl_ex"]
+            if len(doc["imgUrl_ex"])>=3:
+                doc["type"] = "three_pic"
+            elif len(doc["imgUrl_ex"])>=2:
+                doc["type"] = "two_pic"
+            elif len(doc["imgUrl_ex"])>=1:
+                doc["type"] = "one_pic"
+            else:
+                doc["type"] = "no_pic"
+        if "relatePointsList" not in doc.keys():
+            doc["relatePointsList"] = []
+        else:
+            print 1
         if "text" in doc.keys():
             del doc["text"]
         if "isOnline" in doc.keys():
@@ -289,8 +296,8 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNe
             del doc["in_tag"]
         if "relate_opinion" in doc.keys():
             del doc["relate_opinion"]
-        if "similarity" in doc.keys():
-            del doc["similarity"]
+        # if "similarity" in doc.keys():
+            # del doc["similarity"]
         if "eventId_detail" in doc.keys():
             del doc["eventId_detail"]
         if "duplicate_check" in doc.keys():
@@ -300,13 +307,16 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNe
         if "sentence" in doc.keys():
             del doc["sentence"]
         doc["collection"] = "googleNewsItem"
-        doc["imgUrls"] = [doc["imgUrls"]]
-        print doc["imgUrls"]
-        doc = outputField(doc)
+        if type(doc["imgUrls"]) != list:
+            doc["imgUrls"] = [doc["imgUrls"]]
+
         if outFieldFilter:
             doc = outputField(doc)
         result.append(doc)
-
+        if "imgUrl_ex" in doc.keys():
+            del doc["imgUrl_ex"]
+        if "special" in doc.keys():
+            del doc["special"]
     return result
 
 
@@ -403,6 +413,7 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNe
 
 
 def convertNewsItems(docs = [],outFieldFilter = True):  #输入NewsItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
+    docs = reorganize_news(docs)
     result = []
     for doc in docs:
         del doc["_id"]
@@ -451,14 +462,32 @@ def convertNewsItems(docs = [],outFieldFilter = True):  #输入NewsItems数据(l
             doc["type"] = "one_pic"
         else:
             doc["type"] = "no_pic"
-        doc["relatePointsList"] = []
+
+        if "imgUrl_ex" in doc.keys():
+            doc["imgUrls"] = doc["imgUrl_ex"]
+            if len(doc["imgUrl_ex"])>=3:
+                doc["type"] = "three_pic"
+            elif len(doc["imgUrl_ex"])>=2:
+                doc["type"] = "two_pic"
+            elif len(doc["imgUrl_ex"])>=1:
+                doc["type"] = "one_pic"
+            else:
+                doc["type"] = "no_pic"
+        if "relatePointsList" not in doc.keys():
+            doc["relatePointsList"] = []
         doc["collection"] = "NewsItem"
-        doc["imgUrls"] = [doc["imgUrls"]]
-        print doc["imgUrls"]
-        doc = outputField(doc)
+        if type(doc["imgUrls"]) != list:
+            doc["imgUrls"] = [doc["imgUrls"]]
+        # print doc["imgUrls"]
         if outFieldFilter:
             doc = outputField(doc)
         result.append(doc)
+
+        if "imgUrl_ex" in doc.keys():
+            del doc["imgUrl_ex"]
+        if "special" in doc.keys():
+            del doc["special"]
+
     return result
 
 #输出示例：
