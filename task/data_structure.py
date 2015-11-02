@@ -172,7 +172,8 @@ def constructEvent(eventList):
         if eventElement['eventId'] == eventElement["_id"]:
             result_doc = eventElement
             if 'imgUrls' in eventElement.keys():
-                if len(eventElement['imgUrls'])>0:
+                type(eventElement['imgUrls'])
+                if eventElement['imgUrls'] is not None and len(eventElement['imgUrls'])>0:
                     imgUrl_ex.append(eventElement['imgUrls'])
             is_notin_flag = False
 
@@ -183,7 +184,7 @@ def constructEvent(eventList):
                 relatePointsList.append(subElement)
                 result_doc["special"] = 9
                 if 'imgUrls' in eventElement.keys():
-                    if len(eventElement['imgUrls'])>0:
+                    if eventElement['imgUrls'] is not None and len(eventElement['imgUrls'])>0:
                         imgUrl_ex.append(eventElement['imgUrls'])
 
     if is_notin_flag:
