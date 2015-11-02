@@ -64,7 +64,7 @@ class fetchDetailHandler(tornado.web.RequestHandler):
         newsId = self.get_argument("newsid", None)
         collection = self.get_argument("collection", None)
 
-        result = yield recommend.fetchDetail(newsId, collection)
+        result = yield recommend.fetchDetail(newsId, collection,userId,platformType)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
