@@ -279,6 +279,9 @@ def doImgGetAndSave(k, relate, url):
         except:
             logging.warning("##################### gist_exception ********************")
             gist = Gist().get_gist_str(text)
+        # if the summary is the first sentence which is seperated by comma, then we don't use it.
+        if gist.split('，')[0] == text.replace(' ','').split('，')[0]:
+            gist = ""
         e["gist"] = gist
         compress = get_compression_result(gist)
         e["compress"] = compress
@@ -552,7 +555,9 @@ def do_abs_task(params):
             except:
                 logging.warning("##################### gist_exception ********************")
                 gist = Gist().get_gist_str(text)
-
+            # if the summary is the first sentence which is seperated by comma, then we don't use it.
+            if gist.split('，')[0] == text.replace(' ','').split('，')[0]:
+                gist = ""
             conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"gist": gist}})
             compress = get_compression_result(gist)
             conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"compress": compress}})
@@ -699,12 +704,15 @@ def do_content_img_task(params):
     if text:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
         try:
+            # News comes from GoogleNewsItem
             gist = g().get_gist(text)
             # gist = fetch_gist_result(text)
         except:
             logging.warning("##################### gist_exception ********************")
             gist = Gist().get_gist_str(text)
-
+        # if the summary is the first sentence which is seperated by comma, then we don't use it.
+        if gist.split('，')[0] == text.replace(' ','').split('，')[0]:
+                gist = ""
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"gist": gist}})
         compress = get_compression_result(gist)
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"compress": compress}})
@@ -1909,12 +1917,17 @@ def get_last_sen_seg(sen=''):
 def get_compression_result(raw_sentence):
     #raw_sentence = unicode(raw_sentence)
     #refined_text = text_preprocess(raw_sentence)
-    # We ensure that we have at least have 10 chinese characters.
-    if len(raw_sentence) <= 30:
+    # We ensure that we have at least have 15 chinese characters.
+    if len(raw_sentence) <= 45:
         return raw_sentence
-    
-    raw_sentence = raw_sentence.replace('、', '和').replace('+', '加').replace('“', '').replace('”', '').replace('‘','').replace('’', '').replace('%', '').replace('-', '_')
-    sen_seg = re.split(",|，", raw_sentence)
+
+    conjunction_words = ['如果','因此','，并','所以']
+    for conjunction_word in conjunction_words:
+        if conjunction_word in raw_sentence:
+            return raw_sentence
+
+    new_raw_sentence = raw_sentence.replace('、', '和').replace('+', '加').replace('“', '').replace('”', '').replace('‘','').replace('’', '').replace('%', '').replace('-', '_')
+    sen_seg = re.split(",|，", new_raw_sentence)
     len_sen_seg = len(sen_seg)
     last_sen_seg = sen_seg[-1]
     
