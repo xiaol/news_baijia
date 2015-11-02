@@ -301,8 +301,13 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNe
             del doc["sentence"]
         doc["collection"] = "googleNewsItem"
         doc["imgUrls"] = [doc["imgUrls"]]
+<<<<<<< HEAD
+        print doc["imgUrls"]
+        doc = outputField(doc)
+=======
         if outFieldFilter:
             doc = outputField(doc)
+>>>>>>> 26ae1d3dc7ba99aab252962577c8a9486b65a43e
         result.append(doc)
 
     return result
@@ -398,7 +403,12 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNe
 #
 # }
 
+<<<<<<< HEAD
+def convertNewsItems(docs = []):  #输入NewsItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
+    print "asdfsadfasdfas"
+=======
 def convertNewsItems(docs = [],outFieldFilter = True):  #输入NewsItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
+>>>>>>> 26ae1d3dc7ba99aab252962577c8a9486b65a43e
     result = []
     for doc in docs:
         del doc["_id"]
@@ -450,8 +460,13 @@ def convertNewsItems(docs = [],outFieldFilter = True):  #输入NewsItems数据(l
         doc["relatePointsList"] = []
         doc["collection"] = "NewsItem"
         doc["imgUrls"] = [doc["imgUrls"]]
+<<<<<<< HEAD
+        print doc["imgUrls"]
+        doc = outputField(doc)
+=======
         if outFieldFilter:
             doc = outputField(doc)
+>>>>>>> 26ae1d3dc7ba99aab252962577c8a9486b65a43e
         result.append(doc)
 
     return result

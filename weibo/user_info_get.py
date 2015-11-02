@@ -1,5 +1,7 @@
 __author__ = 'jianghao'
 
+import sys
+print sys.path
 import time
 from task import requests_with_sleep as requests
 

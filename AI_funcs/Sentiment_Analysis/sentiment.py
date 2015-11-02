@@ -15,6 +15,7 @@ import jieba
 from itertools import combinations
 from AI_funcs.snownlp.snownlp import SnowNLP
 from AI_funcs.Extraction.extractor import get_quote_text
+from AI_funcs.snownlp.snownlp import sentiment
 
 def docs():
     dbstore = dbConn.GetDateStore()
@@ -36,46 +37,25 @@ def docs():
             sorted_docs[eventId][article_id] = article
     return sorted_docs
 
-"""
-def sentiment(documents):
-    for key, value in documents.iteritems():
-        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        print('Event ID: ' + key)
-        for ke, va in value.iteritems():
-            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            print('Article ID: ' + ke)
-        #     for v in va:
-        #         v = v.decode('utf8')
-        #         print('~~~~~~~~~~~~~~~~~~~~~~~')
-        #         #print sentence
 
-            if not va:
-                print('Oops! Empty article!')
-            else:
-                va = va.replace(' ', '')
-                v = SnowNLP(va)
-                senti = v.sentiments
-                print('sentiment value: ' + str(senti))
-                if senti > 0.5:
-                    print('sentiment label: positive')
-                else:
-                    print('sentiment label: negative')
-                print(va)
-"""
+class Sentiment:
+    def __init__(self, neg_train_file='neg.txt', pos_train_file='pos.txt'):
+        sentiment.train(neg_train_file, pos_train_file)
+        sentiment.save('sentiment.marshal')
 
-
-def get_sentiment(text=''):
-    if text:
-        txt = text.decode('utf8')
-        txt = txt.replace(' ', '').strip()
-        sn_obj = SnowNLP(txt)
-        senti_score = sn_obj.sentiments
-        print('Sentiment score: ' + str(senti_score))
-        return senti_score
-    else:
-        print('Empty text!')
+    def get_sentiment(self,text=''):
+        if text:
+            txt = text.decode('utf8')
+            txt = txt.replace(' ', '').strip()
+            sn_obj = SnowNLP(txt)
+            senti_score = sn_obj.sentiments
+            print('Sentiment score: ' + str(senti_score))
+            return senti_score
+        else:
+            print('Empty text!')
 
 if __name__ == '__main__':
+    """
     docs = docs()
     for key, value in docs.iteritems():
         print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
@@ -96,4 +76,19 @@ if __name__ == '__main__':
                     print('-------------------')
                     print('Quote: ' + quo)
                     get_sentiment(quo)
+    """
+    neg = open("negative.txt", "r")
+    print(type(neg))
+    pos = open("positive.txt", "r")
+    print(type(pos))
+    sen_obj = Sentiment(neg_train_file='negative.txt', pos_train_file='positive.txt')
+    sen_obj.get_sentiment('微信公众号上发布的广告已纳入监管视野')
+    sen_obj.get_sentiment('工商部门执法成本巨大')
+    # for n in neg:
+    #     print(n)
+    #     sen_obj.get_sentiment(n)
+    # print('**********************')
+    # for p in pos:
+    #     print(p)
+    #     sen_obj.get_sentiment(p)
 
