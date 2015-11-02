@@ -107,6 +107,7 @@ class Segmentation(object):
         self.ss = SentenceSegmentation(delimiters)
         
     def segment(self, text, lower = False, speech_tag_filter = True):
+        # ss.segment is the substence with the minimal granularity, seperated by every delimiter.
         sentences = self.ss.segment(text)
         words_no_filter = self.ws.segment_sentences(sentences=sentences, 
                                                     lower = lower, 

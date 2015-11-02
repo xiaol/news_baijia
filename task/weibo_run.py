@@ -18,7 +18,8 @@ from PIL import Image
 import datetime
 from requests.exceptions import Timeout
 from weibo_run_re import set_googlenews_by_url_with_field_and_value, do_search_task
-
+from controller.time_get import timeContentFetch
+from data_structure import convertNewsItems, convertGoogleNewsItems
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -1605,7 +1606,7 @@ def onlineEvent():
     now = datetime.datetime.now()
     now_time = now.strftime('%Y-%m-%d %H:%M:%S')
 
-    docs_online = fetch_unrunned_docs_by_date(isOnline = True)
+    docs_online = fetch_unrunned_docs_by_date(isOnline = True, cluster = True)
     url_title_lefturl_sourceSite_pairs_online = fetch_url_title_lefturl_pairs(docs_online)
 
     logging.warning("##################### online_event_task start ********************")
@@ -1637,6 +1638,37 @@ def unOnlineEvent():
         do_event_task(params, end_time, now_time)
 
     logging.warning("##################### unOnline_event_task complete ********************")
+
+
+def recommend():
+    logging.warning("##################### recommend_event_task start ********************")
+    docs_googleNewsItem = conn["news_ver2"]["googleNewsItem"].find().sort("createTime",pymongo.DESCENDING).limit(1000)
+    docs_googleNewsItem = convertGoogleNewsItems(docs_googleNewsItem)
+    docs_NewsItems = conn["news_ver2"]["NewsItems"].find().sort("create_time", pymongo.DESCENDING).limit(4000)
+    docs_NewsItems = convertNewsItems(docs_NewsItems)
+    doc_list = []
+    i = 0
+
+    for doc in docs_googleNewsItem:
+        doc["_id"] = i
+        tem_dict=dict(doc)
+        conn['news_ver2']['recommendItem'].save(tem_dict)
+        i = i + 1
+    #     doc_list.append(doc)
+    for doc in docs_NewsItems:
+        doc["_id"] =  i
+        tem_dict=dict(doc)
+        conn['news_ver2']['recommendItem'].save(tem_dict)
+        i = i + 1
+        # doc_list.append(doc)
+
+
+    # result_dict = {"content":doc_list,"_id":"1"}
+    # tem_dict=dict(result_dict)
+    # conn['news_ver2']['recommendItem'].save(tem_dict)
+    # conn['news_ver2']['recommendItem'].insert(doc_list)
+    logging.warning("##################### recommend_event_task complete ********************")
+
 
 if __name__ == '__main__':
 
@@ -1743,27 +1775,77 @@ if __name__ == '__main__':
 
         elif arg == "onlineEvent":
             while True:
+                t00 = datetime.datetime.now()
+                t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content start====================%s"%(t00))
                 # time.sleep(30)
                 onlineEvent()
-                logging.warn("===============this round of content complete====================")
-                time.sleep(3600*0.5)
+                t01 = datetime.datetime.now()
+                t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content complete====================%s"%(t01))
+                # time.sleep(3600*0.5)
 
         elif arg == "unOnlineEvent":
             while True:
+                t00 = datetime.datetime.now()
+                t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content start====================%s"%(t00))
                 # time.sleep(30)
                 unOnlineEvent()
-                logging.warn("===============this round of content complete====================")
-                time.sleep(3600*0.5)
+                t01 = datetime.datetime.now()
+                t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content complete====================%s"%(t01))
+                # time.sleep(3600*0.5)
 
         elif arg == "homeGet":
             while True:
                 # time.sleep(30)
+                onlineEvent()
+                logging.warning("##################### this round of content start ********************")
                 options = {}
                 options["timing"] = 1
                 homeContentFetch(options)
+                # result = timeContentFetch({'timefeedback': 1})
+                # result_date = result["history_date"]
+                # result_type = ['0', '1']
+                # for date in result_date:
+                #     for type in result_type:
+                now = datetime.datetime.now()
+                format = '%Y-%m-%d'
+                tommorow = now + datetime.timedelta(days=1)
+                hour = now.hour
+                if hour in range(0,6):
+                    date = now.strftime(format)
+                    type = '0'
+                    logging.warn("===============today type =0 ====================")
+                elif hour in range(6,18):
+                    date = now.strftime(format)
+                    type = '1'
+                    logging.warn("===============today type =1 ====================")
+                else:
+                    date = tommorow.strftime(format)
+                    type = '0'
+                    logging.warn("===============tommorow type =0 ====================")
+                options = {}
+                options["timefeedback"] = 1
+                options["date"] = date
+                options["type"] = type
+                homeContentFetch(options)
+
                 logging.warn("===============this round of content complete====================")
                 time.sleep(3600*1)
 
+        elif arg == "recommend":
+            while True:
+                t00 = datetime.datetime.now()
+                t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content start====================%s"%(t00))
+                # time.sleep(30)
+                recommend()
+                t01 = datetime.datetime.now()
+                t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content complete====================%s"%(t01))
+                time.sleep(3600*1)
 
 
         elif arg=='help':

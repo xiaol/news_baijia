@@ -31,7 +31,7 @@ class Gist:
             self.tr4w = TextRank4Keyword(self.stop_words_file)  # Import stopwords
 
     def get_keyword(self, text):
-            self.tr4w = TextRank4Keyword(self.stop_words_file)  # Import stopwords
+            #self.tr4w = TextRank4Keyword(self.stop_words_file)  # Import stopwords
             #Use word class filtering，decapitalization of text，window is 2.
             self.tr4w.train(text=text, speech_tag_filter=True, lower=True, window=2)
             # 20 keywords The min length of each word is 1.
@@ -40,7 +40,7 @@ class Gist:
             return self.wresult
 
     def get_keyphrase(self, text):
-            self.tr4w = TextRank4Keyword(self.stop_words_file)  # Import stopwords
+            #self.tr4w = TextRank4Keyword(self.stop_words_file)  # Import stopwords
             #Use word class filtering，decapitalization of text，window is 2.
             self.tr4w.train(text=text, speech_tag_filter=True, lower=True, window=2)
             #Use 20 keywords for contructing phrase, the phrase occurrence in original text is at least 2.

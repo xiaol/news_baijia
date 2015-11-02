@@ -8,6 +8,8 @@ import re
 import time
 import datetime
 import urllib2
+import lxml.etree as etree
+# import task.requests_with_sleep as requests
 # import urllib
 # import HTMLParser
 reload(sys)
@@ -139,6 +141,53 @@ def trim_bracket(content):
     content = re.sub(bracket_pat, "", content)
     return content
 
+
+def baidusearch_relate_weibo(topic):
+    result = []
+    url ='http://www.baidu.com/s?rtt=2&tn=baiduwb&rn=20&cl=2&wd={0}'.format(topic)
+    r = requests.get(url)
+    dom = etree.HTML(r.text)
+    try:
+        elements = dom.xpath('//li[@id]')
+    except Exception as e:
+
+        print "weibo page Parse error, the url is===>", url
+        return result
+
+    for element in elements:
+        try:
+            img_url = element.xpath('./div[@class="weibo_detail"]/div[@class="weibo_img_holder"]/div/img/@data-bgimg')[0]
+            # print(etree.tostring(element, pretty_print=True))
+            source_name = element.xpath('./div[@class="weibo_detail"]/p/a/text()')[0]
+            content = ''.join(element.xpath('./div[@class="weibo_detail"]/p/descendant-or-self::text()')[1:])
+            # print type(content)
+            content = content.replace(u"：", "")
+            print "content,%s"%content
+            url = element.xpath('./div[@class="weibo_detail"]/div[@class="weibo_info"]/div[@class="m"]/a/@href')[0]
+            updateTime = element.xpath('./div[@class="weibo_detail"]/div[@class="weibo_info"]/div[@class="m"]/a/text()')[0]
+            img_urls = [img_url]
+            profile_image_url = element.xpath('./div[@class="weibo_face"]/a/img/@src')[0]
+            like_count = 0
+            comments_count = 0
+            reposts_count = 0
+            elem_dict={}
+            elem_dict['img_url'] = img_url
+            elem_dict['content'] = content
+            elem_dict['source_name'] = source_name
+            elem_dict['url'] = url
+            elem_dict['updateTime'] = updateTime
+            elem_dict['img_urls'] = img_urls
+            elem_dict['profile_image_url'] = profile_image_url
+            elem_dict['like_count'] = like_count
+            elem_dict['comments_count'] = comments_count
+            elem_dict['reposts_count'] = reposts_count
+            result.append(elem_dict)
+        except:
+            continue
+    return result
+
+
+
 def baidusearch_relate_docs(topic, page):
     result =[]
     # url = html_parser.unescape(url)
@@ -213,7 +262,8 @@ if __name__ == '__main__':
     # print search_relate_docs("柴静","1")
     # baidusearch_relate_docs("刘翔","1")
     # baidusearch_relate_docs("刘强东","1")
-    baidusearch_relate_docs("宣传片+机制+危机+大学+事件","1")
+    result = baidusearch_relate_weibo("白酒掺敌敌畏谣言成真:冒牌茅台酒疑似被检出")
+    # baidusearch_relate_docs("宣传片+机制+危机+大学+事件","1")
     # baidusearch_relate_docs("煎蛋+烈日+高温+民众+印度","1")
     # source_name=re.compile('<span class=\'wa-weibo-author\'>(.*?)</span>')
     # convertsecondtoTimestr(1429845960.0

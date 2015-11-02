@@ -7,7 +7,7 @@ import operator
 import pymongo
 from pymongo.read_preferences import ReadPreference
 from  home_get import get_time
-
+import tornado
 
 
 def imUserFetch(options):
@@ -203,6 +203,7 @@ def searchUserNameIconByUserid(userId, platformType):
         userIcon = ""
     return userName, userIcon
 
+@tornado.gen.coroutine
 def searchChannelList():
     DBStore = dbConn.GetDateStore()
     conn = DBStore._connect_news
@@ -213,8 +214,8 @@ def searchChannelList():
         results_docs.append(doc)
         print doc
     results_docs = sorted(results_docs, key=lambda channel: int(channel["channel_id"]))
-    return results_docs
-
+    #return results_docs
+    raise tornado.gen.Return(results_docs)
 
 
 

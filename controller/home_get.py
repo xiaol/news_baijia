@@ -14,8 +14,10 @@ import task.requests_with_sleep as requests
 # from content_get import Get_Relate_docs
 from AI_funcs.sen_compr.text_handler import SentenceCompressor
 import re
+import tornado
 import tornado.gen
 from task.weibo_run_re import is_error_code, getDefaultTimeStr
+import logging
 
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
@@ -41,7 +43,10 @@ def homeContentFetch(options):
     :rtype :
     """
     # updateTime = ''
-    t00 = time.time()
+    t00 = datetime.datetime.now()
+    t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+    logging.warn("===============this round of content start====================%s"%(t00))
+    # t00 = time.time()
     print "first ts: ", t00
     page = 1
     limit = 10
@@ -127,17 +132,29 @@ def homeContentFetch(options):
         #                                                                                "$lt": end_time}}).sort([("createTime", -1)])
 
         docs = conn["news_ver2"]["googleNewsItem"].find({"isOnline": 1}).sort([("createTime", -1)]).limit(50)
-        t01 = time.time()
+
+        t01 = datetime.datetime.now()
+        t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
+        # t01 = time.time()
         print "second ts: ", t01
+        logging.warn("===============this round of content start====================%s"%(t01))
+
 
         undocs = conn["news_ver2"]["googleNewsItem"].find(
             {"$or": [{"isOnline": 0}, {"isOnline": {"$exists": 0}}], "createTime": {"$gte": start_time_yes},
              "eventId": {"$exists": 1}}).sort([("createTime", -1)])
-        t02 = time.time()
+
+        t02 = datetime.datetime.now()
+        t02 = t02.strftime("%Y-%m-%d %H:%M:%S")
+        logging.warn("===============this round of content start====================%s"%(t02))
+        # t02 = time.time()
         print "third ts: ", t02
         undocs_list = extratInfoInUndocs(undocs)
-        t03 = time.time()
+        t03 = datetime.datetime.now()
+        t03 = t03.strftime("%Y-%m-%d %H:%M:%S")
+        # t03 = time.time()
         print "fourth ts: ", t03
+        logging.warn("===============this round of content start====================%s"%(t03))
         # db.googleNewsItem.find({'isOnline':{"$exists": 0},'createTime':{"$gte": '2015-05-15 18:00:00',"$lt": '2015-05-16 06:00:00'}, "eventId": {"$exists": 1} }).sort( { createTime: -1 } ).count()
 
     special_list = []
@@ -393,18 +410,30 @@ def homeContentFetch(options):
 
     # print docs_return
     # return docs_return
-    t04 = time.time()
+    t04 = datetime.datetime.now()
+    t04 = t04.strftime("%Y-%m-%d %H:%M:%S")
+    # t04 = time.time()
     print "fifth ts: ", t04
+    logging.warn("===============this round of content start====================%s"%(t04))
 
     result_time = getDefaultTimeStr()
-    result_dict = {"content":docs_return,"createTime":result_time}
-    tem_dict=dict(result_dict)
-    conn['news_ver2']['resultItem'].save(tem_dict)
+    if 'timing' in options.keys():
+        logging.warn("===============timing====================")
+        result_dict = {"content":docs_return,"createTime": result_time}
+        tem_dict=dict(result_dict)
+        conn['news_ver2']['resultItem'].save(tem_dict)
+        logging.warn("===============timing_save_end====================")
+    elif 'date' in options.keys():
+        logging.warn("===============date====================")
+        result_dict = {"content": docs_return, "createTime": result_time, "date": options["date"], "type": options["type"]}
+        tem_dict=dict(result_dict)
+        conn['news_ver2']['resultItemByDate'].save(tem_dict)
+        logging.warn("===============date_save_end====================")
     # raise tornado.gen.Return(docs_return)
     # r.hmset("googleNewsItems",{"googleNewsItems":docs_return})
     return docs_return
 
-
+@tornado.gen.coroutine
 def newsHomeContentFetch(options):
     """
 
@@ -693,9 +722,10 @@ def newsHomeContentFetch(options):
     # docs_return = sorted(docs_return, key=operator.itemgetter("special"))
 
     # print docs_return
-    return docs_return
+    #return docs_return
+    raise tornado.gen.Return(docs_return)
 
-
+@tornado.gen.coroutine
 def LoadMoreNewsContent(options):
     if "type" in options.keys():
         type = options["type"]
@@ -708,8 +738,8 @@ def LoadMoreNewsContent(options):
     if 'id' in options.keys():
         id = options['id']
     docs = loadMoreFetchContent(int(channel_id), type, time, limit,id)
-    return docs
-
+    #return docs
+    raise tornado.gen.Return(docs)
 
 def count_relate_baidu_news(url):
     conn = DBStore._connect_news
@@ -1063,41 +1093,41 @@ def calculate_sim(elem_unit_vec, compare_elem_unit_vec):
 def Get_Relate_docs(doc, docs_relate, filterurls):
     allrelate = []
 
-    if "reorganize" in doc.keys() and doc["reorganize"]:
-        allrelate.extend(doc["reorganize"])
-
-    if "relate" in doc.keys() and doc["relate"]:
-        relate = doc["relate"]
-        if "reorganize" in doc.keys() and doc["reorganize"]:
-            relate = del_dup_relatedoc(relate, doc["reorganize"])
-        left_relate = relate["left"]
-        mid_relate = relate["middle"]
-        bottom_relate = relate["bottom"]
-        opinion = relate["opinion"]
-        deep_relate = relate["deep_report"]
-
-        allList = [left_relate, mid_relate, bottom_relate, opinion, deep_relate]
-
-        for ones in allList:
-
-            for e in ones:
-
-                relate_url = e["url"]
-                # title 为空 跳过
-                if 'title' in e.keys():
-                    if not e['title']:
-                        continue
-
-                if relate_url in filterurls:
-                    continue
-
-                # ct_img = Get_by_url(relate_url)
-                # #
-                # e["img"] = ct_img['img']
-                if not "img" in e.keys():
-                    e["img"] = ""
-
-                allrelate.append(e)
+    # if "reorganize" in doc.keys() and doc["reorganize"]:
+    #     allrelate.extend(doc["reorganize"])
+    #
+    # if "relate" in doc.keys() and doc["relate"]:
+    #     relate = doc["relate"]
+    #     if "reorganize" in doc.keys() and doc["reorganize"]:
+    #         relate = del_dup_relatedoc(relate, doc["reorganize"])
+    #     left_relate = relate["left"]
+    #     mid_relate = relate["middle"]
+    #     bottom_relate = relate["bottom"]
+    #     opinion = relate["opinion"]
+    #     deep_relate = relate["deep_report"]
+    #
+    #     allList = [left_relate, mid_relate, bottom_relate, opinion, deep_relate]
+    #
+    #     for ones in allList:
+    #
+    #         for e in ones:
+    #
+    #             relate_url = e["url"]
+    #             # title 为空 跳过
+    #             if 'title' in e.keys():
+    #                 if not e['title']:
+    #                     continue
+    #
+    #             if relate_url in filterurls:
+    #                 continue
+    #
+    #             # ct_img = Get_by_url(relate_url)
+    #             # #
+    #             # e["img"] = ct_img['img']
+    #             if not "img" in e.keys():
+    #                 e["img"] = ""
+    #
+    #             allrelate.append(e)
 
     for one in docs_relate:
         ls = {}

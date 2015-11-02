@@ -6,15 +6,7 @@ import tornado
 
 DBStore = dbConn.GetDateStore()
 
-@tornado.gen.coroutine
 def getStartPageContent():
-    conn = DBStore._connect_news
-    results_docs = conn['news_ver2']['startPage'].find_one()
-    del results_docs['_id']
-    raise tornado.gen.Return(results_docs)
-
-@tornado.gen.coroutine
-def getStartPageContent1():
     conn = DBStore._connect_news
     docs = conn['news_ver2']['googleNewsItem'].find(
         {"originsourceSiteName": {"$in": ["网易新闻图片","观察者网"]}, "imgUrls": {"$ne": None}, "isOnline": 1}).sort(
@@ -41,4 +33,9 @@ def getStartPageContent1():
             if (doc['sourceUrl'] != img_url):
                 news_dict.append(doc['sourceUrl'])
     results_docs['news_url_list'] = news_dict
-    raise tornado.gen.Return(results_docs)
+    conn['news_ver2']['startPage'].remove()
+    conn['news_ver2']['startPage'].save(results_docs)
+
+if __name__ == "__main__":
+    getStartPageContent()
+    print "start page complete" 

@@ -1,6 +1,6 @@
 # coding=utf-8
-from PIL import Image
-
+#from PIL import Image
+import Image
 from config import dbConn
 from home_get import del_dup_relatedoc
 import jieba
@@ -10,10 +10,11 @@ from math import sqrt
 import numpy as np
 import math
 import bson
+import tornado
 
 DBStore = dbConn.GetDateStore()
 
-
+@tornado.gen.coroutine
 def fetchContent(url, filterurls, userId, platformType, updateTime=None):
     conn = DBStore._connect_news
 
@@ -62,25 +63,25 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
         elif isinstance(weibo, list) and len(weibo) > 0:
             result['weibo'] = weibo
 
-    if doc_comment:
-        if doc_comment["comments"] is not None:
-            if 'weibo' not in doc.keys():
-                result['weibo'] = []
-            comments_list = doc_comment["comments"]
-            for comments_elem in comments_list:
-                comments_elem_dict = {}
-                dict_len = len(comments_elem)
-                comment_result = comments_elem[str(dict_len)]
-                comments_elem_dict["user"] = comment_result["author_name"]
-                comments_elem_dict["title"] = comment_result["message"]
-                comments_elem_dict["sourceSitename"] = "weibo"
-                comments_elem_dict["img"] = ""
-                comments_elem_dict["url"] = ""
-                comments_elem_dict["profileImageUrl"] = ""
-                comments_elem_dict["isCommentFlag"] = 1
-                comments_elem_dict["up"] = comment_result["up"]
-                comments_elem_dict["down"] = comment_result["down"]
-                result['weibo'].append(comments_elem_dict)
+    # if doc_comment:
+    #     if doc_comment["comments"] is not None:
+    #         if 'weibo' not in doc.keys():
+    #             result['weibo'] = []
+    #         comments_list = doc_comment["comments"]
+    #         for comments_elem in comments_list:
+    #             comments_elem_dict = {}
+    #             dict_len = len(comments_elem)
+    #             comment_result = comments_elem[str(dict_len)]
+    #             comments_elem_dict["user"] = comment_result["author_name"]
+    #             comments_elem_dict["title"] = comment_result["message"]
+    #             comments_elem_dict["sourceSitename"] = "weibo"
+    #             comments_elem_dict["img"] = ""
+    #             comments_elem_dict["url"] = ""
+    #             comments_elem_dict["profileImageUrl"] = ""
+    #             comments_elem_dict["isCommentFlag"] = 1
+    #             comments_elem_dict["up"] = comment_result["up"]
+    #             comments_elem_dict["down"] = comment_result["down"]
+    #             result['weibo'].append(comments_elem_dict)
 
     if 'douban' in doc.keys():
         douban = doc['douban']
@@ -186,8 +187,8 @@ def fetchContent(url, filterurls, userId, platformType, updateTime=None):
         sourceSitename = doc["sourceSiteName"]
         result["category"] = sourceSitename[2:4]
 
-    return result
-
+    #return result
+    raise tornado.gen.Return(result)
 
 def get_points(points, praise_list, userId, platformType):
     result_points = []
@@ -218,7 +219,7 @@ def get_points(points, praise_list, userId, platformType):
 
     return result_points
 
-
+@tornado.gen.coroutine
 def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType, updateTime=None):
     conn = DBStore._connect_news
     if news_id:
@@ -246,7 +247,8 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
             for aggre in aggre_items:
                 ls = {}
                 for (k,v) in aggre.items():
-                    ls["title"] = k
+                    ls["title"] = v
+                    ls["url"] = k
                     ls["sourceSitename"] = v
                     ls['height'] = 75
                     ls['width'] = 121
@@ -428,8 +430,8 @@ def newsFetchContent(news_id, url, filterurls, userId, platformType, deviceType,
             del doc["relate_opinion"]["common_opinion"]
         result["relate_opinion"] = doc["relate_opinion"]
 
-    return result
-
+    #return result
+    raise tornado.gen.Return(result)
 
 def getImg(doc):
     if "content" in doc.keys():
@@ -651,41 +653,41 @@ def doc_classify(training_data, data_to_classify):
 def Get_Relate_docs(doc, docs_relate, filterurls):
     allrelate = []
 
-    if "reorganize" in doc.keys() and doc["reorganize"]:
-        allrelate.extend(doc["reorganize"])
+    # if "reorganize" in doc.keys() and doc["reorganize"]:
+    #     allrelate.extend(doc["reorganize"])
 
-    if "relate" in doc.keys() and doc["relate"]:
-        relate = doc["relate"]
-        if "reorganize" in doc.keys() and doc["reorganize"]:
-            relate = del_dup_relatedoc(relate, doc["reorganize"])
-        left_relate = relate["left"]
-        mid_relate = relate["middle"]
-        bottom_relate = relate["bottom"]
-        opinion = relate["opinion"]
-        deep_relate = relate["deep_report"]
-
-        allList = [left_relate, mid_relate, bottom_relate, opinion, deep_relate]
-
-        for ones in allList:
-
-            for e in ones:
-
-                relate_url = e["url"]
-                # title 为空 跳过
-                if 'title' in e.keys():
-                    if not e['title']:
-                        continue
-
-                if relate_url in filterurls:
-                    continue
-
-                # ct_img = Get_by_url(relate_url)
-                # #
-                # e["img"] = ct_img['img']
-                if not "img" in e.keys():
-                    e["img"] = ""
-
-                allrelate.append(e)
+    # if "relate" in doc.keys() and doc["relate"]:
+    #     relate = doc["relate"]
+    #     if "reorganize" in doc.keys() and doc["reorganize"]:
+    #         relate = del_dup_relatedoc(relate, doc["reorganize"])
+    #     left_relate = relate["left"]
+    #     mid_relate = relate["middle"]
+    #     bottom_relate = relate["bottom"]
+    #     opinion = relate["opinion"]
+    #     deep_relate = relate["deep_report"]
+    #
+    #     allList = [left_relate, mid_relate, bottom_relate, opinion, deep_relate]
+    #
+    #     for ones in allList:
+    #
+    #         for e in ones:
+    #
+    #             relate_url = e["url"]
+    #             # title 为空 跳过
+    #             if 'title' in e.keys():
+    #                 if not e['title']:
+    #                     continue
+    #
+    #             if relate_url in filterurls:
+    #                 continue
+    #
+    #             # ct_img = Get_by_url(relate_url)
+    #             # #
+    #             # e["img"] = ct_img['img']
+    #             if not "img" in e.keys():
+    #                 e["img"] = ""
+    #
+    #             allrelate.append(e)
 
     for one in docs_relate:
         ls = {}

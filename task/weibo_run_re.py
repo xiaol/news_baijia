@@ -60,7 +60,6 @@ from AI_funcs.Gist_and_Sim.gist import Gist as g
 from extract_time import time_match
 
 
-
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                                              read_preference=ReadPreference.SECONDARY)
 HOST_NER = "60.28.29.47"
@@ -125,6 +124,9 @@ def total_task():
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
     now = datetime.datetime.now()
     now_time = now.strftime('%Y-%m-%d %H:%M:%S')
+
+
+    # url_title_lefturl_sourceSite_pairs=[["http://news.xinhuanet.com/local/2015-10/25/c_128355379.htm","浙江叔侄冤案平反推动者：他们遭受的刑讯逼供，让我整晚失眠丨不忘初心"," ","谷歌内地新闻"]]
 
     for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
         # if sourceSiteName == "热点":
@@ -205,8 +207,6 @@ def do_isOnline_task(params):
     else:
         print "isOnline fail"
 
-
-
 def is_condition_meet(url, must_meet_field_list):
 
     list_size = len(must_meet_field_list)
@@ -267,7 +267,10 @@ def doImgGetAndSave(k, relate, url):
         r_text = requests.get(apiUrl_text)
         text = (r_text.json())["text"]
         e["text"] = text
-        # text=text.encode('utf-8')
+        try:
+            text=text.encode('utf-8')
+        except:
+            continue
         # text = text.replace(' ', '')
 
         try:
@@ -276,6 +279,9 @@ def doImgGetAndSave(k, relate, url):
         except:
             logging.warning("##################### gist_exception ********************")
             gist = Gist().get_gist_str(text)
+        # if the summary is the first sentence which is seperated by comma, then we don't use it.
+        if gist.split('，')[0] == text.replace(' ','').split('，')[0]:
+            gist = ""
         e["gist"] = gist
         compress = get_compression_result(gist)
         e["compress"] = compress
@@ -536,11 +542,12 @@ def do_abs_task(params):
             if text:
                 conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
                 # print type(text)
-
-            # text=text.encode('utf-8')
+            try:
+                text=text.encode('utf-8')
+            except:
+                return False
             # text = text.replace(' ', '')
-            text = "".join(text.split('\n'))
-
+            # text = "".join(text.split('\n'))
             try:
                 # gist = fetch_gist_result(text)
                 gist = g().get_gist(text)
@@ -548,7 +555,9 @@ def do_abs_task(params):
             except:
                 logging.warning("##################### gist_exception ********************")
                 gist = Gist().get_gist_str(text)
-
+            # if the summary is the first sentence which is seperated by comma, then we don't use it.
+            if gist.split('，')[0] == text.replace(' ','').split('，')[0]:
+                gist = ""
             conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"gist": gist}})
             compress = get_compression_result(gist)
             conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"compress": compress}})
@@ -686,18 +695,24 @@ def do_content_img_task(params):
             # continue
     print text
     print type(text)
-    # text=text.encode('utf-8')
+    try:
+        text=text.encode('utf-8')
+    except:
+        return False
     # text = text.replace(' ', '')
 
     if text:
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"text": text}})
         try:
+            # News comes from GoogleNewsItem
             gist = g().get_gist(text)
             # gist = fetch_gist_result(text)
         except:
             logging.warning("##################### gist_exception ********************")
             gist = Gist().get_gist_str(text)
-
+        # if the summary is the first sentence which is seperated by comma, then we don't use it.
+        if gist.split('，')[0] == text.replace(' ','').split('，')[0]:
+                gist = ""
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"gist": gist}})
         compress = get_compression_result(gist)
         conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {"compress": compress}})
@@ -1153,7 +1168,8 @@ def set_task_ok_by_url_and_field(url, field):
 def GetWeibo(title):
 
     # weibos = weibo_relate_docs_get.search_relate_docs(title, 1)
-    weibos = weibo_relate_docs_get.baidusearch_relate_docs(title,1)
+    # weibos = weibo_relate_docs_get.baidusearch_relate_docs(title,1)
+    weibos = weibo_relate_docs_get.baidusearch_relate_weibo(title)
     # weibos = json.loads(weibos)
 
     if isinstance(weibos, list) and len(weibos) <= 0:
@@ -1179,7 +1195,7 @@ def GetWeibo(title):
         # weibo["title"] = weibo["content"]
         # del weibo["content"]
         weibo_temp["user"] = weibo["source_name"]
-        weibo_temp["title"] = weibo["content"]
+        weibo_temp["title"] = replace_html(weibo["content"])
         weibo_temp["url"] = weibo["url"]
         weibo_temp["profileImageUrl"] = weibo["profile_image_url"]
         weibo_temp["sourceSitename"] = "weibo"
@@ -1202,6 +1218,15 @@ def GetWeibo(title):
         return weibos_of_return[0:8]
     return weibos_of_return
 
+
+def replace_html(s):
+    s = s.replace('&quot;','"')
+    s = s.replace('&amp;','&')
+    s = s.replace('&lt;','<')
+    s = s.replace('&gt;','>')
+    s = s.replace('&nbsp;',' ')
+    s = s.replace(' - 361way.com','')
+    return s
 
 def GetLastKeyWord(title):
 
@@ -1333,15 +1358,18 @@ def fetch_unrunned_docs():
     return un_runned_docs
 
 
-def fetch_unrunned_docs_by_date(lastUpdate=False,isOnline=False, aggreSearchOk=False, update_direction=pymongo.ASCENDING):
+def fetch_unrunned_docs_by_date(lastUpdate=False,isOnline=False,cluster=False,aggreSearchOk=False, update_direction=pymongo.ASCENDING):
     start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
     if isOnline:
-        if aggreSearchOk:
-            docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "aggreSearchOk": {"$exists": 0}, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
+        if cluster:
+            docs = conn["news_ver2"]["Task"].find({"isOnline": 1}).sort([("updateTime", pymongo.DESCENDING)]).limit(50)
         else:
-            docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
+            if aggreSearchOk:
+                docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "aggreSearchOk": {"$exists": 0}, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
+            else:
+                docs = conn["news_ver2"]["Task"].find({"isOnline": 1, "updateTime": {"$gte": start_time}}).sort([("updateTime", 1)])
         return docs
 
     if not lastUpdate:
@@ -1513,7 +1541,7 @@ def find_Index_similar_with_compare_news(training_data, data_to_classify):
             for sims_elem in sims:
                 if sims_elem[0]=="doc":
                     continue
-                elif sims_elem[1]>=0.7 or (same_word[sims_elem[0]]>=keyword_num*0.2 and keyword_num>=10):
+                elif sims_elem[1]>=0.8 or (same_word[sims_elem[0]]>=keyword_num*0.3 and keyword_num>=10):
                     paragraphIndex_dict[sims_elem[0]] = { "similarity": sims_elem[1]
                                                          , "unit_vec" : unit_vec[sims_elem[0]]
                                                          , "keyword": keyword}
@@ -1885,21 +1913,45 @@ def get_last_sen_seg(sen=''):
     print type(sen.decode("utf8"))
     last_sen_seg = re.split(ur",|，|，", sen.decode("utf8"))[-1]    #",|，|，" sen.encode('utf8').decode("utf8")
     return last_sen_seg
+
 def get_compression_result(raw_sentence):
-    raw_sentence = unicode(raw_sentence)
-    refined_text = text_preprocess(raw_sentence)
-    get_last_sen = get_last_sen_seg(refined_text)
-    sentence_ready_to_compress = get_last_sen
-    if len(refined_text) <= 12:
-        return refined_text
+    #raw_sentence = unicode(raw_sentence)
+    #refined_text = text_preprocess(raw_sentence)
+    # We ensure that we have at least have 15 chinese characters.
+    if len(raw_sentence) <= 45:
+        return raw_sentence
+
+    conjunction_words = ['如果','因此','，并','所以']
+    for conjunction_word in conjunction_words:
+        if conjunction_word in raw_sentence:
+            return raw_sentence
+
+    new_raw_sentence = raw_sentence.replace('、', '和').replace('+', '加').replace('“', '').replace('”', '').replace('‘','').replace('’', '').replace('%', '').replace('-', '_')
+    sen_seg = re.split(",|，", new_raw_sentence)
+    len_sen_seg = len(sen_seg)
+    last_sen_seg = sen_seg[-1]
+    
+    # We simply use a cycle to ensure the result of compresion to have more than 6 chinese word characters.
+
+    reverse_idx = 2
+    while(len(last_sen_seg) <= 24 and len_sen_seg >= reverse_idx):
+        tmp_seg = sen_seg[-reverse_idx] + '，'
+        tmp_seg += last_sen_seg
+        last_sen_seg = tmp_seg
+        reverse_idx += 1
+
+    #get_last_sen = get_last_sen_seg(refined_text)
+    sentence_ready_to_compress = last_sen_seg
+    #if len(refined_text) <= 12:
+    #    return refined_text
 
     try:
         compr_result = requests.get("http://60.28.29.37:8080/SentenceCompressor?sentence=" + sentence_ready_to_compress)
         compr_result = (compr_result.json())
         return compr_result["result"]
     except:
-        return get_last_sen
-    return get_last_sen
+        return last_sen_seg
+    return last_sen_seg
 
 
 def do_search_task(params):
@@ -1925,12 +1977,12 @@ def do_search_task(params):
 
     params_key = {"key": topic}
     data = urllib.urlencode(params_key)
-    search_url ="http://192.168.0.37:8080/search?"+data
-    # search_url ="http://60.28.29.37:8080/search?"+data
+    search_url ="http://192.168.0.37:8083/search?"+data
+    # search_url ="http://60.28.29.37:8083/search?"+data
     try:
         r_text = r.get(search_url)
         text = (r_text.json())
-        search_list = text["items"]
+        search_list = text["searchItems"]
     # try:
 
     # r_text = r.get(searchUrl_text)
@@ -1947,6 +1999,8 @@ def do_search_task(params):
         search_title = search_elem["title"]
         search_title = trim_bracket(search_title)
         if not (search_url.endswith('html') or search_url.endswith('shtml') or search_url.endswith('htm')):
+            continue
+        if search_url.split('/')[-1].find('index')>=0:
             continue
         try:
             apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + search_url
@@ -1971,16 +2025,25 @@ def do_search_task(params):
             print "url:%s" % search_url, " : text is None"
             continue
 
+        # print type(str(search_title))
+
         result_elem["_id"] = search_url
         if "img" in params.keys():
             result_elem["originsourceSiteName"] = "bing热点"
         else:
             result_elem["originsourceSiteName"] = "热点"
-        result_elem["updateTime"] = getDefaultTimeStr()
-        # result_elem["updateTime"] = time_match(search_url)
+        # result_elem["updateTime"] = getDefaultTimeStr()
+        updateTime = time_match(search_url)
+        if updateTime[0:4]<>'2015':
+            print "updateTime year no equal 2015"
+            print "updateTime,%s"%updateTime
+            print "sourceUrl,%s"%search_url
+            continue
+        result_elem["updateTime"] = updateTime
+        print "updateTime,%s"%updateTime
         result_elem["sourceUrl"] = search_url
         result_elem["description"] = ""
-        result_elem["title"] = str(search_title)
+        result_elem["title"] = replace_html(str(search_title))
         result_elem["relate"] = {}
         result_elem["sourceSiteName"] = "百家热点"
         result_elem["createTime"] = getDefaultTimeStr()
@@ -2154,14 +2217,17 @@ if __name__ == '__main__':
     # print trim_bracket("夏克立否认夏天退出爸爸3 暂由夫人黄嘉千替代(图)")
     # gist = fetch_gist_result(r"8月23日上午9时许，位于上海展览中心的上海书展人头攒动，一位身着米白色休闲西装的老人，在讲台台阶旁的轮椅上安静坐着。 老人白白瘦瘦，看着却特别精神。当主持人向台下观众作完介绍，观众才发现，在一旁静坐良久的老人正是这场签售会的主角。他是周恩来的侄子、86岁的周尔鎏先生。 周尔鎏带来的是他的新书，由中央文献出版社出版的《我的七爸周恩来》。 周尔鎏的祖父与周恩来的父亲是嫡堂兄弟，分别属于家族里的二房和七房。因长房无后，周尔鎏的祖父就过继给长房而成为周家的大家长，周尔鎏即成为周家的长房长孙。两家不仅同时从绍兴举家迁往淮安定居，并且同居一宅，不分彼此。 周尔鎏1929年出生在上海，“我出生不久生母就离世了，那时我家在上海北四川路永安里44号（现已定为周恩来早期革命遗址），七爸和七妈在我家隐蔽时，我还不到1岁，他们对我百般呵护。从我牙牙学语时，就遵嘱称他们‘七爸’、‘七妈’。” 他口中的七爸正是周恩来，七妈则是邓颖超。 新书首次披露独家史料 1939年至1942年间，周尔鎏的父亲和继母等家人分别去了重庆和苏北，只留他一人在上海读书，后来被周恩来戏称为“孤岛孤儿”。1946年，周恩来通过时任《文汇报》经理张振邦先生几经辗转找到了周尔鎏，“以后我就由七爸七妈直接抚养”。 周恩来夫妇对周尔鎏不仅在生活上给予支持和帮助，也对他之后的工作和思想产生了极大影响。 据周尔鎏介绍，周恩来是中国理学开山鼻祖之一周敦颐的第33世孙，作为周氏始祖的后人，更作为家庭成员中的杰出代表，周恩来早年就因周敦颐而深感自豪并以之为人生楷模。 “七爸作为周敦颐家族的后人，一生信奉其先祖所倡导的‘以诚为本’。”周尔鎏在书中写道，“他任职世界人口最多的大国总理26年之久，始终做到廉洁自持，一尘不染，这是当时全中国人民乃至全世界人民都有目共睹或耳熟能详的历史事实。” 周尔鎏年轻时曾经入伍当兵，后进入南开大学学习，毕业后曾任中联部副局长、对外文委（文化部）司长、北京大学副校长、中国驻英使馆文化参赞、中国社会发展研究中心主任等职。 “由于历史巧遇和工作安排，常常是继总理政治出访某些国家后，我便随后陪同文化代表团出访该国。在国内，我也常陪外宾去总理视察过的地方和单位参观。为此，七爸曾戏称我对他是‘亦步亦趋，步我后尘’。” 周尔鎏说，有关周恩来的许多资料迄今未曾面世，自己深感有责任在有生之年将这些宝贵史料披露出来。“书中内容或许有助于增进国内外对周恩来总理的全面了解，有助于周恩来研究工作的推进。” 在周氏后人中，读者较早看到的是周恩来侄女周秉德的回忆录，周尔鎏认为，自己和周秉德因“经历和年龄差别，当年的事她并不知晓”。 这部20余万字的新书分为《周氏家世》《爱宝与七爸七妈》《建国风云》《文革岁月》《永远的怀念》《史实的订补与澄清》《秉承遗训》七个部分。新书首次公布了诸多独家史料，包括周恩来曾先留学英国后留学法国，“伍豪事件”前后周恩来躲藏在周尔鎏的出生地上海，周恩来生前最后的枕边书、内心的家族愿望，以及从建国到“文革”，周恩来在家人面前流露的思想看法等。 “周元棠是七爸的高祖，他对七爸的影响是迄今为止罕为人知的。”周尔鎏在书中写道。 周元棠生于1791年，卒于1851年，“生前著述甚多，但因战乱，身后仅有一卷《海巢书屋诗稿》留存。这卷诗稿所录诗作均是周元棠22岁之前所写。” 周尔鎏在书中披露，正是这卷收录135首诗作的诗稿，被周恩来珍藏在床头枕下阅读多年，伴随他历经“文革”的十年浩劫，直到他离开人世。 周尔鎏认为，周恩来幼年生长在淮安，此后相继在辽宁、天津求学，后来更是辗转南北，但他对祖居地??绍兴的乡恋深情始终未变，对当地的风物景致、文化习俗甚为了解，这除了周恩来的博闻强识并曾专程到过绍兴外，和他研读高祖周元棠的诗作获取独特的感受不无关系。 “元棠公生前虽遭遇家道衰落，但他一生甘守清贫，始终秉持高洁操守。”周尔鎏认为，周元棠《自述》诗作中“当作奇男子”的铮铮铁骨之言，迄今仍然令周氏后人有读其佳句如见其人的感受。 周恩来在1917年9月从天津南开东渡日本，在出发前曾写下诗篇《大江歌罢掉头东》：大江歌罢掉头东，邃密群科济世穷。面壁十年图破壁，难酬蹈海亦英雄。 周尔鎏感慨，青年时代周恩来为拯救中华而愿献出一切的豪迈气概，与元棠公“当作奇男子”的铮铮铁骨是何等的相似。 再如《海巢书屋诗稿》中的《留侯》，“提到自古以来真正的可以称作豪杰的历史人物并不多见，往往不是过于刚直就是过于压抑自己，真正能够文武全才刚柔并济的英雄人物‘总以识高见才力’。” 周尔鎏发现，周元棠在无意中还成了一位预言家，“七爸非凡而又曲折艰辛的一生，于百余年后全面验证了元棠公的预示，也同时验证了中华民族传统文化强大的生命力。” “从一个没落的封建大家庭中走出来的周恩来，最终成为世人公认的智勇兼备、文武双全、刚柔并济的伟大政治家，与家族传承不无关系。因此，七爸一生珍藏这一诗集也就不足为奇了，他经常反复研读这些诗篇，从中得到激励或抚慰，也是可以想见的。”周尔鎏写道。 出身大家庭的周恩来曾打算退休后写一部名为《房》的长篇小说。周恩来告诉周尔鎏，这一小说的内容就是根据大家庭的许多“房”的不同历史演变，作为中国社会的缩影加以描述。然而这一愿望最终未能实现。 “文革”初期跟不上 周尔鎏认为，“文革”初期，周恩来也感觉“跟不上”。 他在书中写道，1965年，毛泽东提出“整党内走资本主义道路的当权派”，又向地方一些领导人说：“中央出了修正主义你们怎么办？”可以说这是危险的提示，实际上，毛泽东已经发出了准备发动“文化大革命”的重要信号。 另一方面，周尔鎏认为，当时的周恩来“只是感到毛泽东同其他中央领导的分歧可能愈加厉害，并未料到这场异乎寻常的政治大动乱即将来临”。 1965年11月，上海《文汇报》突然发表了姚文元的文章《评新编历史剧〈海瑞罢官〉》，对剧作者、时任北京市副市长吴晗进行公开点名批判。 “七爸当时对此事一无所知，他同意彭真的意见：吴晗问题是学术问题而不是政治问题，学术问题要坚持‘百花齐放、百家争鸣’的方针。”周尔鎏写道。 1965年5月25日，在康生、曹轶欧夫妇的策划下，北京大学哲学系聂元梓等七人贴出“大字报”??《宋硕、陆平、彭?云在文化大革命中究竟干些什么？》，攻击北京大学党委和北京市搞修正主义，遭到许多师生和员工的批驳。 周尔鎏回忆，由于北京大学有几十个国家的留学生，七爸指示：北大搞运动一定要慎重，注意内外有别。大字报贴出以后，七爸连夜派中共中央华北局、国务院外办和高教部的负责人到该校，批评聂元梓等人违反中央规定的原则，搞乱了中央的部署，并重申要严格遵守内外有别的中央指示。 几日后，毛泽东指示康生、陈伯达，将该大字报由新华社全文广播，并在全国各地报刊发表。 “当晚，陈毅询问七爸：‘这么大的举动，为什么事先不通知？’七爸回答道：‘我本人也只是临近广播前才接到康生电话，告我该大字报内容由中央台向全国播出。 1974年，邓颖超曾和周尔鎏有一次特别的谈话。 “1974年春天，七爸不仅是重病缠身，同时他在政治上还处于一个危难的时刻，七妈避开周围耳目，单独嘱咐我配合他们作最坏的准备。” 周尔鎏感到，这次谈话在某种意义上讲，是七爸七妈对他的最后嘱咐。 这一次谈话，周尔鎏在书中形容为“特别的谈话”。 他在书中回忆，“1974年的这次谈话，七妈避开秘书和身边工作人员秘密地打电话约我个别见面。她用了很长的时间让我详尽地汇报‘文革’以来我的遭遇和表现，看来她对我的情况早就有所了解。” 周尔鎏向邓颖超谈到康生和江青后，邓颖超说道，“至于你提到康生，他称外事口的工作不仅是‘三和一少’（对帝国主义和，对修正主义和，对各国反动派和，对支持民族解放运动少），甚至无限上纲为‘三降一灭’（投降帝国主义、投降现代修正主义、投降反动派和消灭民族解放运动），你说他将矛头除明显指向王稼祥同志外还指向七爸这是对的。‘四人帮’也是这样，我们没法跟别人讲，这次就要跟你讲彻底。江青她就是反你七爸的，看来是狼子野心，有点不达目的不罢休的意思。” “总理已染重病在身，居然还受到这种恶毒的污蔑和攻击，你作为侄儿并且一度是外事口的干部，对你七爸非常了解，对这样极不公正合理的遭遇当时是会感到义愤的。其实不仅如此，这不幸的遭遇也可能会降临到你和你的家庭，这也是七爸让我再次特地召见你的原因之一，希望你预作最坏的准备……北京的形势如何，七爸的病情如何发展都很难说。”周尔鎏在书中回忆邓颖超的谈话。 多年后，邓颖超向周尔鎏讲述了周恩来去世的真正原因。")
     # print gist
+    # replace_html("四川&quot;老板&quot;配手机监控乞丐 乞者报警获解救】9月5日，在四川达州张家湾行乞的一名残疾人用手机报警表示“我是被迫行乞”。据报警的行乞残疾人称，")
+    # replace_html("广州女白领&quot;卖晚安&quot;赚3千元 短信1元1条")
     while True:
         doc_num = total_task()
         if doc_num == "no_doc":
             time.sleep(60)
 
     # GetWeibo("孙楠 歌手")
-
-
+    
+    sentence = '收到各方好友和媒体的祝福，在此感谢'
+    print get_compression_result(sentence)
 
 
 
