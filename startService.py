@@ -37,9 +37,9 @@ class SearchHandler(tornado.web.RequestHandler):
         userid = self.get_argument("userid", None)
         deviceid = self.get_argument("deviceid", None)
         keyword = self.get_argument("keyword", None)
-        start = self.get_argument("start", None)
+        page = self.get_argument("page", None)
          
-        result = yield search.search(keyword, start)
+        result = yield search.search(keyword, page)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result)) 
 
@@ -610,7 +610,6 @@ class FetchChannelListHandler(tornado.web.RequestHandler):
 
 
 class StartPageHandler(tornado.web.RequestHandler):
-    @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
         result = yield start_page_post.getStartPageContent()
@@ -619,8 +618,9 @@ class StartPageHandler(tornado.web.RequestHandler):
 
 
 class FetchElementaryHandler(tornado.web.RequestHandler):
+    @tornado.gen.coroutine
     def post(self):
-        result = elementary_post.getElementary()
+        result = yield elementary_post.getElementary()
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
