@@ -323,9 +323,9 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True, deviceType = 'ios')
             if isinstance(baike, dict):
                 baike['abs'] = baike['abstract']
                 del baike['abstract']
-                result['baike'] = [baike]
+                doc['baike'] = [baike]
             if isinstance(baike, list) and len(baike) > 0:
-                result['baike'] = baike
+                doc['baike'] = baike
 
         if outFieldFilter:
             doc = outputField(doc)
