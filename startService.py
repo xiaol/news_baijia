@@ -619,8 +619,10 @@ class StartPageHandler(tornado.web.RequestHandler):
 
 
 class FetchElementaryHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
     def post(self):
-        result = elementary_post.getElementary()
+        result = yield elementary_post.getElementary()
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 

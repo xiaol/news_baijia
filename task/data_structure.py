@@ -313,6 +313,11 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True, deviceType = 'ios')
         if type(doc["imgUrls"]) != list:
             doc["imgUrls"] = [doc["imgUrls"]]
 
+        if "abstract" in doc.keys():
+            doc["abs"] = doc["abstract"]
+            del doc["abstract"]
+        else:
+            doc["abs"] = ""
         if outFieldFilter:
             doc = outputField(doc)
         result.append(doc)
@@ -326,7 +331,7 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True, deviceType = 'ios')
 
 
 #输出示例： 多出relate|category
-        # 如下字段可能有 (|douban|weibo|zhihu|abstract|"imgWall"|”compress“|baike)
+        # 如下字段可能有 (|douban|weibo|zhihu|abs|"imgWall"|”compress“|baike)
 # {
 #   “updateTime”（新闻发布时间）: "2015-10-14 15:04:52",
 #   “sourceUrl”（新闻url）: "http://www.techweb.com.cn/tele/2015-10-14/2212661.shtml",
@@ -396,7 +401,7 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True, deviceType = 'ios')
 #   ],
 #
 #   “imgUrls”（新闻url）: "http://upload.techweb.com.cn/2015/1014/1444805229847.jpg",
-#   “abstract”(算法算出新闻摘要): "据悉，在去年一月份威斯康星大学校友研究基金会就曾经针对苹果A7处理器未经允许使用其计算机微架构专利起诉过苹果公司，涉及到的产品是当时的iPhone5s与iPadAir，而之后A8与A8X芯片也出现同样的问题",
+#   “abs”(算法算出新闻摘要): "据悉，在去年一月份威斯康星大学校友研究基金会就曾经针对苹果A7处理器未经允许使用其计算机微架构专利起诉过苹果公司，涉及到的产品是当时的iPhone5s与iPadAir，而之后A8与A8X芯片也出现同样的问题",
 #   “imgWall”(图片集):[
 #   {
 #       “note”(图片信息描述): "10月13日，广东广州，刘女士家遭....",
@@ -407,7 +412,7 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True, deviceType = 'ios')
 #   ”compress“:(算法算出文章主干)
 #   “baike”(百科部分): {
 #     "url": "http://baike.baidu.com/view/3647.htm",
-#     “abstract”（算法算出百科摘要）: "加拿大(Canada),为北美洲最北的国家,西抵太平洋,东迄大西洋,北至北冰洋,东北部和丹麦领地格陵兰岛相望,东部和法属圣皮埃尔和密克隆群岛相望,南方与美国本土接壤,...          ",
+#     “abs”（算法算出百科摘要）: "加拿大(Canada),为北美洲最北的国家,西抵太平洋,东迄大西洋,北至北冰洋,东北部和丹麦领地格陵兰岛相望,东部和法属圣皮埃尔和密克隆群岛相望,南方与美国本土接壤,...          ",
 #     "title": "加拿大_百度百科
 #     “commentNum”:评论数量
 #
@@ -484,6 +489,11 @@ def convertNewsItems(docs = [],outFieldFilter = True, deviceType = 'ios'):  #输
         if type(doc["imgUrls"]) != list:
             doc["imgUrls"] = [doc["imgUrls"]]
         # print doc["imgUrls"]
+        if "abstract" in doc.keys():
+            doc["abs"] = doc["abstract"]
+            del doc["abstract"]
+        else:
+            doc["abs"] = ""
         if outFieldFilter:
             doc = outputField(doc)
         result.append(doc)

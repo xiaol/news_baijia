@@ -5,7 +5,7 @@ import pymongo
 
 DBStore = dbConn.GetDateStore()
 
-
+@tornado.gen.coroutine
 def getElementary():
     conn = DBStore._connect_news
     docs = conn['news_ver2']['elementary'].find({"title": {"$ne": None}}).sort("createTime", pymongo.DESCENDING).limit(
@@ -17,4 +17,5 @@ def getElementary():
                 continue
             doc.pop('_id')
             results_docs.append(doc)
-    return results_docs
+    # return results_docs
+    raise tornado.gen.Return(results_docs)
