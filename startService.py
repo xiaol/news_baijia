@@ -60,11 +60,11 @@ class fetchDetailHandler(tornado.web.RequestHandler):
         userId = self.get_argument("userid", None)
         platformType =  self.get_argument("platformtype", None)
         deviceId = self.get_argument("deviceid", None)
-        deviceType = self.get_argument("devicetype", None)
+        deviceType = self.get_argument("devicetype", "ios")
         newsId = self.get_argument("newsid", None)
         collection = self.get_argument("collection", None)
 
-        result = yield recommend.fetchDetail(newsId, collection,userId,platformType)
+        result = yield recommend.fetchDetail(newsId, collection,userId,platformType,deviceType)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 

@@ -20,12 +20,22 @@ conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replic
 def recommend(deviceId, channelId):
     db = conn.news_ver2
     doc_num = db.recommendItem.count()
-    random_num = random.random()*doc_num
     already_visit_set = r.smembers(deviceId)
+    docs_ex = []
     if channelId == "TJ0001":
-        docs = db.recommendItem.find({"_id":{'$gte': random_num}}).sort("createTime",pymongo.DESCENDING).limit(30)
+        # for i in range(1):
+            # random_num = random.random()*doc_num
+            # docs = db.recommendItem.find({"_id":{'$gte': random_num}}).sort("createTime",pymongo.DESCENDING).limit(50)
+        docs = db.recommendItem.find().sort("createTime",pymongo.DESCENDING).limit(2000)
+            # for doc in docs:
+            #     docs_ex.append(doc)
     else:
-        docs = db.recommendItem.find({"channelId":channelId, "_id":{'$gte': random_num}}).sort("createTime",pymongo.DESCENDING).limit(50)
+        # for i in range(3):
+            # random_num = random.random()*doc_num
+            # docs = db.recommendItem.find({"channelId":channelId, "_id":{'$gte': random_num}}).sort("createTime",pymongo.DESCENDING).limit(50)
+        docs = db.recommendItem.find({"channelId":channelId}).sort("createTime",pymongo.DESCENDING).limit(1000)
+            # for doc in docs:
+            #     docs_ex.append(doc)
     doc_list = []
     i = 0
     for doc in docs:
@@ -43,14 +53,15 @@ def recommend(deviceId, channelId):
     # r.hmset("deviceId",{"googleNewsItems":docs_return})
     raise tornado.gen.Return(doc_list)
 
+
 @tornado.gen.coroutine
-def fetchDetail(newsId, collection, userId, platformType):
+def fetchDetail(newsId, collection, userId, platformType, deviceType):
     if collection == "NewsItem":
         doc = conn["news_ver2"]["NewsItems"].find_one({"newsId": newsId})
-        result = convertNewsItems([doc], outFieldFilter = False)[0]
+        result = convertNewsItems([doc], outFieldFilter = False, deviceType = deviceType)[0]
     elif collection == "googleNewsItem":
         doc = conn["news_ver2"]["googleNewsItem"].find_one({"newsId": newsId})
-        result = convertGoogleNewsItems([doc], outFieldFilter = False)[0]
+        result = convertGoogleNewsItems([doc], outFieldFilter = False, deviceType = deviceType)[0]
     else:
         return
     if not result:
@@ -64,7 +75,7 @@ def fetchDetail(newsId, collection, userId, platformType):
             del relate_elem["text"]
 
     if "imgUrls" in result.keys():
-        result['imgUrl'] = doc['imgUrls']
+        result['imgUrl'] = doc['imgUrls'][0]
 
     result["relate"] = allrelate
     result_points = []

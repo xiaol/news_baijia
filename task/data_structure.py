@@ -110,7 +110,7 @@ def extractContent(content):
                 i = i + 1
     return contentlist
 
-def extractContentByGoogle(content):
+def extractContentByGoogle(content,deviceType):
 
     text_list = content.split('\n')
     result_list = []
@@ -119,9 +119,11 @@ def extractContentByGoogle(content):
         if not text_elem.strip():
             continue
         else:
-            result_list.append({"txt": text_elem, "index": i})
-            i = i + 1
-
+            if deviceType == 'ios':
+                result_list.append({"txt": text_elem, "index": i})
+                i = i + 1
+            else:
+                result_list.append({"i": {"txt": text_elem}})
     return result_list
 
 
@@ -172,7 +174,8 @@ def constructEvent(eventList):
         if eventElement['eventId'] == eventElement["_id"]:
             result_doc = eventElement
             if 'imgUrls' in eventElement.keys():
-                if len(eventElement['imgUrls'])>0:
+                type(eventElement['imgUrls'])
+                if eventElement['imgUrls'] is not None and len(eventElement['imgUrls'])>0:
                     imgUrl_ex.append(eventElement['imgUrls'])
             is_notin_flag = False
 
@@ -183,7 +186,7 @@ def constructEvent(eventList):
                 relatePointsList.append(subElement)
                 result_doc["special"] = 9
                 if 'imgUrls' in eventElement.keys():
-                    if len(eventElement['imgUrls'])>0:
+                    if eventElement['imgUrls'] is not None and len(eventElement['imgUrls'])>0:
                         imgUrl_ex.append(eventElement['imgUrls'])
 
     if is_notin_flag:
@@ -195,7 +198,7 @@ def constructEvent(eventList):
 
 
 
-def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNewItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
+def convertGoogleNewsItems(docs = [], outFieldFilter = True, deviceType = 'ios'):    #输入GoogleNewItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
     docs = reorganize_news(docs)
 
     special_source = ["观察", "网易","地球"]
@@ -243,7 +246,7 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNe
 
         if "content" in doc.keys():
             try:
-                doc["content"] = extractContentByGoogle(doc["content"])
+                doc["content"] = extractContentByGoogle(doc["content"],deviceType)
             except:
                 continue
                 print "content is list,url,%s"%doc["sourceUrl"]
@@ -412,7 +415,7 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True):    #输入GoogleNe
 
 
 
-def convertNewsItems(docs = [],outFieldFilter = True):  #输入NewsItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
+def convertNewsItems(docs = [],outFieldFilter = True, deviceType = 'ios'):  #输入NewsItems数据(list里面包含字典)  输出 统一数据格式(list里面包含字典)
     docs = reorganize_news(docs)
     result = []
     for doc in docs:
@@ -433,7 +436,9 @@ def convertNewsItems(docs = [],outFieldFilter = True):  #输入NewsItems数据(l
             del doc["source_url"]
         if 'content' in doc.keys():
             doc["imgUrls"] = extractImgUrls(doc["content"])
-            doc["content"] = extractContent(doc["content"])
+            if deviceType == "ios":
+                doc["content"] = extractContent(doc["content"])
+
         if "source" in doc.keys():
             del doc["source"]
         if "start_url" in doc.keys():
