@@ -275,7 +275,7 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True, deviceType = 'ios')
         if "relatePointsList" not in doc.keys():
             doc["relatePointsList"] = []
         else:
-            print 1
+            print "relatePointsList already exists!"
         if "text" in doc.keys():
             del doc["text"]
         if "isOnline" in doc.keys():

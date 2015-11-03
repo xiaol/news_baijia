@@ -1646,6 +1646,7 @@ def recommend():
     docs_googleNewsItem = convertGoogleNewsItems(docs_googleNewsItem)
     docs_NewsItems = []
     for channelId in [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 16]:
+        print "channelId,%d"%channelId
         channelId = str(channelId)
         docs = conn["news_ver2"]["NewsItems"].find({'channel_id':channelId}).sort("create_time", pymongo.DESCENDING).limit(1000)
         for doc in docs:
@@ -1656,12 +1657,14 @@ def recommend():
     i = 0
 
     for doc in docs_googleNewsItem:
+        print i
         doc["_id"] = i
         tem_dict=dict(doc)
         conn['news_ver2']['recommendItem'].save(tem_dict)
         i = i + 1
     #     doc_list.append(doc)
     for doc in docs_NewsItems:
+        print i
         doc["_id"] =  i
         tem_dict=dict(doc)
         conn['news_ver2']['recommendItem'].save(tem_dict)
