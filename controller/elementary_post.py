@@ -18,4 +18,5 @@ def getElementary():
                 continue
             doc.pop('_id')
             results_docs.append(doc)
+    # return results_docs
     raise tornado.gen.Return(results_docs)

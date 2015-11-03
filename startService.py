@@ -618,6 +618,7 @@ class StartPageHandler(tornado.web.RequestHandler):
 
 
 class FetchElementaryHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
         result = yield elementary_post.getElementary()
