@@ -123,7 +123,7 @@ def extractContentByGoogle(content,deviceType):
                 result_list.append({"txt": text_elem, "index": i})
                 i = i + 1
             else:
-                result_list.append({"i": {"txt": text_elem}})
+                result_list.append({str(i).decode('utf-8'): {"txt": text_elem}})
     return result_list
 
 

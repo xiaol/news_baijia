@@ -11,7 +11,8 @@ import random
 from  task.data_structure import convertNewsItems, convertGoogleNewsItems
 from  content_get import Get_Relate_docs, get_points,count_praise,project_comments_to_paragraph
 
-r = redis.Redis(host='121.41.75.213', port=6379, db=1)
+# r = redis.Redis(host='121.41.75.213', port=6379, db=1)
+r = redis.Redis(host='localhost', port=6379, db=1)
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                      read_preference=ReadPreference.SECONDARY)
