@@ -110,7 +110,7 @@ def fetchDetail(newsId, collection, userId, platformType, deviceType):
                 else:
                     comment_result['isPraiseFlag'] = 0
 
-            points = project_comments_to_paragraph(doc, doc_comment["comments"])
+            points = project_comments_to_paragraph(doc, doc_comment["comments"], deviceType)
             result_points.extend(points)
     points_fromdb.extend(result_points)
 
