@@ -544,7 +544,9 @@ def convertNewsItems(docs = [],outFieldFilter = True, deviceType = 'ios'):  #输
         if outFieldFilter:
             doc = outputField(doc)
         result.append(doc)
-
+        if "weibo" in doc.keys():
+            for weibo in doc["weibo"]:
+                weibo["sourceSitename"] = "weibo"
         if "imgUrl_ex" in doc.keys():
             del doc["imgUrl_ex"]
         if "special" in doc.keys():
