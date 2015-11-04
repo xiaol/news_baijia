@@ -27,7 +27,7 @@ def recommend(deviceId, channelId):
         # for i in range(1):
             # random_num = random.random()*doc_num
             # docs = db.recommendItem.find({"_id":{'$gte': random_num}}).sort("createTime",pymongo.DESCENDING).limit(50)
-        docs = db.recommendItem.find().sort("createTime",pymongo.DESCENDING).limit(2000)
+        docs = db.recommendItem.find().sort("_id",pymongo.ASCENDING).limit(2000)
             # for doc in docs:
             #     docs_ex.append(doc)
     else:

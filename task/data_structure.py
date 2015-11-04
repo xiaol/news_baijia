@@ -1,7 +1,6 @@
 # coding=utf-8
 
 from controller.config import dbConn
-from weibo import weibo_relate_docs_get, user_info_get
 import json
 import datetime, time
 import operator
@@ -9,16 +8,12 @@ import pymongo
 from controller.utils import get_start_end_time
 from pymongo.read_preferences import ReadPreference
 # from channel_get import fetch_channel, newsFetch_channel,loadMoreFetchContent
-from para_sim.TextRank4ZH.gist import Gist
-import task.requests_with_sleep as requests
-# from content_get import Get_Relate_docs
-from AI_funcs.sen_compr.text_handler import SentenceCompressor
+
 import re
 import tornado.gen
-from task.weibo_run_re import is_error_code, getDefaultTimeStr
 import logging
 from weibo.Comments import guid
-
+from controller.home_get import delete_duplicate_sulist,calculate_sim
 
 conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
                                      read_preference=ReadPreference.SECONDARY)
@@ -52,7 +47,7 @@ u"外媒观光团":"外媒",
 u"贵圈乱不乱":"娱乐",
 u"科学嗨起来":"科技",
 u"直男常备":"体育",
-u"股往金来":"财经",
+u"股往今来":"财经",
 u"高逼格get√":"时尚",
 u"反正我信了":"搞笑",
 u"追剧看片schedule":"影视",
@@ -73,7 +68,7 @@ u"外媒观光团":"WM0005",
 u"贵圈乱不乱":"YL0006",
 u"科学嗨起来":"KJ0007",
 u"直男常备":"TY0008",
-u"股往金来":"CJ0009",
+u"股往今来":"CJ0009",
 u"高逼格get√":"SS0010",
 u"反正我信了":"GX0011",
 u"追剧看片schedule":"YS0012",
@@ -182,7 +177,7 @@ def constructEvent(eventList):
         else:
             subElement = {}
             if 'compress' in eventElement.keys() and 'similarity' in eventElement.keys():
-                subElement = {'sourceUrl': eventElement['sourceUrl'], 'sourceSiteName': eventElement['sourceSiteName'], 'compress': eventElement['compress'], 'similarity': eventElement['similarity']}
+                subElement = {'sourceUrl': eventElement['sourceUrl'], 'sourceSiteName': eventElement['sourceSiteName'], 'compress': eventElement['compress'], 'similarity': eventElement['similarity'], 'unit_vec': eventElement["unit_vec"]}
                 relatePointsList.append(subElement)
                 result_doc["special"] = 9
                 if 'imgUrls' in eventElement.keys():
@@ -195,6 +190,37 @@ def constructEvent(eventList):
         result_doc["relatePointsList"] = relatePointsList
         result_doc["imgUrl_ex"] = imgUrl_ex
     return result_doc
+
+
+def GetRelateNews(relate):
+    # if not relate:
+    #     return
+    distinctList = []
+    if relate is None:
+        return distinctList
+    if len(relate.keys())==0:
+        return distinctList
+    left_relate = relate["left"]
+    mid_relate = relate["middle"]
+    bottom_relate = relate["bottom"]
+    opinion = relate["opinion"]
+    deep_relate = relate["deep_report"]
+    sourceNameSet = set()
+
+    sumList = []
+    total_relate = [left_relate, mid_relate, bottom_relate, opinion, deep_relate]
+    for relate in total_relate:
+        for e in relate:
+            if not e["compress"]:
+                continue
+            if e["sourceSitename"] not in sourceNameSet:
+                if "title" in e.keys():
+                    del e["title"]
+                distinctList.append(e)
+                sourceNameSet.add(e["sourceSitename"])
+    return distinctList
+
+
 
 
 
@@ -276,6 +302,10 @@ def convertGoogleNewsItems(docs = [], outFieldFilter = True, deviceType = 'ios')
             doc["relatePointsList"] = []
         else:
             print "relatePointsList already exists!"
+        # if "relate" in doc.keys():
+        #     distinctList =  GetRelateNews(doc["relate"])
+        #     doc["relatePointsList"].extend(distinctList)
+        doc["relatePointsList"] = delete_duplicate_sulist(doc["relatePointsList"])
         if "text" in doc.keys():
             del doc["text"]
         if "isOnline" in doc.keys():
@@ -503,6 +533,14 @@ def convertNewsItems(docs = [],outFieldFilter = True, deviceType = 'ios'):  #输
             del doc["abstract"]
         else:
             doc["abs"] = ""
+        if 'baike' in doc.keys():
+            baike = doc['baike']
+            if isinstance(baike, dict):
+                baike['abs'] = baike['abstract']
+                del baike['abstract']
+                doc['baike'] = [baike]
+            if isinstance(baike, list) and len(baike) > 0:
+                doc['baike'] = baike
         if outFieldFilter:
             doc = outputField(doc)
         result.append(doc)

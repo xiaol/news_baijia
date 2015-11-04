@@ -1642,7 +1642,10 @@ def unOnlineEvent():
 
 def recommend():
     logging.warning("##################### recommend_event_task start ********************")
-    docs_googleNewsItem = conn["news_ver2"]["googleNewsItem"].find().sort("createTime",pymongo.DESCENDING).limit(1000)
+    now = datetime.datetime.now()
+    start_time = now + datetime.timedelta(days=-4)
+    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    docs_googleNewsItem = conn["news_ver2"]["googleNewsItem"].find({"createTime": {"$gte": start_time}}).sort([("isOnline", pymongo.DESCENDING), ("createTime", pymongo.DESCENDING)]).limit(2000)
     docs_googleNewsItem = convertGoogleNewsItems(docs_googleNewsItem)
     docs_NewsItems = []
     for channelId in [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 16]:
