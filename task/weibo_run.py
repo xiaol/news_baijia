@@ -1658,6 +1658,9 @@ def recommend():
     docs_NewsItems = convertNewsItems(docs_NewsItems)
     doc_list = []
     i = 0
+    t00 = datetime.datetime.now()
+    t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+    logging.warn("===============this round of save start====================%s"%(t00))
 
     for doc in docs_googleNewsItem:
         print i

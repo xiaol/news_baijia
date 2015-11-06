@@ -124,6 +124,7 @@ def fetchDetail(newsId, collection, userId, platformType, deviceType):
     for point_ele in points_fromdb:
         point_ele['comments_count'] = paragraph_comment_count[point_ele['paragraphIndex']]
         # ariesy 2015-6-17 提取语音弹幕
+
         if (flag == False and "speech_paragraph" == point_ele["type"] or "speech_doc" == point_ele["type"]):
             flag = True
             result["isdoc"] = True
