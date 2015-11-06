@@ -456,11 +456,23 @@ def newsFetchContentList(type, url, filterurls, userId, platformType, deviceType
         return newsFetchContent(url, filterurls, userId, platformType, updateTime, deviceType)
 
 
-def project_comments_to_paragraph(doc, comments):
+def project_comments_to_paragraph(doc, comments, devictType = 'ios'):
     points = []
     textblocks = []
-    for content in doc['content'].split('\n'):
-        textblocks.append({'content': content})
+    if devictType <> 'ios':
+        for content in doc['content']:
+            for key in content.keys():
+                if "txt" in content[key]:
+                    textblocks.append({'content': content[key]["txt"]})
+
+    elif isinstance(doc['content'], list):
+        for content in doc['content']:
+            if "txt" in content.keys():
+                textblocks.append({'content': content["txt"]})
+    else:
+        for content in doc['content'].split('\n'):
+            textblocks.append({'content': content})
+
     if len(textblocks) == 1:
         for comments_elem in comments:
             dict_len = len(comments_elem)
