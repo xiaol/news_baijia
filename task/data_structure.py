@@ -463,7 +463,6 @@ def convertNewsItems(docs = [],outFieldFilter = True, deviceType = 'ios'):  #输
     docs = reorganize_news(docs)
     result = []
     for doc in docs:
-        del doc["_id"]
         if "update_time" in doc.keys():
             doc["updateTime"] = doc["update_time"]
             del doc["update_time"]
@@ -481,8 +480,11 @@ def convertNewsItems(docs = [],outFieldFilter = True, deviceType = 'ios'):  #输
         if 'content' in doc.keys():
             doc["imgUrls"] = extractImgUrls(doc["content"])
             if deviceType == "ios":
-                doc["content"] = extractContent(doc["content"])
-
+                try:
+                    doc["content"] = extractContent(doc["content"])
+                except:
+                    print "extractContent,bug,%s"%doc["sourceUrl"]
+                    continue
         if "source" in doc.keys():
             del doc["source"]
         if "start_url" in doc.keys():
@@ -505,7 +507,7 @@ def convertNewsItems(docs = [],outFieldFilter = True, deviceType = 'ios'):  #输
             del doc["create_time"]
         if "newsId" not in doc.keys():
             doc["newsId"] = guid('NewsItems')
-            conn["news_ver2"]["NewsItems"].update({"source_url": doc["sourceUrl"]}, {"$set": {"newsId": doc["newsId"]}})
+            conn["news_ver2"]["NewsItems"].update({"_id": doc["_id"]}, {"$set": {"newsId": doc["newsId"]}})
 
         if len(doc["imgUrls"]) >0:
             doc["type"] = "one_pic"
@@ -551,7 +553,8 @@ def convertNewsItems(docs = [],outFieldFilter = True, deviceType = 'ios'):  #输
             del doc["imgUrl_ex"]
         if "special" in doc.keys():
             del doc["special"]
-
+        if "_id" in doc.keys():
+            del doc["_id"]
     return result
 
 #输出示例：
