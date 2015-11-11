@@ -464,10 +464,10 @@ def convertNewsItems(docs = [],outFieldFilter = True, deviceType = 'ios'):  #输
     docs = reorganize_news(docs)
     result = []
     for doc in docs:
-        if doc["url"] == "http://health.people.com.cn/n/2015/1110/c21471-27797670.html":
-            print 1
-        else:
-            continue
+        # if doc["url"] == "http://health.people.com.cn/n/2015/1110/c21471-27797670.html":
+        #     print 1
+        # else:
+        #     continue
         if "update_time" in doc.keys():
             doc["updateTime"] = doc["update_time"]
             del doc["update_time"]
