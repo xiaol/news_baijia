@@ -501,7 +501,11 @@ def convertNewsItems(docs = [],outFieldFilter = True, deviceType = 'ios'):  #输
                 # print doc["channel"]
         if "channel_id" in doc.keys():
             del doc["channel_id"]
-        doc["commentNum"] = extractCommentNum(doc["sourceUrl"])
+        try:
+            doc["commentNum"] = extractCommentNum(doc["sourceUrl"])
+        except:
+            print doc
+            doc["commentNum"] = 0
         if "create_time" in doc.keys():
             doc["createTime"] = doc["create_time"]
             del doc["create_time"]
@@ -509,7 +513,7 @@ def convertNewsItems(docs = [],outFieldFilter = True, deviceType = 'ios'):  #输
             doc["newsId"] = guid('NewsItems')
             conn["news_ver2"]["NewsItems"].update({"_id": doc["_id"]}, {"$set": {"newsId": doc["newsId"]}})
 
-        if len(doc["imgUrls"]) >0:
+        if "imgUrls" in doc.keys() and len(doc["imgUrls"]) >0:
             doc["type"] = "one_pic"
         else:
             doc["type"] = "no_pic"
