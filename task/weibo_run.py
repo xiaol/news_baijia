@@ -10,12 +10,16 @@ import re
 import subprocess
 import time
 import lxml.etree as etree
+import lxml.html
 import sys
 import logging
 import os
 from PIL import Image
 import datetime
 from requests.exceptions import Timeout
+from weibo_run_re import set_googlenews_by_url_with_field_and_value, do_search_task
+from controller.time_get import timeContentFetch
+from data_structure import convertNewsItems, convertGoogleNewsItems
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -36,6 +40,16 @@ except ImportError:
     from utils import get_start_end_time, is_number
 
 from abstract import KeywordExtraction
+# from AI_funcs.Doc_Clustering.doc_clustering import doc_cluster, doc_similarity
+import jieba
+import gensim
+from math import sqrt
+import numpy as np
+import math
+from config import dbConn
+
+from weibo_run_re import fetch_unrunned_docs_by_date, fetch_url_title_lefturl_pairs, do_event_task
+from controller.home_get import homeContentFetch
 
 g_time_filter = ["今天","明天","后天"]
 g_gpes_filter = ["中国"]
@@ -845,10 +859,12 @@ def baiduNewsTaskRun():
         url_here = url_title_pair[0]
         title_here = url_title_pair[1]
 
+        '''
         topic = Getner(title_here)
         if not topic:
             topic = extract_tags_helper(title_here)
-            topic = 's'.join(topic)
+            topic = 's'.join(topic)'''
+        topic = title_here[:len(title_here)/3*2]
 
         # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
 
@@ -1066,9 +1082,6 @@ def ImgMeetCondition_ver2(url, getSize=False):
         print width, "+", height, " url=======>", img_url
         return False
 
-
-
-
 def googleNewsTaskRun():
     start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -1101,6 +1114,11 @@ def googleNewsTaskRun():
         #     topic = extract_tags_helper(title_here)
         #     topic = 's'.join(topic)
 
+        t00 = datetime.datetime.now()
+        t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+        print "task start,%s"%t00
+        logging.warn("===============task start====================%s"%(t00))
+
         topic = title_here
         # cmd = 'scrapy crawl google.com.hk -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
         cmd = '/root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
@@ -1114,6 +1132,563 @@ def googleNewsTaskRun():
 
         conn["news_ver2"]["Task"].update({"url": url_here}, {"$set": {"googleSearchOk": 1}})
         time.sleep(130)
+
+
+def clusterTaskRun():
+
+    start_time, end_time, update_time, update_type, upate_frequency = get_start_end_time(halfday=True)
+    start_time = start_time + datetime.timedelta(days=-1)
+    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+    docs = conn["news_ver2"]["googleNewsItem"].find({"createTime": {"$gte": start_time
+                                                                    }}).sort([("createTime", -1)])
+    param_list = []
+    title_dict = {}
+    content_dict = {}
+    paragraphIndex = 0
+    for doc in docs:
+        param_elem = {}
+        url = doc["sourceUrl"]
+        if "text" in doc.keys():
+            content = doc["text"]
+        else:
+            continue
+        if "title" in doc.keys():
+            title = doc["title"]
+        title_dict[str(paragraphIndex)] = title
+        content_dict[str(paragraphIndex)] = content
+        paragraphIndex += 1
+        # param_elem["url"] = url
+        # param_elem["content"] = content
+        # param_list.append(param_elem)
+    # content_dict['1']="【摘要】         7月4日晚，张靓颖在演唱会上公开了与少城时代CEO冯轲长达12年的恋情。恋情公开后，各种有关张靓颖与冯柯的八卦疯狂扩散。但让人意外的是，张靓颖公开恋情，在微博上却让金星的红沙发火了起来，这是怎么一回事？\n    华龙网7月5日22时讯（首席记者 黄军）7月4日晚，张靓颖在演唱会上公开了与少城时代CEO冯轲长达12年的恋情。恋情公开后，各种有关张靓颖与冯柯的八卦疯狂扩散。但让人意外的是，张靓颖公开恋情，在微博上却让金星的红沙发火了起来，这是怎么一回事？\n    当天的演唱会上，张靓颖唱完《终于等到你》后，突然公开了与自己的经纪人，也就是少城时代CEO冯轲的恋情。在粉丝的尖叫下，冯轲走上舞台，与张靓颖热烈拥吻，让不少粉丝润湿眼眶。\n张靓颖做客《金星时间》。 视频截图\n    但是，今晚的微博热搜榜上，没有看见张靓颖公开恋情的话题，却有一个莫名其妙的话题——金星的红沙发。\n    要想知道这是怎么一回事，得回到6月10日播出的《金星时间》中看看。当时，张靓颖是座上宾，节目现场有两张红沙发，都挨着金星，张靓颖选择了离金星近的沙发坐下。采访中，金星问张靓颖是单身还是恋爱状态，张靓颖没有直接回答，但金星表示已经猜出。\n    金星对张靓颖说，坐在靠近她的位置上，很快就要嫁出去了。坐在另一个红沙发上，很快就要生孩子了。\n    这是有典故的。金星说，周迅来的时候还没谈恋爱，来坐了红沙发之后，回去就谈恋爱结婚了。张靓颖坐了那个红沙发后，也在7月4日公开恋情，网友笑称：“结婚生娃也不远了。”\n    也正因如此，张靓颖公开恋情后，“金星的红沙发”话题被迅速刷上了微博热搜榜，阅读量超过1000万。\n"
+    paragraphIndex_list = find_Index_similar_with_compare_news(content_dict,
+                 {"doc":"【摘要】         7月4日晚，张靓颖在演唱会上公开了与少城时代CEO冯轲长达12年的恋情。恋情公开后，各种有关张靓颖与冯柯的八卦疯狂扩散。但让人意外的是，张靓颖公开恋情，在微博上却让金星的红沙发火了起来，这是怎么一回事？\n    华龙网7月5日22时讯（首席记者 黄军）7月4日晚，张靓颖在演唱会上公开了与少城时代CEO冯轲长达12年的恋情。恋情公开后，各种有关张靓颖与冯柯的八卦疯狂扩散。但让人意外的是，张靓颖公开恋情，在微博上却让金星的红沙发火了起来，这是怎么一回事？\n    当天的演唱会上，张靓颖唱完《终于等到你》后，突然公开了与自己的经纪人，也就是少城时代CEO冯轲的恋情。在粉丝的尖叫下，冯轲走上舞台，与张靓颖热烈拥吻，让不少粉丝润湿眼眶。\n张靓颖做客《金星时间》。 视频截图\n    但是，今晚的微博热搜榜上，没有看见张靓颖公开恋情的话题，却有一个莫名其妙的话题——金星的红沙发。\n    要想知道这是怎么一回事，得回到6月10日播出的《金星时间》中看看。当时，张靓颖是座上宾，节目现场有两张红沙发，都挨着金星，张靓颖选择了离金星近的沙发坐下。采访中，金星问张靓颖是单身还是恋爱状态，张靓颖没有直接回答，但金星表示已经猜出。\n    金星对张靓颖说，坐在靠近她的位置上，很快就要嫁出去了。坐在另一个红沙发上，很快就要生孩子了。\n    这是有典故的。金星说，周迅来的时候还没谈恋爱，来坐了红沙发之后，回去就谈恋爱结婚了。张靓颖坐了那个红沙发后，也在7月4日公开恋情，网友笑称：“结婚生娃也不远了。”\n    也正因如此，张靓颖公开恋情后，“金星的红沙发”话题被迅速刷上了微博热搜榜，阅读量超过1000万。\n"}
+                 )
+    # param_cluster_list = doc_cluster(param_list)
+    # domain_dict = {}
+    # for param_cluster_elem in param_cluster_list:
+    #     if param_cluster_elem['cluster'] in domain_dict:
+    #         domain_dict[param_cluster_elem['cluster']].append(param_cluster_elem)
+    #     else:
+    #         domain_dict[param_cluster_elem['cluster']] = [param_cluster_elem]
+
+    # for k, domain_events in domain_dict.iteritems():
+    #     domain_events = doc_similarity(domain_events)
+    #     eventCount = 0
+    #     top_story = ''
+    #     if len(domain_events) < 2:
+    #         continue
+    #     for story in domain_events:
+    #         #if story.get("eventId", None):  //TODO
+    #         if eventCount is 0:
+    #             set_googlenews_by_url_with_field_and_value_ex(story["url"], "eventId", story["url"], "similarity", story["similarity"])
+    #             top_story = story["url"]
+    #             eventCount += 1
+    #             continue
+    #
+    #         set_googlenews_by_url_with_field_and_value_ex(story["url"], "eventId", top_story, "similarity", story["similarity"])
+    #         eventCount += 1
+    #     print 'found topic events count ===>' , eventCount
+    #
+g_time_filter = ["今天","明天","后天"]
+g_gpes_filter = ["中国","全国","美国"]
+g_keyword_filter = ["小时", "原谅", "标题"]
+
+def extract_tags_helper(sentence, topK=20, withWeight=False):
+    tags = []
+    for eng in re.findall(r'[A-Za-z ]+',sentence):
+        if len(eng) > 2:
+            tags.append(eng)
+    tagRule = get_tag_from_group(sentence)
+    tagRule2 = get_tag_from_group2(sentence)
+
+    tags.extend(extract_tags(sentence, topK, withWeight, allowPOS=('ns', 'n', 'nr', 'nt','nz')))
+    tags = [x for x in tags if not is_number(x)]
+    tags = [x for x in tags if not x in g_gpes_filter and not x in g_time_filter and not x in g_keyword_filter]
+    tags = [x for x in tags if not x in tagRule and not x in tagRule2]
+    if len(tagRule2) > 1:
+        tags.append(tagRule2)
+    if len(tagRule) > 1:
+        tags.append(tagRule)
+    return tags
+
+def get_tag_from_group(text):
+    p_tag = re.compile(r'.*《(?P<tag>.*)》.*')
+    tagSearch = p_tag.search(text)
+    tag = ''
+    if tagSearch:
+        tag = tagSearch.group('tag')
+    return tag
+
+
+def get_tag_from_group2(text):
+    p_tag = re.compile(r'.*"(?P<tag>.*)".*')
+    tagSearch = p_tag.search(text)
+    tag = ''
+    if tagSearch:
+        tag = tagSearch.group('tag')
+    return tag
+
+
+def doc_classify(training_data, data_to_classify):
+    # Load in corpus, remove newlines, make strings lower-case
+    # if len(training_data) == 1 or not training_data:
+    #     message = "The number of classes has to be greater than one; got 1 or 0."
+    #     print message
+    #     return
+    docs = {}
+    docs.update(training_data)
+    docs.update(data_to_classify)
+    names = docs.keys()
+
+    preprocessed_docs = {}
+    for name in names:
+        if name=='doc':
+        # preprocessed_docs[name] = list(jieba.cut(docs[name]))
+            preprocessed_docs[name] = list(extract_tags_helper(docs[name]))
+        else:
+            preprocessed_docs[name] = list(jieba.cut(docs[name]))
+    # Build the dictionary and filter out rare terms
+    # Perform Chinese words segmentation.
+    # dct = gensim.corpora.Dictionary(preprocessed_docs.values())
+    dct = gensim.corpora.Dictionary([preprocessed_docs['doc']])
+    unfiltered = dct.token2id.keys()
+    # no_below_num = 0.005*len(training_data)
+    # dct.filter_extremes(no_below=no_below_num)
+    filtered = dct.token2id.keys()
+    # filtered_out = set(unfiltered) - set(filtered)
+
+
+    # Build Bag of Words Vectors out of preprocessed corpus
+    bow_docs = {}
+    dense = {}
+    for name in names:
+        sparse = dct.doc2bow(preprocessed_docs[name])
+        bow_docs[name] = sparse
+        dense[name] = vec2dense(sparse, num_terms=len(dct))
+
+    # Build tfidf
+    tfidf = gensim.models.TfidfModel(bow_docs.values())
+    bow_docs_tfidf = {}
+    for name in names:
+        bow_docs_tfidf[name] = tfidf[bow_docs[name]]
+
+
+    # Dimensionality reduction using LSI. Go from 6D to 2D.
+    print "\n---LSI Model---"
+
+    lsi_docs = {}
+    num_topics = 300
+    lsi_model = gensim.models.LsiModel(bow_docs_tfidf.values(),id2word=dct,
+                                       num_topics=num_topics)
+    # lsi_model = gensim.models.LsiModel(bow_docs_tfidf.values(),id2word=dct,
+    #                                    num_topics=num_topics)
+
+
+    for name in names:
+        vec = bow_docs[name]
+        vec_tfidf = bow_docs_tfidf[name]
+        sparse = lsi_model[vec_tfidf]
+        # dense = vec2dense(sparse, num_topics)
+        lsi_docs[name] = sparse
+
+    # Normalize LSI vectors by setting each vector to unit length
+    # print "\n---Unit Vectorization---"
+    #
+    unit_vec = {}
+    #
+    for name in names:
+
+        vec = bow_docs[name]
+        norm = sqrt(sum(num[1] ** 2 for num in vec))
+        if norm<0.000001:
+            norm = 1
+        with np.errstate(invalid='ignore'):
+            unit_vec[name] = [(num[0], num[1]/norm) for num in vec]
+        # if norm<0.000001:
+        #     unit_vec[name] = [0.0] * len(vec)
+
+    #     unit_vecs[name] = unit_vec
+    # Take cosine distances between docs and show best matches
+    print "\n---Document Similarities---"
+
+    # index = gensim.similarities.MatrixSimilarity(lsi_docs.values())
+    # index = gensim.similarities.MatrixSimilarity(bow_docs_tfidf.values())
+    index = gensim.similarities.MatrixSimilarity(bow_docs.values())
+    print type(index)
+
+
+    for i, name in enumerate(names):
+        if name=="doc":
+            print "article_title,%s"%docs[name]
+            # vec = lsi_docs[name]
+            vec = bow_docs_tfidf[name]
+            vec = unit_vec[name]
+            sims = index[vec]
+
+            sims = sorted(enumerate(sims), key=lambda item: -item[1])
+
+
+            # index=0
+            for sims_elem in sims:
+                print "sims,%d"%sims_elem[0]
+                print "title,%s,sims,%10.3f"%(docs[str(names[sims_elem[0]])], sims_elem[1])
+                # index+=1
+            break
+        else:
+            continue
+            # Similarities are a list of tuples of the form (doc #, score)
+            # In order to extract the doc # we take first value in the tuple
+            # Doc # is stored in tuple as numpy format, must cast to int
+
+            # if int(sims[0][0]) != i:
+            #     match = int(sims[0][0])
+            # else:
+            #     match = int(sims[1][0])
+
+            # match = names[match]
+        #
+        # print "\n---Classification---"
+        #
+        # train = [unit_vecs[key] for key in training_data.keys()]
+        #
+        # labels = [(num + 1) for num in range(len(training_data.keys()))]
+        # label_to_name = dict(zip(labels, training_data.keys()))
+        # classifier = SVC()
+    # classifier.fit(train, labels)
+    # result = {}
+    # for name in names:
+    #
+    #     vec = unit_vecs[name]
+    #     label = classifier.predict([vec])[0]
+    #     cls = label_to_name[label]
+    #     if name in data_to_classify.keys():
+    #         result[name] = cls
+    # return result
+
+
+
+def find_Index_similar_with_compare_news(training_data, data_to_classify):
+    # Load in corpus, remove newlines, make strings lower-case
+    # if len(training_data) == 1 or not training_data:
+    #     message = "The number of classes has to be greater than one; got 1 or 0."
+    #     print message
+    #     return
+    docs = {}
+    docs.update(training_data)
+    docs.update(data_to_classify)
+    names = docs.keys()
+    keyword = list(extract_tags_helper(data_to_classify['doc']))
+    preprocessed_docs = {}
+    for name in names:
+        preprocessed_docs[name] = list(jieba.cut(docs[name]))
+    # Build the dictionary and filter out rare terms
+    # Perform Chinese words segmentation.
+    # dct = gensim.corpora.Dictionary(preprocessed_docs.values())
+    dct = gensim.corpora.Dictionary([keyword])
+    unfiltered = dct.token2id.keys()
+    # no_below_num = 0.005*len(training_data)
+    # dct.filter_extremes(no_below=no_below_num)
+    filtered = dct.token2id.keys()
+    # filtered_out = set(unfiltered) - set(filtered)
+
+
+    # Build Bag of Words Vectors out of preprocessed corpus
+    bow_docs = {}
+    dense = {}
+    for name in names:
+        sparse = dct.doc2bow(preprocessed_docs[name])
+        bow_docs[name] = sparse
+        dense[name] = vec2dense(sparse, num_terms=len(dct))
+
+    # Build tfidf
+    tfidf = gensim.models.TfidfModel(bow_docs.values())
+    bow_docs_tfidf = {}
+    for name in names:
+        bow_docs_tfidf[name] = tfidf[bow_docs[name]]
+
+
+    # Dimensionality reduction using LSI. Go from 6D to 2D.
+    print "\n---LSI Model---"
+
+    lsi_docs = {}
+    num_topics = 300
+    lsi_model = gensim.models.LsiModel(bow_docs_tfidf.values(),id2word=dct,
+                                       num_topics=num_topics)
+    # lsi_model = gensim.models.LsiModel(bow_docs_tfidf.values(),id2word=dct,
+    #                                    num_topics=num_topics)
+
+
+    for name in names:
+        vec = bow_docs[name]
+        vec_tfidf = bow_docs_tfidf[name]
+        sparse = lsi_model[vec_tfidf]
+        # dense = vec2dense(sparse, num_topics)
+        lsi_docs[name] = sparse
+
+    # Normalize LSI vectors by setting each vector to unit length
+    # print "\n---Unit Vectorization---"
+    #
+    unit_vec = {}
+    #
+    for name in names:
+
+        vec = dense[name]
+        norm = sqrt(sum(num ** 2 for num in vec))
+        if norm<0.000001:
+            norm = 1
+        with np.errstate(invalid='ignore'):
+            unit_vec[name] = [(num/norm) for num in vec]
+        # if norm<0.000001:
+        #     unit_vec[name] = [0.0] * len(vec)
+
+    #     unit_vecs[name] = unit_vec
+    # Take cosine distances between docs and show best matches
+    print "\n---Document Similarities---"
+
+    # index = gensim.similarities.MatrixSimilarity(lsi_docs.values())
+    # index = gensim.similarities.MatrixSimilarity(bow_docs_tfidf.values())
+    index = gensim.similarities.MatrixSimilarity(bow_docs.values())
+    # print type(index)
+
+
+
+    for i, name in enumerate(names):
+        if name=="doc":
+            paragraphIndex_list = []
+            print "article_title,%s"%docs[name]
+            # vec = lsi_docs[name]
+            # vec = bow_docs_tfidf[name]
+            vec = unit_vec[name]
+            sims = calculate_sim(vec, names, unit_vec)
+
+            # sims = index[vec]
+
+            sims = sorted(sims.iteritems(), key=lambda d:d[1], reverse = True)
+            # sims_names = sims.keys()
+
+            # index=0
+            for sims_elem in sims:
+                if sims_elem[0]=="doc":
+                    continue
+                elif sims_elem[1]>=0.6:
+                    paragraphIndex_list.append(sims_elem[0])
+                else:
+                    continue
+                    # print "sims,%s"%sims_elem[0]
+                    # print "title,%s,sims,%10.3f"%(docs[sims_elem[0]], sims_elem[1])
+                # index+=1
+            break
+        else:
+            continue
+
+    return  paragraphIndex_list
+
+def calculate_sim(vec, names, unit_vec):
+    sims={}
+    for name in names:
+        sims_value = sum([vec[i]*unit_vec[name][i] for i in range(len(vec))])
+        sims[name] = sims_value
+    return sims
+
+def vec2dense(vec, num_terms):
+    '''Convert from sparse gensim format to dense list of numbers'''
+    return list(gensim.matutils.corpus2dense([vec], num_terms=num_terms).T[0])
+
+
+def set_googlenews_by_url_with_field_and_value_ex(url, field1, value1, field2, value2):
+    conn["news_ver2"]["googleNewsItem"].update({"sourceUrl": url}, {"$set": {field1: value1, field2: value2}})
+
+
+
+
+
+def getBaiduHotWord():
+    DBStore = dbConn.GetDateStore()
+    conn = DBStore._connect_news
+
+    map={'0': '全部', '1': '国际', '2':'国内', '3':'体育', '4':'娱乐', '5':'社会', '6':'财经', '8':'科技', '10':'汽车', '14':'军事' }
+    result = []
+    for i  in [0, 1, 2, 3, 4, 5, 6, 8, 10, 14]:
+        apiUrl = "http://news.baidu.com/n?m=rddata&v=hot_word&type=%d&date="%i
+        r = requests.get(apiUrl)
+        if r.status_code == 200:
+            print "content,%s"%r.content
+            dict_obj = json.loads(r.content)
+            data = dict_obj['data']
+            for data_elem in data:
+                result_elem = {}
+                result_elem["baiduHotWord"] = data_elem["query_word"].split(" ")
+                result_elem["title"] = data_elem["title"]
+                result_elem["type"] = map[str(i)]
+                result_elem["createTime"] = getDefaultTimeStr()
+                result_elem["chemicalBond"] = "baiduHotWord"
+                result.append(result_elem)
+
+
+    for result_elem in result:
+        is_exists_in_elementary = conn['news_ver2']['elementary'].find_one({'title': result_elem['title']})
+        if is_exists_in_elementary:
+            continue
+        else:
+            conn['news_ver2']['elementary'].insert(result_elem)
+
+
+
+def getDefaultTimeStr():
+    format='%Y-%m-%d %H:%M:%S'
+    defaultTime=(datetime.datetime.now())
+    defaultTimeStr=defaultTime.strftime(format)
+    return defaultTimeStr
+
+
+def bingSearch():
+    apiUrl ='http://cn.bing.com/hpm?'
+    response = requests.get(apiUrl)
+    if response.status_code == 200:
+        print "content,%s"%response.text
+        content = etree.HTML(response.text)
+        # content = lxml.html.fromstring(response.content)
+        pages_arr = content.xpath('//div[@id="crs_scroll"]/ul/li')
+        # re.compile(r'<div id="crs_scroll" role="complementary"><ul id="crs_pane"><li.*?</li>')
+        # pages_arr = re.findall
+
+        for pages in pages_arr:
+            img = pages.xpath('./a/span/img/@src')[0]
+            img_after = conver_small_to_larger(img)
+            topic_pattern = re.compile(r'<div class="hp_text">(.*?)</div>')
+            # pages_str = ET.tostring(pages, encoding='utf8', method='xml')
+            pages_str = etree.tostring(pages, encoding='utf-8')
+            topic_search_result = re.search(topic_pattern, pages_str)
+            if topic_search_result:
+                topic = topic_search_result.group(1)
+            else:
+                continue
+
+                # try:
+            topic = topic.encode('utf8').decode("utf8")
+            no_error_pattern = re.compile(u'[\u4e00-\u9fa5_0-9]+')
+            if re.search(no_error_pattern, topic):
+                params = {"topic": topic, "img": img_after}
+                print "topic,%s"%topic
+                print "search_start"
+                do_search_task(params)
+                print "search_end"
+            else:
+                continue
+            # except:
+            #     continue
+
+    else:
+        return ""
+
+def conver_small_to_larger(img):
+    if re.sub("&","&amp;", img).startswith("http://s.cn.bing.net"):
+        return re.sub("&","&amp;", img)
+    else:
+        return "http://s.cn.bing.net" + re.sub("&","&amp;", img)
+
+
+def aggreSearch():
+
+    docs_online_search_ok = fetch_unrunned_docs_by_date(isOnline = True, aggreSearchOk = True)
+    url_title_lefturl_sourceSite_pairs_online_search_ok = fetch_url_title_lefturl_pairs(docs_online_search_ok)
+
+    logging.warning("##################### online_search_task start ********************")
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online_search_ok:
+
+        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        do_search_task(params)
+        conn["news_ver2"]["Task"].update({"url": url}, {"$set": {"aggreSearchOk": 1}})
+
+    logging.warning("##################### online_search_task complete ********************")
+
+def onlineEvent():
+    start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+    end_time = end_time + datetime.timedelta(days=-2)
+    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+    now = datetime.datetime.now()
+    now_time = now.strftime('%Y-%m-%d %H:%M:%S')
+
+    docs_online = fetch_unrunned_docs_by_date(isOnline = True, cluster = True)
+    url_title_lefturl_sourceSite_pairs_online = fetch_url_title_lefturl_pairs(docs_online)
+
+    logging.warning("##################### online_event_task start ********************")
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs_online:
+        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        try:
+            do_event_task(params, end_time, now_time)
+        except:
+            continue
+
+    logging.warning("##################### online_event_task complete ********************")
+
+
+def unOnlineEvent():
+    logging.warning("##################### unOnline_event_task start ********************")
+    docs = fetch_unrunned_docs_by_date()
+    url_title_lefturl_sourceSite_pairs = fetch_url_title_lefturl_pairs(docs)
+    start_time, end_time, update_time, update_type, update_frequency = get_start_end_time(halfday=True)
+    end_time = end_time + datetime.timedelta(days=-2)
+    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+    now = datetime.datetime.now()
+    now_time = now.strftime('%Y-%m-%d %H:%M:%S')
+
+    for url, title, lefturl, sourceSiteName in url_title_lefturl_sourceSite_pairs:
+        params = {"url":url, "title":title, "lefturl":lefturl, "sourceSiteName": sourceSiteName}
+        print "*****************************task start, the url is %s, sourceSiteName: %s " \
+                  "*****************************" % (url, sourceSiteName)
+        do_event_task(params, end_time, now_time)
+
+    logging.warning("##################### unOnline_event_task complete ********************")
+
+
+def recommend():
+    logging.warning("##################### recommend_event_task start ********************")
+    now = datetime.datetime.now()
+    start_time = now + datetime.timedelta(days=-4)
+    start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    docs_googleNewsItem = conn["news_ver2"]["googleNewsItem"].find({"createTime": {"$gte": start_time}}).sort([("isOnline", pymongo.DESCENDING), ("createTime", pymongo.DESCENDING)]).limit(1000)
+    docs_googleNewsItem = convertGoogleNewsItems(docs_googleNewsItem)
+    docs_NewsItems = []
+    for channelId in [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 16]:
+        print "channelId,%d"%channelId
+        channelId = str(channelId)
+        docs = conn["news_ver2"]["NewsItems"].find({'channel_id':channelId}).sort("create_time", pymongo.DESCENDING).limit(1000)
+        for doc in docs:
+            docs_NewsItems.append(doc)
+    # docs_NewsItems = conn["news_ver2"]["NewsItems"].find().sort("create_time", pymongo.DESCENDING).limit(400)
+    docs_NewsItems = convertNewsItems(docs_NewsItems)
+    doc_list = []
+    i = 0
+    t00 = datetime.datetime.now()
+    t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+    logging.warn("===============this round of save start====================%s"%(t00))
+
+    for doc in docs_googleNewsItem:
+        print i
+        doc["_id"] = i
+        tem_dict=dict(doc)
+        conn['news_ver2']['recommendItem'].save(tem_dict)
+        i = i + 1
+    #     doc_list.append(doc)
+    for doc in docs_NewsItems:
+        print i
+        doc["_id"] =  i
+        tem_dict=dict(doc)
+        conn['news_ver2']['recommendItem'].save(tem_dict)
+        i = i + 1
+        # doc_list.append(doc)
+
+
+    # result_dict = {"content":doc_list,"_id":"1"}
+    # tem_dict=dict(result_dict)
+    # conn['news_ver2']['recommendItem'].save(tem_dict)
+    # conn['news_ver2']['recommendItem'].insert(doc_list)
+    logging.warning("##################### recommend_event_task complete ********************")
+
 
 if __name__ == '__main__':
 
@@ -1174,6 +1749,7 @@ if __name__ == '__main__':
                 googleNewsTaskRun()
                 logging.warn("===============this round of googleNews complete====================")
                 time.sleep(7200)
+
         elif arg == 'relateimg':
             while True:
                 time.sleep(40)
@@ -1189,6 +1765,108 @@ if __name__ == '__main__':
                 time.sleep(30)
                 cont_pic_titleTaskRun()
                 logging.warn("===============this round of content complete====================")
+
+        elif arg == "cluster":
+            while True:
+                # time.sleep(30)
+                # clusterTaskRun()
+                logging.warn("===============this round of content complete====================")
+                # time.sleep(3600*24)
+        elif arg == "getBaiduHotWord":
+            while True:
+                # time.sleep(30)
+                getBaiduHotWord()
+                logging.warn("===============this round of content complete====================")
+                time.sleep(3600*2)
+
+        elif arg == "bingSearch":
+            while True:
+                # time.sleep(30)
+                bingSearch()
+                logging.warn("===============this round of content complete====================")
+                time.sleep(3600*0.5)
+
+        elif arg == "aggreSearch":
+            while True:
+                # time.sleep(30)
+                aggreSearch()
+                logging.warn("===============this round of content complete====================")
+                time.sleep(3600*0.5)
+
+        elif arg == "onlineEvent":
+            while True:
+                t00 = datetime.datetime.now()
+                t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content start====================%s"%(t00))
+                # time.sleep(30)
+                onlineEvent()
+                t01 = datetime.datetime.now()
+                t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content complete====================%s"%(t01))
+                # time.sleep(3600*0.5)
+
+        elif arg == "unOnlineEvent":
+            while True:
+                t00 = datetime.datetime.now()
+                t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content start====================%s"%(t00))
+                # time.sleep(30)
+                unOnlineEvent()
+                t01 = datetime.datetime.now()
+                t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content complete====================%s"%(t01))
+                # time.sleep(3600*0.5)
+
+        elif arg == "homeGet":
+            while True:
+                # time.sleep(30)
+                onlineEvent()
+                logging.warning("##################### this round of content start ********************")
+                options = {}
+                options["timing"] = 1
+                homeContentFetch(options)
+                # result = timeContentFetch({'timefeedback': 1})
+                # result_date = result["history_date"]
+                # result_type = ['0', '1']
+                # for date in result_date:
+                #     for type in result_type:
+                now = datetime.datetime.now()
+                format = '%Y-%m-%d'
+                tommorow = now + datetime.timedelta(days=1)
+                hour = now.hour
+                if hour in range(0,6):
+                    date = now.strftime(format)
+                    type = '0'
+                    logging.warn("===============today type =0 ====================")
+                elif hour in range(6,18):
+                    date = now.strftime(format)
+                    type = '1'
+                    logging.warn("===============today type =1 ====================")
+                else:
+                    date = tommorow.strftime(format)
+                    type = '0'
+                    logging.warn("===============tommorow type =0 ====================")
+                options = {}
+                options["timefeedback"] = 1
+                options["date"] = date
+                options["type"] = type
+                homeContentFetch(options)
+
+                logging.warn("===============this round of content complete====================")
+                time.sleep(3600*1)
+
+        elif arg == "recommend":
+            while True:
+                t00 = datetime.datetime.now()
+                t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content start====================%s"%(t00))
+                # time.sleep(30)
+                recommend()
+                t01 = datetime.datetime.now()
+                t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content complete====================%s"%(t01))
+                time.sleep(3600*1)
+
 
         elif arg=='help':
             print "need one or more argument of: weibo, ner, abs, zhihu, baike, douban, baiduNews, relateimg"

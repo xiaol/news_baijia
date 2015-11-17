@@ -22,6 +22,8 @@ def elementary(elements):
             results_elementary['elements'].append(element['elementName'])
         elif element['chemicalBond'] == 'ionic bond':
             results_elementary['elements'].append([element['atomName'], element['ionicName']])
+        elif element['chemicalBond'] == 'baiduHotWord':
+            results_elementary['elements'].append(element['baiduHotWord'])
 
     return results_elementary
 
@@ -58,9 +60,13 @@ if __name__ == '__main__':
     construct_element('element', '亚冠')
     construct_element('element', '小米')
     construct_element('element', '震中分布图')
+    construct_element('element', '吴镇宇')
     #construct_element('element', 'MVP')
     #construct_ionic('IS', '先知漫画展')
     construct_ionic('三大评测机构', '杀软')
     construct_ionic('生日', '谢娜')
     construct_ionic('烟草消费税', '烟草税')
+    construct_ionic('冯绍峰', '倪妮')
+    construct_ionic('范冰冰', '张馨予')
+    construct_ionic('范冰冰', '王思聪')
 

@@ -1,0 +1,403 @@
+
+In regular expressions, there are twelve metacharacters that should be escaped if
+they are to be used with their literal meaning:
+• Backslash \
+• Caret ^
+• Dollar sign $
+• Dot .
+• Pipe symbol |
+• Question mark ?
+• Asterisk *
+• Plus sign +
+• Opening parenthesis (
+• Closing parenthesis )
+• Opening square bracket [
+• The opening curly brace {
+
+
+
+. This element matches any character except newline \n
+\d This matches any decimal digit; this is equivalent to the class [0-9]
+\D This matches any non-digit character; this is equivalent to the class [^0-9]
+\s This matches any whitespace character; this is equivalent to the class
+[ \t\n\r\f\v]
+\S This matches any non-whitespace character; this is equivalent to the class
+[^ \t\n\r\f\v]
+\w This matches any alphanumeric character; this is equivalent to the class
+[a-zA-Z0-9_]
+\W This matches any non-alphanumeric character; this is equivalent to the
+class [^a-zA-Z0-9_]
+
+
+
+
+[^\/\]
+
+[ Matches a set of characters
+^ Not matching this symbol's following characters
+\/ Matches a / character
+\ Matches a \ character
+] End of the set
+
+
+
+?       Question mark     Optional (0 or 1 repetitions)
+*       Asterisk          Zero or more times
++       Plus sign         One or more times
+{n,m}   Curly braces      Between n and m times
+
+[yes|no]
+
+
+
+>>> pattern = re.compile(r"\W")
+>>> pattern.split("hello world")
+['Hello', 'world']
+In the preceding example, we've defined a pattern to match any non-alphanumeric
+character. So, in this case the match happens in the whitespace. That's why the string
+is split into words.
+
+
+The maxsplit parameter specifies how many splits can be done at maximum and
+returns the remaining part in the result:
+>>> pattern = re.compile(r"\W")
+>>> pattern.split("Beautiful is better than ugly", 2)
+['Beautiful', 'is', 'better than ugly']
+
+
+
+The maxsplit parameter specifies how many splits can be done at maximum and
+returns the remaining part in the result:
+>>> pattern = re.compile(r"\W")
+>>> pattern.split("Beautiful is better than ugly", 2)
+['Beautiful', 'is', 'better than ugly']
+
+
+
+What can we do if we want to capture the pattern too?
+The answer is to use groups:
+>>> pattern = re.compile(r"(-)")
+>>> pattern.split("hello-word")
+['hello', '-', 'word']
+
+
+
+
+>>> pattern = re.compile(r"\w+")
+>>> pattern.findall("hello world")
+['hello', 'world']
+
+
+
+
+r_list = [re.compile("..."),
+          re.compile("..."),
+          re.compile("..."),
+          re.compile("...")]
+if any(r.match(string) for r in r_list):
+    # if at least one of the regex's matches do smth
+
+
+
+
+>>>def normalize_orders(matchobj):
+if matchobj.group(1) == '-': return "A"
+else: return "B"
+>>> re.sub('([-|A-Z])', normalize_orders, '-1234 A193  B123')
+'A1234 B193 B123'
+
+
+The greedy behavior of the quantifiers is applied by default in the quantifiers.
+A greedy quantifier will try to match as much as possible to have the biggest
+match result possible.
+The non-greedy behavior can be requested by adding an extra question mark
+to the quantifier; for example, ??, *? or +?. A quantifier marked as reluctant
+will behave like the exact opposite of the greedy ones. They will try to have
+the smallest match possible.
+
+
+
+pattern = re.compile(r"(\w+) (\w+)")
+match = pattern.search("Hello world")
+>>> match.group()
+'Hello world'
+
+>>> match.group(0)
+'Hello world'
+
+>>> match.group(1)
+'Hello'
+
+>>> match.group(2)
+'world'
+
+>>> match.group(0, 2)
+('Hello⇢world', 'world')
+
+
+>>> pattern = re.compile(r"(?P<first>\w+) (?P<second>\w+)")
+>>> match = pattern.search("Hello world")
+>>> match.group('first')
+'Hello'
+
+>>> match.group(0, 'first', 2)
+('Hello world', 'Hello', 'world')
+
+
+
+>>> pattern = re.compile("(\w+) (\w+)")
+>>> match = pattern.search("Hello World")
+>>> match.groups()
+('Hello', 'World')
+
+
+
+>>> pattern = re.compile("(\w+) (\w+)?")
+>>> match = pattern.search("Hello ")
+>>> match.groups("mundo")
+('Hello', 'mundo')
+>>> match.groups()
+('Hello', None)
+
+The pattern in the preceding example is trying to match two groups made of one or
+more alphanumeric characters. The second one is optional; so we get only one group
+with the string Hello. After getting the match, we call groups with default set to
+mundo so that it returns mundo as the second group. Note that in the following call
+we don't set default, so None is returned.
+
+
+The groupdict method is used in the cases where named groups have been used.
+It will return a dictionary with all the groups that were found:
+>>> pattern = re.compile(r"(?P<first>\w+) (?P<second>\w+)")
+>>> pattern.search("Hello⇢world").groupdict()
+{'first': 'Hello', 'second': 'world'}
+
+
+
+
+This operation returns the string after replacing it with backreferences in the
+template string. It's similar to sub.
+Continuing with the example in the previous section:
+>>> text = "imagine a new *world*, a magic *world*"
+>>> match = re.search(r'\*(.*?)\*', text)
+>>> match.expand(r"<b>\g<1><\\b>")
+'<b>world<\\b>'
+
+
+It escapes the literals that may appear in the expressions.
+>>> re.findall(re.escape("^"), "^like^")
+['^', '^']
+
+
+
+
+
+Compilation flags
+
+re.IGNORECASE or re.I
+The following pattern matches even though the string starts with A and not with an a.
+>>> pattern = re.compile(r"[a-z]+", re.I)
+>>> pattern.search("Felix")
+<_sre.SRE_Match at 0x10e27a238>
+>>> pattern.search("felix")
+<_sre.SRE_Match at 0x10e27a510>
+
+
+
+
+re.MULTILINE or re.M
+In the following example, the pattern doesn't match the date after newline because
+we're not using the flag:
+>>> pattern = re.compile("^\w+\: (\w+/\w+/\w+)")
+>>> pattern.findall("date: 12/01/2013 \ndate: 11/01/2013")
+['12/01/2013']
+However, on using the Multiline flag, it matches the two dates:
+>>> pattern = re.compile("^\w+\: (\w+/\w+/\w+)", re.M)
+>>> pattern.findall("date: 12/01/2013 \ndate: 11/01/2013")
+['12/01/2013', '12/01/2013']
+
+
+This is not the best way to capture a date.
+
+
+
+re.DOTALL or re.S
+Let's try to match anything after a digit:
+>>> re.findall("^\d(.)", "1\ne")
+[]
+We can see in the previous example that the character class . with its default
+behavior doesn't match the newline. Let's see what happens on using the flag:
+>>> re.findall("^\d(.)", "1\ne", re.DOTALL)
+['\n']
+As expected, on using the DOTALL flag it matches the newline perfectly.
+
+
+
+
+The simplest example of the use of parentheses would be building
+a subexpression.
+>>>re.match(r"(\d-\w){2,3}", ur"1-a2-b")
+<_sre.SRE_Match at 0x10f690738>
+The parentheses indicate to the regex engine that the pattern inside them has to be treated like a unit.
+
+Another simple example of their use is limiting the scope of alternation.
+
+
+
+
+>>>pattern = re.compile(r"(\d+)-\w+")
+>>>it = pattern.finditer(r"1-a\n20-baer\n34-afcr")
+>>>match = it.next()
+>>>match.group(1)
+'1'
+>>>match = it.next()
+>>>match.group(1)
+'20'
+>>>match = it.next()
+>>>match.group(1)
+'34'
+
+When working with the group method, the index 0 returns the whole match, and the groups start at index 1.
+
+
+Find duplicated words
+
+>>>pattern = re.compile(r"(\w+) \1")
+>>>match = pattern.search(r"hello hello world")
+>>>match.groups()
+('hello',)
+
+We're capturing a group made up of one or more alphanumeric characters,
+after which the pattern tries to match a whitespace, and finally we have the \1
+backreference. It means that it must exactly match the same thing it matched as the first group.
+
+
+>>>pattern = re.compile(r"(\d+)-(\w+)")
+>>>pattern.sub(r"\2-\1", "1-a\n20-baer\n34-afcr")
+'a-1\nbaer-20\nafcr-34'
+
+
+Named groups
+
+>>> pattern = re.compile(r"(?P<first>\w+) (?P<second>\w+)")
+>>> match = pattern.search("Hello world")
+>>>match.group("first")
+'Hello'
+>>>match.group("second")
+'world'
+
+So, backreferences are now much simpler to use and maintain as is evident in the
+following example:
+>>>pattern = re.compile(r"(?P<country>\d+)-(?P<id>\w+)")
+>>>pattern.sub(r"\g<id>-\g<country>", "1-a\n20-baer\n34-afcr")
+'a-1\nbaer-20\nafcr-34'
+
+As we see in the previous example, in order to reference a group by the name
+in the sub operation, we have to use \g<name>.
+
+
+Use                                  Syntax
+Inside a pattern                    (?P=name)
+In the repl string of the sub       \g<name>
+operation
+
+In any of the operations of         match.group('name')
+the MatchObject
+
+
+>>>re.search("Españ(a|ol)", "Español")
+<_sre.SRE_Match at 0x10e90b828>
+>>>re.search("Españ(a|ol)", "Español").groups()
+('ol',)
+
+
+
+Letter          Flag
+i               re.IGNORECASE
+L               re.LOCALE
+m               re.MULTILINE
+s               re.DOTALL
+u               re.UNICODE
+x               re.VERBOSE
+
+
+
+>>>re.findall(r"(?u)\w+" ,ur"ñ")
+[u'\xf1']
+
+The above example is the same as:
+>>>re.findall(r"\w+" ,ur"ñ", re.U)
+[u'\xf1']
+
+
+
+yes-pattern|no-pattern
+This is a very useful case of groups.
+Syntax
+(?(id/name)yes-pattern|no-pattern)
+
+This expression means: if the group with this ID has already been matched, then at
+this point of the string, the yes-pattern pattern has to match. If the group hasn't
+been matched, then the no-pattern pattern has to match.
+
+We have a list of products,
+but in this case the ID can be made in two different ways:
+• The country code (two digits), a dash, three or four alphanumeric characters,
+a dash, and the area code (2 digits). For example: 34-adrl-01.
+• Three or four alphanumeric characters. For example: adrl.
+
+So, when there is a country code, we need to match the country area:
+>>>pattern = re.compile(r"(\d\d-)?(\w{3,4})(?(1)(-\d\d))")
+>>>pattern.match("34-erte-22")
+<_sre.SRE_Match at 0x10f68b7a0>
+>>>pattern.search("erte")
+<_sre.SRE_Match at 0x10f68b828>
+
+there is a match when we have a country
+code and area code. Note that when there is a country code but no area code,
+there is no match:
+>>>pattern.match("34-erte")
+None
+
+
+what's no-pattern for? Let's add another constraint to the previous example:
+if there is no country code there has to be a name at the end of the string:
+
+• The country code (2 digits), a dash, three or four alphanumeric characters,
+a dash, and the area code (2 digits). For example: 34-adrl-01
+• Three or four alphanumeric characters, followed by three or four characters.
+For example: adrl-sala.
+
+>>>pattern = re.compile(r"(\d\d-)?(\w{3,4})-(?(1)(\d\d)|[a-z]{3,4})$")
+>>>pattern.match("34-erte-22")
+<_sre.SRE_Match at 0x10f6ee750>
+
+As expected, if there is a country code and an area code, there is a match.
+>>>pattern.match("34-erte")
+None
+
+In the preceding example, we do have a country area, but there is no area code,
+so there is no match.
+>>>pattern.match("erte-abcd")
+<_sre.SRE_Match at 0x10f6ee880>
+
+And finally, when there is no country area, there must be a name, so we have
+a match.
+Note that no-pattern is optional, so in the first example, we've omitted it.
+
+
+
+If we use the regular expression we have at the moment, we will obtain the following result:
+   >>>pattern = re.compile(r'\B@[\w_]+')
+   >>>pattern.findall("Know your Big Data = 5 for $50 on eBooks and 40%
+   off all eBooks until Friday #bigdata #hadoop @HadoopNews packtpub.com/
+   bigdataoffers")
+   ['@HadoopNews']
+
+
+ We do want to match just the username without including the preceding @ symbol. At this point, a look behind mechanism becomes useful. We can include the word boundary and the @ symbol in a look behind subexpression so that they don't become a part of the matched result:
+   >>>pattern = re.compile(r'(?<=\B@)[\w_]+')
+   >>>pattern.findall("Know your Big Data = 5 for $50 on eBooks and 40%
+   off all eBooks until Friday #bigdata #hadoop @HadoopNews packtpub.com/
+   bigdataoffers")
+   ['HadoopNews']
