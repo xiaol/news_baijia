@@ -1113,7 +1113,7 @@ def googleNewsTaskRun():
         print "complete url===>", url_here,
 
         conn["news_ver2"]["Task"].update({"url": url_here}, {"$set": {"googleSearchOk": 1}})
-        time.sleep(30)
+        time.sleep(130)
 
 if __name__ == '__main__':
 
