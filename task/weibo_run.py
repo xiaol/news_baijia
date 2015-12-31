@@ -1114,6 +1114,11 @@ def googleNewsTaskRun():
         #     topic = extract_tags_helper(title_here)
         #     topic = 's'.join(topic)
 
+        t00 = datetime.datetime.now()
+        t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+        print "task start,%s"%t00
+        logging.warn("===============task start====================%s"%(t00))
+
         topic = title_here
         # cmd = 'scrapy crawl google.com.hk -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
         cmd = '/root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
@@ -1126,7 +1131,7 @@ def googleNewsTaskRun():
         print "complete url===>", url_here,
 
         conn["news_ver2"]["Task"].update({"url": url_here}, {"$set": {"googleSearchOk": 1}})
-        time.sleep(30)
+        time.sleep(130)
 
 
 def clusterTaskRun():
