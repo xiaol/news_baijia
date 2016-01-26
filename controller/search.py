@@ -6,20 +6,32 @@ from pymongo.read_preferences import ReadPreference
 import re
 import tornado
 import tornado.gen
-
-conn = pymongo.MongoReplicaSetClient("h44:27017, h213:27017, h241:27017", replicaSet="myset",
-                                     read_preference=ReadPreference.SECONDARY)
+from task.data_structure import convertGoogleNewsItems, convertNewsItems 
+from elasticsearch import Elasticsearch
+es = Elasticsearch(["120.27.162.230","120.27.163.39"])
 
 @tornado.gen.coroutine
-def search(keyword, start):
-    db = conn.news_ver2
-    docs_googleNewsItem = db.googleNewsItem.find({"title":re.compile(keyword)}).sort("createTime",pymongo.ASCENDING).skip(int(start)/2).limit(7)
-    docs_NewsItems = db.NewsItems.find({"title":re.compile(keyword)}).sort("create_time", pymongo.ASCENDING).skip(int(start)-int(start)/2).limit(8)
-    doc_list = []
-    for doc in docs_googleNewsItem:
-        del doc["_id"]
-        doc_list.append(doc)
-    for doc in docs_NewsItems:
-        del doc["_id"]
-        doc_list.append(doc)
-    raise tornado.gen.Return(doc_list)
+def search_cartoon(keyword, page):
+    res = es.search(index="cartoon", body={"from" : 15*(int(page)-1), "size" : 15, "query": {"match": { "tags" : keyword }}})
+    docs = []
+    for doc in res["hits"]["hits"]:
+        docs.append(doc["_source"])
+    raise tornado.gen.Return(docs)
+
+@tornado.gen.coroutine
+def search_tags(keyword, page):
+    res = es.search(index="news", body={"from" : 15*(int(page)-1), "size" : 15, "query": {"match": { "tags" : keyword }}})
+    docs = []
+    for doc in res["hits"]["hits"]:
+        docs.append(doc["_source"])
+    raise tornado.gen.Return(docs)
+
+es1 = Elasticsearch(["120.27.162.230","120.27.163.39"])
+
+@tornado.gen.coroutine
+def search(keyword, page):
+    res = es1.search(index="news_baijia", body={"from": 15*(int(page)-1), "size":15, "query": {"term": {"title":keyword}}})
+    docs = []
+    for doc in res["hits"]["hits"]:
+        docs.append(doc["_source"])
+    raise tornado.gen.Return(docs)
