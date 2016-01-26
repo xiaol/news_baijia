@@ -513,6 +513,7 @@ def convertNewsItems(docs = [],outFieldFilter = True, deviceType = 'ios'):  #输
             doc["commentNum"] = 0
         if "create_time" in doc.keys():
             doc["createTime"] = doc["create_time"]
+            doc["updateTime"] = doc["create_time"]
             del doc["create_time"]
         if "newsId" not in doc.keys():
             doc["newsId"] = guid('NewsItems')
