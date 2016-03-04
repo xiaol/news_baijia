@@ -20,6 +20,8 @@ from requests.exceptions import Timeout
 from weibo_run_re import set_googlenews_by_url_with_field_and_value, do_search_task
 from controller.time_get import timeContentFetch
 from data_structure import convertNewsItems, convertGoogleNewsItems
+from weibo_run_re import trim_bracket, find_Index_similar_with_compare_news_2
+import requests as r
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -837,7 +839,7 @@ def baiduNewsTaskRun():
     start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
     end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
 
-    un_runned_docs = conn["news_ver2"]["Task"].find({"updateTime": {"$gte": end_time}, "isOnline": 1,
+    un_runned_docs = conn["news_ver2"]["Task"].find({"updateTime": {"$gte": start_time},
                         "$or":[{"baiduSearchOk": 0}, {"baiduSearchOk": {"$exists": 0}}]}).sort([("updateTime", -1)])
 
     url_title_pairs = []
@@ -864,20 +866,95 @@ def baiduNewsTaskRun():
         if not topic:
             topic = extract_tags_helper(title_here)
             topic = 's'.join(topic)'''
-        topic = title_here[:len(title_here)/3*2]
+        topic = title_here[:len(title_here)/3 * 2]
 
         # cmd = 'scrapy crawl news.baidu.com -a url=' + url_here + ' -a topic=\"'+ topic + '\"'
 
+        # cmd = 'sh /root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
+        # # cmd = 'sh script.sh ' + url_here + ' ' + topic
+        # print cmd
+        #
+        # child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
+        params_key = {"key": topic}
+        data = urllib.urlencode(params_key)
+        # search_url ="http://192.168.0.37:8083/search?"+data
+        search_url ="http://60.28.29.37:8088/search?"+data
+        time.sleep(10)
+        try:
+            r_text = r.get(search_url)
+            text = (r_text.json())
+            search_list = text["searchItems"]
+        except Exception as e :
+            print "search_url_exception"
+            print e
+            return
+        doc = conn["news_ver2"]["googleNewsItem"].find_one({"sourceUrl": url_here})
+        if "text" not in doc.keys():
+            try:
+                apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + url_here
+                r_text = requests.get(apiUrl_text)
+                text = (r_text.json())["text"]
+                doc["text"] = text
+            except:
+                print "raw_text_exception"
+                continue
+        i =0
+        for search_elem in search_list:
+            if i >=5:
+                continue
+            if len(search_elem["imgUrl"]) == 0:
+                continue
+            result_elem = {}
+            sourceUrl = search_elem["url"]
+            id = sourceUrl
+            title = search_elem["title"]
+            title = trim_bracket(title)
+            if not (sourceUrl.endswith('html') or sourceUrl.endswith('shtml') or sourceUrl.endswith('htm')):
+                continue
+            if sourceUrl.split('/')[-1].find('index')>=0:
+                continue
+            sourceSiteName = search_elem["sourceSite"]
+            updateTime = search_elem["updateTime"]
+            description = search_elem["abs"]
+            keyword = topic
+            sourceName = search_elem["sourceSite"]
+            relateUrl = url_here
+            imgUrl = search_elem["imgUrl"]
+            result_elem["_id"] = id
+            result_elem["sourceSiteName"] = sourceSiteName
+            result_elem["updateTime"] =  updateTime
+            result_elem["sourceUrl"] = sourceUrl
+            result_elem["description"] = description
+            result_elem["keyword"] = keyword
+            result_elem["title"] = title
+            result_elem["sourceName"] = sourceName
+            result_elem["relateUrl"] = relateUrl
+            result_elem["imgUrl"] = imgUrl
+            try:
+                apiUrl_text = "http://121.41.75.213:8080/extractors_mvc_war/api/getText?url=" + sourceUrl
+                r_text = requests.get(apiUrl_text)
+                text = (r_text.json())["text"]
+            except:
+                print "r_text_exception"
+                continue
+            result_elem["content"] = text
 
+            content_dict={}
+            content_dict["1"] = text
 
-        cmd = 'sh /root/workspace/news_baijia/task/script.sh ' + url_here + ' ' + topic
-        # cmd = 'sh script.sh ' + url_here + ' ' + topic
-        print cmd
+            if doc["text"] is None or result_elem["content"] is None:
+                continue
+            paragraphIndex_dict = find_Index_similar_with_compare_news_2(content_dict, {"doc":doc["text"]})
+            if "1" in paragraphIndex_dict.keys():
+                result_elem["similarity"] = paragraphIndex_dict["1"]["similarity"]
+                result_elem["unit_vec"] = paragraphIndex_dict["1"]["unit_vec"]
+                result_elem["keyword"] = paragraphIndex_dict["1"]["keyword"]
+                conn["news"]["AreaItems"].save(dict(result_elem))
+                i = i + 1
 
-        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
         print "complete url===>", url_here,
-
         conn["news_ver2"]["Task"].update({"url": url_here}, {"$set": {"baiduSearchOk": 1}})
+
 
 
 # task 从googleNewsItem 表中取没上线新闻到 Task表
@@ -1656,7 +1733,7 @@ def recommend():
     for channelId in [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 16]:
         print "channelId,%d"%channelId
         channelId = str(channelId)
-        docs = conn["news_ver2"]["NewsItems"].find({'channel_id':channelId}).sort("create_time", pymongo.DESCENDING).limit(100)
+        docs = conn["news_ver2"]["NewsItems"].find({'channel_id':channelId}).sort("create_time", pymongo.DESCENDING).limit(100)  
         for doc in docs:
             docs_NewsItems.append(doc)
     # docs_NewsItems = conn["news_ver2"]["NewsItems"].find().sort("create_time", pymongo.DESCENDING).limit(400)
