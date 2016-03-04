@@ -1733,7 +1733,7 @@ def recommend():
     for channelId in [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 16]:
         print "channelId,%d"%channelId
         channelId = str(channelId)
-        docs = conn["news_ver2"]["NewsItems"].find({'channel_id':channelId}).sort("create_time", pymongo.DESCENDING).limit(100)  
+        docs = conn["news_ver2"]["NewsItems"].find({'channel_id':channelId}).sort("create_time", pymongo.DESCENDING).limit(100)
         for doc in docs:
             docs_NewsItems.append(doc)
     # docs_NewsItems = conn["news_ver2"]["NewsItems"].find().sort("create_time", pymongo.DESCENDING).limit(400)
