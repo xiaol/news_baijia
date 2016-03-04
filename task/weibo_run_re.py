@@ -2048,8 +2048,8 @@ def do_search_task(params):
 
     params_key = {"key": topic}
     data = urllib.urlencode(params_key)
-    # search_url ="http://192.168.0.37:8083/search?"+data
-    search_url ="http://60.28.29.37:8083/search?"+data
+    search_url ="http://192.168.0.37:8083/search?"+data
+    # search_url ="http://60.28.29.37:8083/search?"+data
     try:
         r_text = r.get(search_url)
         text = (r_text.json())

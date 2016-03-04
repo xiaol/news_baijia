@@ -877,8 +877,8 @@ def baiduNewsTaskRun():
         # child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).wait()
         params_key = {"key": topic}
         data = urllib.urlencode(params_key)
-        # search_url ="http://192.168.0.37:8083/search?"+data
-        search_url ="http://60.28.29.37:8088/search?"+data
+        search_url ="http://192.168.0.37:8088/search?"+data
+        # search_url ="http://60.28.29.37:8088/search?"+data
         time.sleep(10)
         try:
             r_text = r.get(search_url)
