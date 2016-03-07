@@ -940,7 +940,9 @@ def baiduNewsTaskRun():
                 print "r_text_exception"
                 continue
             result_elem["content"] = text
-
+            createTime = datetime.datetime.now()
+            createTime = createTime.strftime("%Y-%m-%d %H:%M:%S")
+            result_elem["createTime"] = createTime
             content_dict={}
             content_dict["1"] = text
 
