@@ -844,7 +844,8 @@ def baiduNewsTaskRun():
 
     url_title_pairs = []
     for doc in un_runned_docs:
-
+        t00 = datetime.datetime.now()
+        print t00
         url = doc["url"]
         title = doc["title"]
         if not url or not title:
@@ -857,7 +858,8 @@ def baiduNewsTaskRun():
 
 
     for url_title_pair in url_title_pairs:
-
+        t00 = datetime.datetime.now()
+        print t00
         url_here = url_title_pair[0]
         title_here = url_title_pair[1]
 
@@ -1817,9 +1819,14 @@ if __name__ == '__main__':
 
         elif arg == 'baiduNews':
             while True:
+                t00 = datetime.datetime.now()
+                t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content start====================%s"%(t00))
                 time.sleep(50)
                 baiduNewsTaskRun()
-                logging.warn("===============this round of baiduNews complete====================")
+                t01 = datetime.datetime.now()
+                t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of content complete====================%s"%(t01))
 
         elif arg == 'googleNews':
             while True:
