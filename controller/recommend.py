@@ -39,6 +39,7 @@ def recommend(deviceId, channelId):
             #     docs_ex.append(doc)
     doc_list = []
     i = 0
+    flag = False    # big image flag
     for doc in docs:
         if type(doc["imgUrls"]) != list:
             doc["imgUrls"] = [doc["imgUrls"]]
@@ -48,6 +49,11 @@ def recommend(deviceId, channelId):
         if doc["sourceUrl"] in already_visit_set:
             continue
         else:
+            if doc.get("type") == "big_pic":
+                if flag:
+                    doc["type"] = "one_pic"
+                else:
+                    flag = True
             doc_list.append(doc)
             r.sadd(deviceId, doc["sourceUrl"])
             i = i +1
