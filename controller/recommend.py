@@ -1,5 +1,6 @@
 # coding=utf-8
 
+from datetime import datetime, timedelta
 import json
 import pymongo
 from pymongo.read_preferences import ReadPreference
@@ -34,7 +35,14 @@ def recommend(deviceId, channelId):
         # for i in range(3):
             # random_num = random.random()*doc_num
             # docs = db.recommendItem.find({"channelId":channelId, "_id":{'$gte': random_num}}).sort("createTime",pymongo.DESCENDING).limit(50)
-        docs = db.recommendItem.find({"channelId":channelId}).sort("createTime",pymongo.DESCENDING).limit(1000)
+        if deviceId == "3b7976c8c1b8cd372a59b05bfa9ac5b3" and channelId == "WM0005":
+            dt = datetime.now() - timedelta(days=7)
+            #{"channel_id":"16", "create_time": {"$gte": "2016-03-01"}, "sourceSiteName":"外媒看天朝"}
+            gte = dt.strftime("%Y-%m-%d")
+            docs = db.NewsItems.find({"channel_id":"16", "create_time": {"$gte": "2016-03-01"}, "sourceSiteName":"外媒看天朝"}).sort("create_time", pymongo.DESCENDING).limit(100)
+            docs = convertNewsItems(docs=docs)
+        else:
+            docs = db.recommendItem.find({"channelId":channelId}).sort("createTime",pymongo.DESCENDING).limit(1000)
             # for doc in docs:
             #     docs_ex.append(doc)
     doc_list = []
@@ -45,7 +53,8 @@ def recommend(deviceId, channelId):
             doc["imgUrls"] = [doc["imgUrls"]]
         if i>=15:
             break
-        del doc["_id"]
+        if doc.get("_id"):
+            del doc["_id"]
         if doc["sourceUrl"] in already_visit_set:
             continue
         else:
