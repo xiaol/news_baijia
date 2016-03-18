@@ -1734,10 +1734,12 @@ def recommend():
     docs_googleNewsItem = conn["news_ver2"]["googleNewsItem"].find({"createTime": {"$gte": start_time}}).sort([("isOnline", pymongo.DESCENDING), ("createTime", pymongo.DESCENDING)]).limit(500)
     docs_googleNewsItem = convertGoogleNewsItems(docs_googleNewsItem)
     docs_NewsItems = []
+    recommend_news_time = datetime.datetime.now().date() - datetime.timedelta(days=2)
+    recommend_news_time = recommend_news_time.strftime("%Y-%m-%d")
     for channelId in [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 16]:
         print "channelId,%d"%channelId
         channelId = str(channelId)
-        docs = conn["news_ver2"]["NewsItems"].find({'channel_id':channelId}).sort("create_time", pymongo.DESCENDING).limit(100)
+        docs = conn["news_ver2"]["NewsItems"].find({'channel_id':channelId, "create_time": {"$gte": recommend_news_time}}).sort("create_time", pymongo.DESCENDING).limit(100)
         for doc in docs:
             docs_NewsItems.append(doc)
     # docs_NewsItems = conn["news_ver2"]["NewsItems"].find().sort("create_time", pymongo.DESCENDING).limit(400)
