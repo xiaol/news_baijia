@@ -22,6 +22,7 @@ from controller.time_get import timeContentFetch
 from data_structure import convertNewsItems, convertGoogleNewsItems
 from weibo_run_re import trim_bracket, find_Index_similar_with_compare_news_2
 import requests as r
+import collections
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -911,6 +912,10 @@ def baiduNewsTaskRun():
             id = sourceUrl
             title = search_elem["title"]
             title = trim_bracket(title)
+
+            if cmp4(title_here, title) > 0.6:
+                continue
+
             if not (sourceUrl.endswith('html') or sourceUrl.endswith('shtml') or sourceUrl.endswith('htm')):
                 continue
             if sourceUrl.split('/')[-1].find('index')>=0:
@@ -952,14 +957,28 @@ def baiduNewsTaskRun():
             if "1" in paragraphIndex_dict.keys():
                 result_elem["similarity"] = paragraphIndex_dict["1"]["similarity"]
                 result_elem["unit_vec"] = paragraphIndex_dict["1"]["unit_vec"]
-                result_elem["keyword"] = paragraphIndex_dict["1"]["keyword"]
+                # result_elem["keyword"] = paragraphIndex_dict["1"]["keyword"]
                 conn["news"]["AreaItems"].save(dict(result_elem))
                 i = i + 1
 
         print "complete url===>", url_here,
         conn["news_ver2"]["Task"].update({"url": url_here}, {"$set": {"baiduSearchOk": 1}})
 
-
+def cmp4(str1, str2):
+    d = collections.defaultdict(int)
+    for c in str1:
+        d[c] += 1
+    for c in str2:
+        d[c] -= 1
+    count = 0
+    same_count = 0
+    for v in d.itervalues():
+        count = count +1
+        if v == 0:
+           same_count = same_count +1
+    if count < 1:
+        return 0
+    return same_count / (count * 1.0)
 
 # task 从googleNewsItem 表中取没上线新闻到 Task表
 def newsToTaskRun():
@@ -1774,6 +1793,7 @@ def recommend():
 if __name__ == '__main__':
 
     # ImgMeetCondition_ver2("111")
+    print cmp4(u"我的祖国",u"我国的是")
 
     for arg in sys.argv[1:]:
         print arg
