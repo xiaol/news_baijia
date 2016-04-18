@@ -12,7 +12,7 @@ import sys
 import tornado.netutil
 import json
 from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get, point_get, \
-    praise_post, start_page_post, dredge_up_post, elementary_post, tags_get, recommend
+    praise_post, start_page_post, dredge_up_post, elementary_post, tags_get, recommend,differ
 from controller import search
 from controller.push import push_message
 import abstract
@@ -682,6 +682,20 @@ class caimaotiyuHandler(tornado.web.RequestHandler):
         self.write(json.dumps(result))
 
 
+class differOpinionHandler(tornado.web.RequestHandler):
+    def post(self):
+        args = self.request.arguments
+        article = self.get_argument("article", None)
+        article = json.loads(self.get_argument("article", None))
+        if len(args) < 1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = differ.data_tranfer(article)
+            result = differ.duplicate_docs_check(result)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
@@ -716,7 +730,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/search", SearchHandler),
             (r"/news/baijia/caimaotiyu", caimaotiyuHandler),
             (r"/news/baijia/recommend", recommendHandler),
-            (r"/news/baijia/fetchDetail", fetchDetailHandler)
+            (r"/news/baijia/fetchDetail", fetchDetailHandler),
+            (r"/news/baijia/differOpinion", differOpinionHandler)
 
         ]
 
