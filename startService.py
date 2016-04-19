@@ -686,7 +686,9 @@ class differOpinionHandler(tornado.web.RequestHandler):
     def post(self):
         args = self.request.arguments
         article = self.get_argument("article", None)
-        article = json.loads(self.get_argument("article", None))
+        # print article
+        article = article.split('$')
+        # article = json.loads(self.get_argument("article", None))
         if len(args) < 1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
