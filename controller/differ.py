@@ -68,6 +68,7 @@ def duplicate_docs_check(domain_events):
         #             "----------------------------------------------------"
         #             )
         #     f.close()
+
     differ_result = []
     for event in events:
         result = {}
@@ -75,15 +76,19 @@ def duplicate_docs_check(domain_events):
         url = main_event["_id"]
         # result = main_event
         result["_id"] = url
-        result["self_opinion"] = []
-        # result["common_opinion"] = []
-        for event_elem in events:
-            if url == event_elem["_id"]:
-                continue
-            else:
-                if len(event_elem["self_opinion"]) >= 20:
-                    result["self_opinion"].append({ "self_opinion": event_elem["self_opinion"], "_id": event_elem["_id"]})
-        #         if len(event_elem["common_opinion"]) > 20:
+        result["self_opinion"] = ""
+        if len(event["self_opinion"]) >= 20:
+            result["self_opinion"] = event["self_opinion"]
+
+        # result["self_opinion"] = []
+        # # result["common_opinion"] = []
+        # for event_elem in events:
+        #     if url == event_elem["_id"]:
+        #         continue
+        #     else:
+        #         if len(event_elem["self_opinion"]) >= 20:
+        #             result["self_opinion"].append({ "self_opinion": event_elem["self_opinion"], "_id": event_elem["_id"]})
+        # #         if len(event_elem["common_opinion"]) > 20:
         #             result["common_opinion"].append({"common_opinion": event_elem["common_opinion"], "url": event_elem["_id"]})
         differ_result.append(result)
     return differ_result
