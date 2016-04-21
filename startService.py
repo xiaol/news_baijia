@@ -683,6 +683,8 @@ class caimaotiyuHandler(tornado.web.RequestHandler):
 
 class differOpinionHandler(tornado.web.RequestHandler):
     def post(self):
+        self.set_header("Access-Control-Allow-Origin",
+                        "*")  # TODO should change to exact domain after test in localhost
         args = self.request.arguments
         article = self.get_argument("article", None)
         # print repr(article)
@@ -699,6 +701,8 @@ class differOpinionHandler(tornado.web.RequestHandler):
 
 class FetchArticleHandler(tornado.web.RequestHandler):
     def get(self):
+        self.set_header("Access-Control-Allow-Origin",
+                        "*")  # TODO should change to exact domain after test in localhost
         topic = self.get_argument("topic", None)
         options = {}
         options["topic"] = topic
