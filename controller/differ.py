@@ -77,7 +77,7 @@ def duplicate_docs_check(domain_events):
         # result = main_event
         result["_id"] = url
         result["self_opinion"] = ""
-        if len(trim(event["self_opinion"])) >= 20:
+        if len((event["self_opinion"].strip())) >= 20:
             result["self_opinion"] = event["self_opinion"]
 
         # result["self_opinion"] = []
