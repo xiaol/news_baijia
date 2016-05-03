@@ -55,7 +55,7 @@ def duplicate_docs_check(domain_events):
         # event["common_opinion"] = common_opinion
         duplicate_result_by_paragraph = compute_match_ratio_sentence_to_paragraph(result)
         min_match_ratio, one_paragraph_by_article, total_paragraph_by_article = extract_opinon_by_match_ratio(main_event, duplicate_result_by_paragraph)
-        if min_match_ratio < 0.39:
+        if min_match_ratio < 0.39 and min_match_ratio > 0.1:
             event["self_opinion"] = one_paragraph_by_article
         else:
             event["self_opinion"] = ''
@@ -77,7 +77,7 @@ def duplicate_docs_check(domain_events):
         # result = main_event
         result["_id"] = url
         result["self_opinion"] = ""
-        if len(event["self_opinion"]) >= 20:
+        if len(trim(event["self_opinion"])) >= 20:
             result["self_opinion"] = event["self_opinion"]
 
         # result["self_opinion"] = []
