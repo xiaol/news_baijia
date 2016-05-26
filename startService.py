@@ -11,7 +11,7 @@ import tornado.httpclient
 import sys
 import tornado.netutil
 import json
-from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get, point_get, praise_post, start_page_post, dredge_up_post, elementary_post, tags_get, recommend , differ
+from controller import home_get, content_get, time_get, login_get, im_get, point_post, channel_get, point_get, praise_post, start_page_post, dredge_up_post, elementary_post, tags_get, recommend , differ, ltp
 from controller import search
 from controller.push import push_message
 import abstract
@@ -713,6 +713,18 @@ class FetchArticleHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
+class FetchNerHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.set_header("Access-Control-Allow-Origin",
+                        "*")  # TODO should change to exact domain after test in localhost
+        topic = self.get_argument("topic", None)
+        if len(topic) <1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = ltp.ltp_model(topic)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
 
 class Application(tornado.web.Application):
     def __init__(self):
@@ -750,7 +762,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/recommend", recommendHandler),
             (r"/news/baijia/fetchDetail", fetchDetailHandler),
             (r"/news/baijia/differOpinion", differOpinionHandler),
-            (r"/news/baijia/fetchArticle", FetchArticleHandler)
+            (r"/news/baijia/fetchArticle", FetchArticleHandler),
+            (r"/news/baijia/fetchNer", FetchNerHandler)
 
         ]
 
