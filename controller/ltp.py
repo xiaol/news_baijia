@@ -26,7 +26,7 @@ def ltp_model(txt):
     result["person"] = []
     for i in range(num):
         # print "%s  %s  " % (netags[i], words[i]),
-        if netags[i].find("Nh") >= 0:
+        if netags[i].find("Nh") >= 0 or postags[i] in ('n', 'nh', 'ni', 'ws'):
             result["person"].append(words[i])
     return result
 
