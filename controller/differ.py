@@ -580,13 +580,94 @@ def trim_new_line_character(text):
 
     return '\n'.join(result_list)+'\n'
 
+def split_words(text,article):
+    text = text.decode('utf-8')
+    result = []
+    # 最大匹配
+    maximum = 6
+    index = len(text)
+    while index > 0:
+      word = None
+      for length in range(maximum, 0, -1):
+        if index - length < 0:
+          continue
+        piece = text[(index - length):index]
+        if piece_in_article(piece, article):
+          word = piece
+          result.append(word)
+          index = index - length
+          break
+      if word is None:
+        index -= 1
+    return result
+
+def piece_in_article(piece, article):
+    if article.count(piece)>1:
+        return True
+    else:
+        return False
+
+def do_relate_task(params):
+    if "title" in params.keys():
+        title = params["title"]
+    docs = conn["news_ver2"]["relate"].find_one({"_id": title})
+    if docs:
+        return docs["relate_opinion"]
+    params_key = {"url": params["url"]}
+    data = urllib.urlencode(params_key)
+    search_url ="http://120.27.162.110:9001/extract_news"
+    # try:
+    req = urllib2.Request(url = search_url, data = data)
+    res_data = urllib2.urlopen(req)
+    res = res_data.read()
+    print res
+    # print type(res)
+    content =""
+    text = json.loads(res)
+    if text["ret_code"] <>1:
+        return {'response': 202, 'msg': 'Hey Dude ->'}
+    for elem in text["result"]["content"]:
+        if "text" in elem.keys():
+            content = content + elem["text"]
+    # print content
+
+    result = split_words(title, content)
+    for words in result[::-1]:
+        print words,' ',
+
+    if len([i.encode('utf-8') for i in result[::-1] if len(i)>=2])>=1:
+        key = " ".join([i.encode('utf-8') for i in result[::-1] if len(i)>=2])
+    else:
+        key = title[:len(title)/3 * 2]
+    params_key = {"key": key}
+    data = urllib.urlencode(params_key)
+    search_url ="http://120.55.88.11:8088/search?"+data
+    # try:
+    r_text = r.get(search_url)
+    text = (r_text.json())
+    search_list = text["searchItems"]
+    # except:
+    #     print "search_url_exception"
+    #     return
+    # text_list = []
+    # url_set = set()
+    for search_elem in search_list:
+        # search_url = search_elem["url"]
+        print search_elem["title"]
+    elem = {}
+    elem["_id"] = title
+    elem["relate_opinion"] = search_list
+    item_dict = dict(elem)
+    conn['news_ver2']['relate'].save(item_dict)
+    return search_list
 
 if __name__ == '__main__':
     # print do_article_task({"topic":"抢红包大打出手"})
     # print bingSearch()
-    domain_events = [u"今日，法晚记者从河南警方获悉，北京和颐酒店女子遇袭案发生后，河南公安厅全力配合北京警方抓捕逃犯，由李法正副厅长坐镇指挥，整个抓捕过程保密性很强，行动十分迅速。\n今日，法晚记者从河南警方获悉，北京和颐酒店女子遇袭案发生后，五名嫌犯逃窜到了原籍河南省许昌市襄城县汾陈乡。北京警方调查得知后，随即向河南省公安厅发出了协助抓捕的请求。河南省公安厅的主要领导对这起案件非常重视，派出了负责打击刑事犯罪和网络安全保卫工作的李法正副厅长坐镇指挥。这次抓捕行动由许昌市公安局刑侦支队统一调配，在掌握了犯罪嫌疑人李某的逃窜轨迹后，襄城县刑警队迅速出动，将李某抓获归案。许昌市、襄城县公安机关很多重要岗位的警官直到破案才知道原来自己的同事也参与了此次行动。此前，北京警方回应网友对破案速度的质疑时称：此次抓捕行动需要跨省、跨警种的合作，两地警方的协调、沟通工作就花费了一部分时间。"
-                     ,u"法晚深度即时（稿件统筹 朱顺忠 实习生 尚妍）今日，法晚记者从河南警方获悉，北京和颐酒店女子遇袭案发生后，河南公安厅全力配合北京警方抓捕逃犯，由李法正副厅长坐镇指挥，整个抓捕过程保密性很强，行动十分迅速。\n今日，法晚（微信公号ID：fzwb_52165216）记者从河南警方获悉，北京和颐酒店女子遇袭案发生后，五名嫌犯逃窜到了原籍河南省许昌市襄城县汾陈乡。北京警方调查得知后，随即向河南省公安厅发出了协助抓捕的请求。河南省公安厅的主要领导对这起案件非常重视，派出了负责打击刑事犯罪和网络安全保卫工作的李法正副厅长坐镇指挥。这次抓捕行动由许昌市公安局刑侦支队统一调配，在掌握了犯罪嫌疑人李某的逃窜轨迹后，襄城县刑警队迅速出动，将李某抓获归案。许昌市、襄城县公安机关很多重要岗位的警官直到破案才知道原来自己的同事也参与了此次行动。此前，北京警方回应网友对破案速度的质疑时称：此次抓捕行动需要跨省、跨警种的合作，两地警方的协调、沟通工作就花费了一部分时间。"]
-
-    result = data_tranfer(domain_events)
-    print duplicate_docs_check(result)
-    # print (extract_opinion(article))
+    do_relate_task({"url":"http://mp.weixin.qq.com/s?__biz=MjM5MTk2OTIwOA==&mid=401562035&idx=1&sn=c3bebee6cb09072cd048bea3108b03c7&scene=23&srcid=0321UwN45f6LVCgXQvbzo1NI#rd","title":"宗宁：网红经济的悖论，现在做已经晚了"})
+    # domain_events = [u"今日，法晚记者从河南警方获悉，北京和颐酒店女子遇袭案发生后，河南公安厅全力配合北京警方抓捕逃犯，由李法正副厅长坐镇指挥，整个抓捕过程保密性很强，行动十分迅速。\n今日，法晚记者从河南警方获悉，北京和颐酒店女子遇袭案发生后，五名嫌犯逃窜到了原籍河南省许昌市襄城县汾陈乡。北京警方调查得知后，随即向河南省公安厅发出了协助抓捕的请求。河南省公安厅的主要领导对这起案件非常重视，派出了负责打击刑事犯罪和网络安全保卫工作的李法正副厅长坐镇指挥。这次抓捕行动由许昌市公安局刑侦支队统一调配，在掌握了犯罪嫌疑人李某的逃窜轨迹后，襄城县刑警队迅速出动，将李某抓获归案。许昌市、襄城县公安机关很多重要岗位的警官直到破案才知道原来自己的同事也参与了此次行动。此前，北京警方回应网友对破案速度的质疑时称：此次抓捕行动需要跨省、跨警种的合作，两地警方的协调、沟通工作就花费了一部分时间。"
+    #                  ,u"法晚深度即时（稿件统筹 朱顺忠 实习生 尚妍）今日，法晚记者从河南警方获悉，北京和颐酒店女子遇袭案发生后，河南公安厅全力配合北京警方抓捕逃犯，由李法正副厅长坐镇指挥，整个抓捕过程保密性很强，行动十分迅速。\n今日，法晚（微信公号ID：fzwb_52165216）记者从河南警方获悉，北京和颐酒店女子遇袭案发生后，五名嫌犯逃窜到了原籍河南省许昌市襄城县汾陈乡。北京警方调查得知后，随即向河南省公安厅发出了协助抓捕的请求。河南省公安厅的主要领导对这起案件非常重视，派出了负责打击刑事犯罪和网络安全保卫工作的李法正副厅长坐镇指挥。这次抓捕行动由许昌市公安局刑侦支队统一调配，在掌握了犯罪嫌疑人李某的逃窜轨迹后，襄城县刑警队迅速出动，将李某抓获归案。许昌市、襄城县公安机关很多重要岗位的警官直到破案才知道原来自己的同事也参与了此次行动。此前，北京警方回应网友对破案速度的质疑时称：此次抓捕行动需要跨省、跨警种的合作，两地警方的协调、沟通工作就花费了一部分时间。"]
+    #
+    # result = data_tranfer(domain_events)
+    # print duplicate_docs_check(result)
+    # # print (extract_opinion(article))

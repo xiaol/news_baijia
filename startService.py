@@ -704,14 +704,34 @@ class FetchArticleHandler(tornado.web.RequestHandler):
         self.set_header("Access-Control-Allow-Origin",
                         "*")  # TODO should change to exact domain after test in localhost
         topic = self.get_argument("topic", None)
+
         options = {}
         options["topic"] = topic
+
         if len(topic) <1:
             result = {'response': 201, 'msg': 'Hey Dude ->'}
         else:
             result = differ.do_article_task(options)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
+
+    def post(self):
+        self.set_header("Access-Control-Allow-Origin",
+                        "*")  # TODO should change to exact domain after test in localhost
+        args = self.request.arguments
+        topic = self.get_argument("topic", None)
+        url = self.get_argument("url", None)
+        options = {}
+        options["topic"] = topic
+        options["url"] = url
+        if len(topic) <1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = differ.do_article_task(options)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
 
 class FetchNerHandler(tornado.web.RequestHandler):
     def get(self):
@@ -725,6 +745,25 @@ class FetchNerHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
+
+
+class FetchRelateHandler(tornado.web.RequestHandler):
+
+    def post(self):
+        self.set_header("Access-Control-Allow-Origin",
+                        "*")  # TODO should change to exact domain after test in localhost
+        args = self.request.arguments
+        title = self.get_argument("title", None)
+        url = self.get_argument("url", None)
+        options = {}
+        options["title"] = title
+        options["url"] = url
+        if len(title) <1:
+            result = {'response': 201, 'msg': 'Hey Dude ->'}
+        else:
+            result = differ.do_relate_task(options)
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
 
 class Application(tornado.web.Application):
     def __init__(self):
@@ -763,7 +802,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/fetchDetail", fetchDetailHandler),
             (r"/news/baijia/differOpinion", differOpinionHandler),
             (r"/news/baijia/fetchArticle", FetchArticleHandler),
-            (r"/news/baijia/fetchNer", FetchNerHandler)
+            (r"/news/baijia/fetchNer", FetchNerHandler),
+            (r"/news/baijia/fetchRelate", FetchRelateHandler)
 
         ]
 
