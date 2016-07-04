@@ -13,6 +13,7 @@ import urllib
 import sys
 import urllib2
 from config import dbConn
+from ltp import segmentor, postagger
 reload(sys)
 sys.setdefaultencoding('utf8')
 DBStore = dbConn.GetDateStore()
@@ -611,7 +612,7 @@ def do_relate_task(params):
     if "title" in params.keys():
         title = params["title"]
     docs = conn["news_ver2"]["relate"].find_one({"_id": title})
-    if docs:
+    if docs and len(docs["relate_opinion"])>0:
         return docs["relate_opinion"]
     params_key = {"url": params["url"]}
     data = urllib.urlencode(params_key)
@@ -640,14 +641,31 @@ def do_relate_task(params):
         # print content
 
     result = split_words(title, content)
-    for words in result[::-1]:
-        print words,' ',
+    words = []
+    for word in result[::-1]:
+        print word,' ',
+        # words.append(word)
+
 
     if len([i.encode('utf-8') for i in result[::-1] if len(i)>=2])>=1:
         key = " ".join([i.encode('utf-8') for i in result[::-1] if len(i)>=2])
     else:
         key = title[:len(title)/3 * 2]
-    params_key = {"key": key}
+
+    sentence = key.encode("utf-8")
+    words = segmentor.segment(sentence)
+    print "\n".join(words)
+    num =len(words)
+    # print "num,%s" %num
+    postags = postagger.postag(words)
+    print "\n".join(postags)
+    key_new=[]
+    for i in range(num):
+        # print "%s  %s  " % (netags[i], words[i]),
+      if postags[i] not in ('m', 'q', 'wp','u'):
+          key_new.append(words[i])
+    print " ".join(key_new)
+    params_key = {"key": " ".join(key_new)}
     data = urllib.urlencode(params_key)
     search_url ="http://120.55.88.11:8088/search?"+data
     # try:
