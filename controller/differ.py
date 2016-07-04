@@ -665,7 +665,7 @@ def do_relate_task(params):
       if postags[i] not in ('m', 'q', 'wp','u'):
           key_new.append(words[i])
     print " ".join(key_new[:3])
-    params_key = {"key": " ".join(key_new)}
+    params_key = {"key": " ".join(key_new[:3])}
     data = urllib.urlencode(params_key)
     search_url ="http://120.55.88.11:8088/search?"+data
     # try:
