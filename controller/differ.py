@@ -14,10 +14,14 @@ import sys
 import urllib2
 from config import dbConn
 from ltp import segmentor, postagger
+# from __future__ import print_function
+from AI_funcs.textrank4zh import TextRank4Keyword
+tr4w = TextRank4Keyword()
 reload(sys)
 sys.setdefaultencoding('utf8')
 DBStore = dbConn.GetDateStore()
 conn = DBStore._connect_news
+
 
 def duplicate_docs_check(domain_events):
     events = []
@@ -608,6 +612,19 @@ def piece_in_article(piece, article):
     else:
         return False
 
+def extract_tag(content):
+    tags = []
+    result = ""
+    for strong_text in re.findall(r'<strong>(.*?)</strong>', content):
+        result = result + strong_text
+    if len(result)>=10:
+        tr4w.analyze(text=result, lower=True, window=2)
+        for item in tr4w.get_keywords(5, word_min_len=2):
+            tags.append(item.word)
+            print(item.word, item.weight)
+    return tags
+
+
 def do_relate_task(params):
     if "title" in params.keys():
         title = params["title"]
@@ -665,7 +682,7 @@ def do_relate_task(params):
     for i in range(num):
         # print "%s  %s  " % (netags[i], words[i]),
       if postags[i] not in ('m', 'q', 'wp','u'):
-          key_new.append(words[i])
+          key_new.append(words[i].decode('utf-8'))
     print " ".join(key_new[:3])
     params_key = {"key": " ".join(key_new[:3])}
     data = urllib.urlencode(params_key)
@@ -682,18 +699,24 @@ def do_relate_task(params):
     for search_elem in search_list:
         # search_url = search_elem["url"]
         print search_elem["title"]
+    relate_opinion = {}
+    relate_opinion["searchItems"] = search_list
+
+
+    relate_opinion["tags"] = list(set(extract_tag(content) + [i for i in key_new if len(i)>=2]))
     elem = {}
     elem["_id"] = title
-    elem["relate_opinion"] = search_list
+    elem["relate_opinion"] = relate_opinion
     item_dict = dict(elem)
     conn['news_ver2']['relate'].save(item_dict)
-    print search_list
-    return search_list
+    # print relate_opinion
+    return relate_opinion
 
 if __name__ == '__main__':
     # print do_article_task({"topic":"抢红包大打出手"})
     # print bingSearch()
-    do_relate_task({"url":"http://mp.weixin.qq.com/s?__biz=MjM5MTk2OTIwOA==&mid=401562035&idx=1&sn=c3bebee6cb09072cd048bea3108b03c7&scene=23&srcid=0321UwN45f6LVCgXQvbzo1NI#rd","title":"17宗宁：网红经济的悖论，现在做已经晚了"})
+    # extract_tag("中新网北京12月1日电(记者 张曦) 30日晚，高圆圆和赵又廷在京举行答谢宴，诸多明星现身捧场，其中包括张杰(微博)、谢娜(微博)夫妇、何炅(微博)、蔡康永(微博)、徐克、张凯丽、黄轩(微博)等。30日中午，有媒体曝光高圆圆和赵又廷现身台北桃园机场的照片，照片中两人小动作不断，尽显恩爱。事实上，夫妻俩此行是回女方老家北京举办答谢宴。")
+    do_relate_task({"url":"http://mp.weixin.qq.com/s?__biz=MjM5MTk2OTIwOA==&mid=401562035&idx=1&sn=c3bebee6cb09072cd048bea3108b03c7&scene=23&srcid=0321UwN45f6LVCgXQvbzo1NI#rd","title":"20宗宁：网红经济的悖论，现在做已经晚了"})
     # do_relate_task({"url":"http://www.taiwan.cn/xwzx/shytp/201606/t20160630_11495228_12.htm","title":"14宗宁：网红经济的悖论，现在做已经晚了"})
     # domain_events = [u"今日，法晚记者从河南警方获悉，北京和颐酒店女子遇袭案发生后，河南公安厅全力配合北京警方抓捕逃犯，由李法正副厅长坐镇指挥，整个抓捕过程保密性很强，行动十分迅速。\n今日，法晚记者从河南警方获悉，北京和颐酒店女子遇袭案发生后，五名嫌犯逃窜到了原籍河南省许昌市襄城县汾陈乡。北京警方调查得知后，随即向河南省公安厅发出了协助抓捕的请求。河南省公安厅的主要领导对这起案件非常重视，派出了负责打击刑事犯罪和网络安全保卫工作的李法正副厅长坐镇指挥。这次抓捕行动由许昌市公安局刑侦支队统一调配，在掌握了犯罪嫌疑人李某的逃窜轨迹后，襄城县刑警队迅速出动，将李某抓获归案。许昌市、襄城县公安机关很多重要岗位的警官直到破案才知道原来自己的同事也参与了此次行动。此前，北京警方回应网友对破案速度的质疑时称：此次抓捕行动需要跨省、跨警种的合作，两地警方的协调、沟通工作就花费了一部分时间。"
     #                  ,u"法晚深度即时（稿件统筹 朱顺忠 实习生 尚妍）今日，法晚记者从河南警方获悉，北京和颐酒店女子遇袭案发生后，河南公安厅全力配合北京警方抓捕逃犯，由李法正副厅长坐镇指挥，整个抓捕过程保密性很强，行动十分迅速。\n今日，法晚（微信公号ID：fzwb_52165216）记者从河南警方获悉，北京和颐酒店女子遇袭案发生后，五名嫌犯逃窜到了原籍河南省许昌市襄城县汾陈乡。北京警方调查得知后，随即向河南省公安厅发出了协助抓捕的请求。河南省公安厅的主要领导对这起案件非常重视，派出了负责打击刑事犯罪和网络安全保卫工作的李法正副厅长坐镇指挥。这次抓捕行动由许昌市公安局刑侦支队统一调配，在掌握了犯罪嫌疑人李某的逃窜轨迹后，襄城县刑警队迅速出动，将李某抓获归案。许昌市、襄城县公安机关很多重要岗位的警官直到破案才知道原来自己的同事也参与了此次行动。此前，北京警方回应网友对破案速度的质疑时称：此次抓捕行动需要跨省、跨警种的合作，两地警方的协调、沟通工作就花费了一部分时间。"]
