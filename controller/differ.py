@@ -633,14 +633,16 @@ def do_relate_task(params):
             content = (r_text.json())["text"]
             # print content
         except:
-            return {'response': 202, 'msg': 'Hey Dude ->'}
+            return {'response': 202, 'msg': 'text is null'}
     if text["ret_code"] == 1:
         for elem in text["result"]["content"]:
             if "text" in elem.keys():
                 content = content + elem["text"]
         # print content
-
-    result = split_words(title, content)
+    try:
+        result = split_words(title, content)
+    except:
+        return {'response': 202, 'msg': 'text is null'}
     words = []
     for word in result[::-1]:
         print word,' ',
