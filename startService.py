@@ -759,7 +759,7 @@ class FetchRelateHandler(tornado.web.RequestHandler):
         options["title"] = title
         options["url"] = url
         if len(title) <1:
-            result = {'response': 201, 'msg': 'Hey Dude ->'}
+            result = {'response': 201, 'msg': 'parameter error'}
         else:
             result = differ.do_relate_task(options)
         self.set_header("Content-Type", "Application/json")
