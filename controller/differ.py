@@ -690,7 +690,7 @@ def do_relate_task(params):
     print " ".join(key_new[:3])
 
     if "tags" in params.keys():
-        if len(params["tags"])>=2:
+        if params["tags"] is not None:
             params_key = {"key": params["tags"]}
     else:
         params_key = {"key": " ".join(key_new[:3])}
