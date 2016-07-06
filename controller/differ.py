@@ -588,6 +588,10 @@ def trim_new_line_character(text):
 def split_words(text,article):
     text = text.decode('utf-8')
     result = []
+    for eng in re.findall(r'[A-Za-z ]+' ,text):
+        if len(eng) > 2:
+            result.append(eng)
+            text = text.replace(eng, "")
     # 最大匹配
     maximum = 6
     index = len(text)
@@ -684,7 +688,11 @@ def do_relate_task(params):
       if postags[i] not in ('m', 'q', 'wp','u'):
           key_new.append(words[i].decode('utf-8'))
     print " ".join(key_new[:3])
-    params_key = {"key": " ".join(key_new[:3])}
+
+    if "tags" in params.keys():
+        params_key = {"key": params["tags"]}
+    else:
+        params_key = {"key": " ".join(key_new[:3])}
     data = urllib.urlencode(params_key)
     search_url ="http://120.55.88.11:8088/search?"+data
     # try:
@@ -702,8 +710,12 @@ def do_relate_task(params):
     relate_opinion = {}
     relate_opinion["searchItems"] = search_list
 
-
-    relate_opinion["tags"] = list(set(extract_tag(content) + [i for i in key_new if len(i)>=2]))
+    if "tags" in params.keys():
+        tag_temp = set(extract_tag(content) + [i for i in key_new if len(i)>=2])
+        tag_temp.discard(params["tags"])
+        relate_opinion["tags"] = list(tag_temp)
+    else:
+        relate_opinion["tags"] = list(set(extract_tag(content) + [i for i in key_new if len(i)>=2]))
     elem = {}
     elem["_id"] = title
     elem["relate_opinion"] = relate_opinion

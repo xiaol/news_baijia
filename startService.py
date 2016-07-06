@@ -755,9 +755,12 @@ class FetchRelateHandler(tornado.web.RequestHandler):
         args = self.request.arguments
         title = self.get_argument("title", None)
         url = self.get_argument("url", None)
+        tags = self.get_argument("tags", None)
         options = {}
         options["title"] = title
         options["url"] = url
+        options["tags"] = tags
+
         if len(title) <1:
             result = {'response': 201, 'msg': 'parameter error'}
         else:
