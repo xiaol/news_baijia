@@ -690,7 +690,8 @@ def do_relate_task(params):
     print " ".join(key_new[:3])
 
     if "tags" in params.keys():
-        params_key = {"key": params["tags"]}
+        if len(params["tags"])>=2:
+            params_key = {"key": params["tags"]}
     else:
         params_key = {"key": " ".join(key_new[:3])}
     data = urllib.urlencode(params_key)
