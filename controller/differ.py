@@ -689,11 +689,11 @@ def do_relate_task(params):
           key_new.append(words[i].decode('utf-8'))
     print " ".join(key_new[:3])
 
+    params_key = {"key": " ".join(key_new[:3])}
+
     if "tags" in params.keys():
         if params["tags"] is not None:
             params_key = {"key": params["tags"]}
-    else:
-        params_key = {"key": " ".join(key_new[:3])}
     data = urllib.urlencode(params_key)
     search_url ="http://120.55.88.11:8088/search?"+data
     # try:
