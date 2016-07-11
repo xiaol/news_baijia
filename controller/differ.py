@@ -736,7 +736,7 @@ def do_relate_task(params):
     elem["_id"] = title
     elem["relate_opinion"] = relate_opinion
     item_dict = dict(elem)
-    conn['news_ver2']['relate'].save(item_dict)
+    # conn['news_ver2']['relate'].save(item_dict)
     # print relate_opinion
     return relate_opinion
 
