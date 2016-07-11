@@ -15,8 +15,9 @@ import urllib2
 from config import dbConn
 from ltp import segmentor, postagger
 # from __future__ import print_function
-from AI_funcs.textrank4zh import TextRank4Keyword
+from AI_funcs.textrank4zh import TextRank4Keyword, TextRank4Sentence
 tr4w = TextRank4Keyword()
+tr4s = TextRank4Sentence()
 reload(sys)
 sys.setdefaultencoding('utf8')
 DBStore = dbConn.GetDateStore()
@@ -619,13 +620,25 @@ def piece_in_article(piece, article):
 def extract_tag(content):
     tags = []
     result = ""
+    print content
+    print '\n'
     for strong_text in re.findall(r'<strong>(.*?)</strong>', content):
-        result = result + strong_text
+        print strong_text
+        result = result + re.sub(r'<.*?>', "", strong_text)
     if len(result)>=10:
         tr4w.analyze(text=result, lower=True, window=2)
-        for item in tr4w.get_keywords(5, word_min_len=2):
-            tags.append(item.word)
-            print(item.word, item.weight)
+        # print '/'.join(tr4w.get_keyphrases(keywords_num=30, min_occur_num= 1))
+        # print 'end'
+        # for item in tr4w.get_keywords(50, word_min_len=2):
+        for item in tr4w.get_keyphrases(keywords_num=30, min_occur_num= 1):
+            tags.append(item)
+            # print item.word
+            # print item.weight
+    tr4s.analyze(text=re.sub(r'<.*?>', "", content), lower=True, source = 'all_filters')
+    abs = u''
+    for item in tr4s.get_key_sentences(num=3):
+        abs = abs+ item.sentence + u'。'
+    tags.append(abs)
     return tags
 
 
@@ -717,6 +730,8 @@ def do_relate_task(params):
         relate_opinion["tags"] = list(tag_temp)
     else:
         relate_opinion["tags"] = list(set(extract_tag(content) + [i for i in key_new if len(i)>=2]))
+
+
     elem = {}
     elem["_id"] = title
     elem["relate_opinion"] = relate_opinion
