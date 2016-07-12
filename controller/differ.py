@@ -722,7 +722,7 @@ def do_relate_task(params):
         # search_url = search_elem["url"]
         print search_elem["title"]
     relate_opinion = {}
-    relate_opinion["searchItems"] = search_list
+    relate_opinion["searchItems"] = search_list[:4]
 
     if "tags" in params.keys():
         tag_temp = set(extract_tag(content) + [i for i in key_new if len(i)>=2])
