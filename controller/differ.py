@@ -22,6 +22,8 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 DBStore = dbConn.GetDateStore()
 conn = DBStore._connect_news
+import random
+
 
 
 def duplicate_docs_check(domain_events):
@@ -739,6 +741,20 @@ def do_relate_task(params):
     # conn['news_ver2']['relate'].save(item_dict)
     # print relate_opinion
     return relate_opinion
+
+globvar = 3124756  #3000000
+def random_fetch_question():
+    global globvar
+    rand = random.random()
+    print globvar
+    # doc = conn["news_ver2"]["questionItem"].find_one({'random': {"$gte": rand}})
+    doc = conn["news_ver2"]["questionItem"].find_one({'nid': globvar})
+    globvar = globvar + 1
+    if not doc:
+        return random_fetch_question()
+    if "_id" in doc.keys():
+        doc.pop('_id')
+    return doc
 
 if __name__ == '__main__':
     # print do_article_task({"topic":"抢红包大打出手"})

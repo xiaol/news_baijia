@@ -768,6 +768,19 @@ class FetchRelateHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
+class FetchQuestionHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.set_header("Access-Control-Allow-Origin",
+                        "*")  # TODO should change to exact domain after test in localhost
+
+
+        result = differ.random_fetch_question()
+        self.set_header("Content-Type", "Application/json")
+        self.write(json.dumps(result))
+
+
+
+
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
@@ -806,7 +819,8 @@ class Application(tornado.web.Application):
             (r"/news/baijia/differOpinion", differOpinionHandler),
             (r"/news/baijia/fetchArticle", FetchArticleHandler),
             (r"/news/baijia/fetchNer", FetchNerHandler),
-            (r"/news/baijia/fetchRelate", FetchRelateHandler)
+            (r"/news/baijia/fetchRelate", FetchRelateHandler),
+            (r"/news/baijia/fetchQuestion", FetchQuestionHandler)
 
         ]
 
