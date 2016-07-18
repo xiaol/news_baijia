@@ -53,6 +53,22 @@ from config import dbConn
 
 from weibo_run_re import fetch_unrunned_docs_by_date, fetch_url_title_lefturl_pairs, do_event_task
 from controller.home_get import homeContentFetch
+import psycopg2
+import random
+
+
+POSTGRE_USER = 'postgres'
+POSTGRE_PWD = 'ly@postgres&2015'
+POSTGRE_HOST = '120.27.163.25'
+POSTGRE_DBNAME = 'BDP'
+POSTGRES = "postgresql://postgres:ly@postgres&2015@120.27.163.25/BDP"
+
+
+
+def get_postgredb():
+    connection = psycopg2.connect(database=POSTGRE_DBNAME, user=POSTGRE_USER, password=POSTGRE_PWD, host=POSTGRE_HOST,)
+    cur = connection.cursor()
+    return connection, cur
 
 g_time_filter = ["今天","明天","后天"]
 g_gpes_filter = ["中国"]
@@ -1792,6 +1808,76 @@ def recommend():
     logging.warning("##################### recommend_event_task complete ********************")
 
 
+sentence_delimiters = ['?', '!', ';', '？', '！', '。', '；', '……', '…', '\n']
+question_delimiters = [u'?', u'？']
+
+def question(start,end):
+    conn_postgre, cur = get_postgredb()
+    cur.execute('SELECT a.nid,a.url,a.title,a.content,a.channel,b.cname FROM (select * FROM newslist_v2 WHERE nid>=(%s) and nid<= (%s)) a  LEFT OUTER JOIN channellist_v2 b ON a.channel=b.id',[start,end])
+    rows = cur.fetchall()
+    content_dict = dict()
+    content = ""
+    question = ''
+    for row in rows:
+        nid = row[0]
+        url = row[1]
+        title =  row[2]
+        channelname = row[5]
+        content_list = row[3]
+        index = 0
+        answer = ''
+        is_question_flag = 0
+        for elems in content_list:
+                if "txt" in elems.keys():
+                    question =''
+                    for sep in question_delimiters:
+                        if sep in re.sub(r'<.*?>', "", elems["txt"]):
+                            paragraph = re.sub(r'<.*?>', "", elems["txt"])
+                            for elem in re.findall(ur'[^?!;？！。；……\n]*?[?？]', paragraph):
+                                # question += re.sub(r'<.*?>', "", elems["txt"]) #elems['txt']
+                                question += elem
+                                is_question_flag = 1
+                                break
+                    # if is_question_flag == 1:
+                    #     continue
+                if is_question_flag == 1:
+                    for elems in content_list[index+1:]:
+                        if "txt" in elems.keys():
+                            answer = re.sub(r'<.*?>', "", elems["txt"])
+                            is_question_flag = 0
+                            break
+                index = index + 1
+                channel =  row[4]
+                if question <> '' and answer <> '':
+                    options={}
+                    options["random"] = random.random()
+                    options["nid"] = nid
+                    options["url"] = url
+                    options["channelname"] = channelname
+                    options["question"] = question
+                    options["answer"] = answer
+                    item_dict=dict(options)
+                    conn['news_ver2']['questionItem'].save(item_dict)
+                    # f = open("/Users/yangjiwen/Documents/yangjw/questionv.01.txt","a")
+                    # f.write(
+                    # "nid:"+str(nid)+"|"
+                    # +"url:"+url.encode('utf-8')+"|"
+                    # # ('\n')
+                    # # +"title:"+str(title)
+                    # +"question:"+question.encode('utf-8')+"|"
+                    # +"answer:"+answer.encode('utf-8')+"|"
+                    # # ('\n')
+                    # +"channelname:"+str(channelname)
+                    # # ('\n')
+                    # )
+                    # f.write('\n')
+
+
+    conn_postgre.close()
+    return title, content
+
+
+
 if __name__ == '__main__':
 
     # ImgMeetCondition_ver2("111")
@@ -1974,6 +2060,22 @@ if __name__ == '__main__':
                 t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
                 logging.warn("===============this round of content complete====================%s"%(t01))
                 time.sleep(3600*1)
+
+        elif arg == "question":
+            while True:
+                t00 = datetime.datetime.now()
+                t00 = t00.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of question start====================%s"%(t00))
+                # time.sleep(30)
+                # start = 3200000L
+                # end=    3211000L
+                question(start, end)
+                t01 = datetime.datetime.now()
+                t01 = t01.strftime("%Y-%m-%d %H:%M:%S")
+                logging.warn("===============this round of qustion complete====================%s"%(t01))
+                time.sleep(3600*1)
+
+
 
 
         elif arg=='help':
