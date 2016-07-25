@@ -805,30 +805,13 @@ def getSimQuestions(askedQues, n):
                     dic.append((id, sim_score))
                     dic = sorted(dic, key=lambda d: d[1])
                 break
-    ques = ''
-    ans = ''
-    for item in dic:
-        id2, sim_score2 = item
-        if sim_score2 == 0:
-            continue
-        doc2 = conn['news_ver2']['qaDataSet'].find_one({'_id':id2})
-        if n == 1 and ques == '' and 'question' in doc2:
-            ques = doc2.pop('question')
-            ques = '最匹配的问题及答案为: ' + ques
-        if 'answer' in doc2:
-            print '=='
-            localAns = doc2.pop('answer')
-            print localAns
-            localAns += ans
-            ans = localAns
-
-    if n == 1:
-        ques += ans
-        ans = ques
-    if ans == '':
-        ans = 'No matching answer. Please try another question.'
-    return ans
-
+    if dic and dic[0][1] > 0:
+        _id = dic[0][0]
+        doc = conn["news_ver2"]["qaDataSet"].find_one({'_id': _id})
+        del doc['_id']
+        return doc
+    else:
+        return 'No matching answer. Please try another question.'
 
 if __name__ == '__main__':
     # print do_article_task({"topic":"抢红包大打出手"})
