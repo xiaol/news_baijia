@@ -774,7 +774,9 @@ class FetchQuestionHandler(tornado.web.RequestHandler):
                         "*")  # TODO should change to exact domain after test in localhost
 
 
-        result = differ.random_fetch_question()
+        #result = differ.random_fetch_question()
+        question = self.get_argument('question', None)
+        result = differ.getSimQuestions(question, 1)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
@@ -843,6 +845,8 @@ if __name__ == "__main__":
     # server.add_sockets(sockets)
     # tornado.ioloop.IOLoop.instance().start()
 
+    #read qa dataset to memory
+    differ.getQuestionKws()
     # app = Application()
     http_server = tornado.httpserver.HTTPServer(Application())
     http_server.listen(port)

@@ -23,6 +23,7 @@ sys.setdefaultencoding('utf8')
 DBStore = dbConn.GetDateStore()
 conn = DBStore._connect_news
 import random
+import jieba.analyse
 
 
 
@@ -755,6 +756,79 @@ def random_fetch_question():
     if "_id" in doc.keys():
         doc.pop('_id')
     return doc
+
+#by liulei for QA
+
+#@brief: get similariy of sentense2 with sentense1
+#@param:   keyWords1----list of sentense1
+#          keyWords2----list of sentense2
+def getSenSimilarity(keyWords1, keyWords2):
+    num = 0
+    for item in keyWords1:
+        if item in keyWords2:
+            num += 1
+    return num
+
+
+qkws = []
+def getQuestionKws():
+    cursor = conn['news_ver2']['qaDataSet'].find()
+    for doc in cursor:
+        if "keywords" not in doc.keys():
+            continue
+        if '_id' not in doc.keys():
+            continue
+        kws = doc.pop('keywords')
+        id = doc.pop('_id')
+        qkws.append((id, kws))
+
+
+#@brief: get top n questions from db
+#@parms: askedQues --- asked question
+#        n --- get top n
+def getSimQuestions(askedQues, n):
+    dic = []
+    asked_kws = jieba.analyse.extract_tags(askedQues, 5)
+    for i in asked_kws:
+        print i.encode('utf-8')
+    for id, kws in qkws:
+        sim_score = getSenSimilarity(asked_kws, kws)
+        #print (bytes(id) + ':' + bytes(sim_score))
+        if len(dic) < n:
+            dic.append((id, sim_score))
+            dic = sorted(dic, key=lambda d: d[1])
+        else:
+            for item in dic:
+                id2, sim_score2 = item
+                if sim_score > sim_score2 :
+                    dic.remove(item)
+                    dic.append((id, sim_score))
+                    dic = sorted(dic, key=lambda d: d[1])
+                break
+    ques = ''
+    ans = ''
+    for item in dic:
+        id2, sim_score2 = item
+        if sim_score2 == 0:
+            continue
+        doc2 = conn['news_ver2']['qaDataSet'].find_one({'_id':id2})
+        if n == 1 and ques == '' and 'question' in doc2:
+            ques = doc2.pop('question')
+            ques = '最匹配的问题及答案为: ' + ques
+        if 'answer' in doc2:
+            print '=='
+            localAns = doc2.pop('answer')
+            print localAns
+            localAns += ans
+            ans = localAns
+
+    if n == 1:
+        ques += ans
+        ans = ques
+    if ans == '':
+        ans = 'No matching answer. Please try another question.'
+    return ans
+
 
 if __name__ == '__main__':
     # print do_article_task({"topic":"抢红包大打出手"})
