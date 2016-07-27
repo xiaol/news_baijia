@@ -847,8 +847,8 @@ if __name__ == "__main__":
     # tornado.ioloop.IOLoop.instance().start()
 
     #read qa dataset to memory
-    #differ.getQuestionKws()
-    differ.collData()
+    differ.getQuestionKws()
+    #differ.collData()
     # app = Application()
     http_server = tornado.httpserver.HTTPServer(Application())
     http_server.listen(port)
