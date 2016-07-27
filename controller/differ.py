@@ -15,6 +15,13 @@ import urllib2
 from config import dbConn
 from ltp import segmentor, postagger
 # from __future__ import print_function
+
+from sklearn import feature_extraction
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import CountVectorizer
+import numpy as np
+from numpy import linalg as la
+
 from AI_funcs.textrank4zh import TextRank4Keyword, TextRank4Sentence
 tr4w = TextRank4Keyword()
 tr4s = TextRank4Sentence()
@@ -782,6 +789,89 @@ def getQuestionKws():
         id = doc.pop('_id')
         qkws.append((id, kws))
 
+#jieba分词
+words_cut = []
+_ids = []
+def getCutWords():
+    global words_cut, _ids
+    cursor = conn['news_ver2']['qaDataSet'].find()
+    for doc in cursor:
+        if "question" in doc.keys() and '_id' in doc.keys():
+            question = doc.pop('question')
+            _id = doc.pop('_id')
+            #cut
+            words = jieba.cut(question)
+            #add space between words
+            wd = ' '.join(words)
+            words_cut.append(wd)
+            _ids.append(_id)
+
+#get tf-idf
+words_bag = []
+weight_matrix = []
+def getWeights():
+    global words_bag
+    global weight_matrix
+    vectorizer=CountVectorizer()#该类会将文本中的词语转换为词频矩阵，矩阵元素a[i][j] 表示j词在i类文本下的词频
+    transformer=TfidfTransformer()#该类会统计每个词语的tf-idf权值
+    tfidf=transformer.fit_transform(vectorizer.fit_transform(words_cut))#第一个fit_transform是计算tf-idf，第二个fit_transform是将文本转为词频矩阵
+    words_bag=vectorizer.get_feature_names()#获取词袋模型中的所有词语
+    weight_matrix=tfidf.toarray()#将tf-idf矩阵抽取出来，元素a[i][j]表示j词在i类文本中的tf-idf权重
+
+#collect data when service start
+def collData():
+    getCutWords()
+    getWeights()
+    print '====collData finished====='
+
+def cosSimilar(inA, inB):
+    inA = np.mat(inA)
+    inB = np.mat(inB)
+    num = float(inA*inB.T)
+    denom = la.norm(inA)*la.norm(inB)
+    return 0.5+0.5*(num/denom)
+
+#compare target question
+def getMostSimilary(askedQues):
+    askedQues_cut = jieba.cut(askedQues)
+    cut = ' '.join(askedQues_cut)
+    cut_list = [cut,]
+    vectorizer=CountVectorizer()#该类会将文本中的词语转换为词频矩阵，矩阵元素a[i][j] 表示j词在i类文本下的词频
+    transformer=TfidfTransformer()#该类会统计每个词语的tf-idf权值
+    tfidf=transformer.fit_transform(vectorizer.fit_transform(cut_list))#第一个fit_transform是计算tf-idf，第二个fit_transform是将文本转为词频矩阵
+    words_aksed = vectorizer.get_feature_names()#获取词袋模型中的所有词语
+    weight_asked = tfidf.toarray()#将tf-idf矩阵抽取出来，元素a[i][j]表示j词在i类文本中的tf-idf权重
+
+    #get target matrix of asked question
+    target_matrix = [0.0 for i in range(len(words_bag))]
+    for wd in words_aksed:
+        if wd in words_bag:
+            print wd
+            _index_bag = words_bag.index(wd)
+            _index_local = words_aksed.index(wd)
+            print _index_bag, _index_local, weight_asked[0][_index_local]
+            target_matrix[_index_bag] = weight_asked[0][_index_local]
+
+    maxScore = 0
+    index = 0
+    weight_num =  len(weight_matrix)
+    if weight_num and (len(target_matrix) == len(weight_matrix[0])):
+        for i in range(weight_num):
+            score = cosSimilar(target_matrix, weight_matrix[i])
+            if score > maxScore:
+                maxScore = score
+                index = i
+
+    if maxScore == 0:
+        return 'No matching answer. Please try another question.'
+
+    _id = _ids[index]
+    doc = conn["news_ver2"]["qaDataSet"].find_one({'_id': _id})
+    if doc and "_id" in doc.keys():
+        doc.pop('_id')
+        return doc
+    else:
+        return 'No matching answer. Please try another question.'
 
 #@brief: get top n questions from db
 #@parms: askedQues --- asked question

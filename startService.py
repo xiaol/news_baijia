@@ -776,7 +776,8 @@ class FetchQuestionHandler(tornado.web.RequestHandler):
 
         #result = differ.random_fetch_question()
         question = self.get_argument('question', None)
-        result = differ.getSimQuestions(question, 1)
+        #result = differ.getSimQuestions(question, 1)
+        result = differ.getMostSimilary(question)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
 
@@ -846,7 +847,8 @@ if __name__ == "__main__":
     # tornado.ioloop.IOLoop.instance().start()
 
     #read qa dataset to memory
-    differ.getQuestionKws()
+    #differ.getQuestionKws()
+    differ.collData()
     # app = Application()
     http_server = tornado.httpserver.HTTPServer(Application())
     http_server.listen(port)
