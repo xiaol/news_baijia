@@ -792,19 +792,35 @@ def getQuestionKws():
 #jieba分词
 words_cut = []
 _ids = []
+nn = 0
 def getCutWords():
-    global words_cut, _ids
-    cursor = conn['news_ver2']['qaDataSet'].find()
-    for doc in cursor:
-        if "question" in doc.keys() and '_id' in doc.keys():
-            question = doc.pop('question')
-            _id = doc.pop('_id')
-            #cut
-            words = jieba.cut(question)
-            #add space between words
-            wd = ' '.join(words)
-            words_cut.append(wd)
-            _ids.append(_id)
+    global words_cut, _ids, nn
+    offset = 0
+    while True:
+        cursor = conn['news_ver2']['qaDataSet'].find().skip(offset).limit(100)
+        if offset >= cursor.count():
+            break
+        for doc in cursor:
+            if 'keywords' in doc.keys() and '_id' in doc.keys():
+                kws = doc.pop('keywords')
+                _id = doc.pop('_id')
+                wd = ' '.join(kws)
+                words_cut.append(wd)
+                _ids.append(_id)
+        offset += 100
+        print offset
+
+        #for doc in cursor:
+        #    if "question" in doc.keys() and '_id' in doc.keys():
+        #        question = doc.pop('question')
+        #        _id = doc.pop('_id')
+        #        #cut
+        #        words = jieba.cut(question)
+        #        #add space between words
+        #        wd = ' '.join(words)
+        #        words_cut.append(wd)
+        #        _ids.append(_id)
+        #offset += 100
 
 #get tf-idf
 words_bag = []
@@ -816,12 +832,16 @@ def getWeights():
     transformer=TfidfTransformer()#该类会统计每个词语的tf-idf权值
     tfidf=transformer.fit_transform(vectorizer.fit_transform(words_cut))#第一个fit_transform是计算tf-idf，第二个fit_transform是将文本转为词频矩阵
     words_bag=vectorizer.get_feature_names()#获取词袋模型中的所有词语
+    print len(words_cut)
     weight_matrix=tfidf.toarray()#将tf-idf矩阵抽取出来，元素a[i][j]表示j词在i类文本中的tf-idf权重
+    print 'finish get weights'
 
 #collect data when service start
 def collData():
+    print 'begin colldata'
     getCutWords()
-    getWeights()
+    print '-----get cut words =-----finished'
+    #getWeights()
     print '====collData finished====='
 
 def cosSimilar(inA, inB):
@@ -835,12 +855,38 @@ def cosSimilar(inA, inB):
 def getMostSimilary(askedQues):
     askedQues_cut = jieba.cut(askedQues)
     cut = ' '.join(askedQues_cut)
-    cut_list = [cut,]
+    words_cut.append(cut)
+    #cut_list = [cut,]
     vectorizer=CountVectorizer()#该类会将文本中的词语转换为词频矩阵，矩阵元素a[i][j] 表示j词在i类文本下的词频
     transformer=TfidfTransformer()#该类会统计每个词语的tf-idf权值
-    tfidf=transformer.fit_transform(vectorizer.fit_transform(cut_list))#第一个fit_transform是计算tf-idf，第二个fit_transform是将文本转为词频矩阵
-    words_aksed = vectorizer.get_feature_names()#获取词袋模型中的所有词语
-    weight_asked = tfidf.toarray()#将tf-idf矩阵抽取出来，元素a[i][j]表示j词在i类文本中的tf-idf权重
+    tfidf=transformer.fit_transform(vectorizer.fit_transform(words_cut))#第一个fit_transform是计算tf-idf，第二个fit_transform是将文本转为词频矩阵
+
+    s1 = tfidf * tfidf.T
+    SimMatris = s1.toarray()
+    max_index = -1
+    max_score = 0
+    target_sims = SimMatris[len(words_cut ) - 1]
+    for i in range (len(words_cut) -2):
+        if target_sims[i] > max_score:
+            max_score = target_sims[i]
+            max_index = i
+
+    words_cut.remove(cut)
+    if max_index == -1:
+        return 'No matching answer. Please try another question.'
+    print max_index, len(_ids)
+    _id = _ids[max_index]
+    doc = conn["news_ver2"]["qaDataSet"].find_one({'_id': _id})
+    if doc and "_id" in doc.keys():
+        doc.pop('_id')
+        return doc
+    else:
+        return 'No matching answer. Please try another question.'
+
+
+
+    #words_aksed = vectorizer.get_feature_names()#获取词袋模型中的所有词语
+    #weight_asked = tfidf.toarray()#将tf-idf矩阵抽取出来，元素a[i][j]表示j词在i类文本中的tf-idf权重
 
     #get target matrix of asked question
     target_matrix = [0.0 for i in range(len(words_bag))]
