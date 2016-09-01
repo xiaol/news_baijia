@@ -644,12 +644,19 @@ def extract_tag(content):
             tags.append(item)
             # print item.word
             # print item.weight
-    tr4s.analyze(text=re.sub(r'<.*?>', "", content), lower=True, source = 'all_filters')
-    abs = u''
-    for item in tr4s.get_key_sentences(num=3):
-        abs = abs+ item.sentence + u'。'
-    tags.append(abs)
+    # tr4s.analyze(text=re.sub(r'<.*?>', "", content), lower=True, source = 'all_filters')
+    # abs = u''
+    # for item in tr4s.get_key_sentences(num=3):
+    #     abs = abs+ item.sentence + u'。'
+    # tags.append(abs)
     return tags
+
+def extract_abs(content):
+    tr4s.analyze(text=re.sub(r'<.*?>', "", content), lower=True, source = 'all_filters')
+    abs = []
+    for item in tr4s.get_key_sentences(num=3):
+        abs.append(item.sentence)
+    return abs
 
 
 def do_relate_task(params):
@@ -741,7 +748,7 @@ def do_relate_task(params):
     else:
         relate_opinion["tags"] = list(set(extract_tag(content) + [i for i in key_new if len(i)>=2]))
 
-
+    relate_opinion["abs"] = extract_abs(content)
     elem = {}
     elem["_id"] = title
     elem["relate_opinion"] = relate_opinion
@@ -948,6 +955,38 @@ def getSimQuestions(askedQues, n):
         return doc
     else:
         return 'No matching answer. Please try another question.'
+
+
+
+
+def getZHihuQuestions(askedQues, n):
+    dic = []
+    asked_kws = jieba.analyse.extract_tags(askedQues, 5)
+    for i in asked_kws:
+        print i.encode('utf-8')
+    for id, kws in qkws:
+        sim_score = getSenSimilarity(asked_kws, kws)
+        #print (bytes(id) + ':' + bytes(sim_score))
+        if len(dic) < n:
+            dic.append((id, sim_score))
+            dic = sorted(dic, key=lambda d: d[1])
+        else:
+            for item in dic:
+                id2, sim_score2 = item
+                if sim_score > sim_score2 :
+                    dic.remove(item)
+                    dic.append((id, sim_score))
+                    dic = sorted(dic, key=lambda d: d[1])
+                break
+    if dic and dic[0][1] > 0:
+        _id = dic[0][0]
+        doc = conn["news_ver2"]["qaDataSet"].find_one({'_id': _id})
+        del doc['_id']
+        return doc
+    else:
+        return 'No matching answer. Please try another question.'
+
+
 
 if __name__ == '__main__':
     # print do_article_task({"topic":"抢红包大打出手"})
