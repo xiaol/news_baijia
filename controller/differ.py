@@ -31,8 +31,22 @@ DBStore = dbConn.GetDateStore()
 conn = DBStore._connect_news
 import random
 import jieba.analyse
+import MySQLdb
+# import ConfigParser
+from task.weibo_run_re import extract_tags_helper
 
+# cf = ConfigParser.ConfigParser()
+# cf.read("config.ini")
 
+# host = cf.get("db", "host")
+# port = int(cf.get("db", "port"))
+# user = cf.get("db", "user")
+# passwd = cf.get("db", "passwd")
+# db_name = cf.get("db", "db")
+# charset = cf.get("db", "charset")
+# use_unicode = cf.get("db", "use_unicode")
+db = MySQLdb.connect(host='121.41.75.213', port=3306, user='yangjw', passwd='Huohua123', db='ZHIHUHOT_FULL_DATA', charset='utf8', use_unicode='True')
+cursor = db.cursor()
 
 def duplicate_docs_check(domain_events):
     events = []
@@ -956,41 +970,71 @@ def getSimQuestions(askedQues, n):
     else:
         return 'No matching answer. Please try another question.'
 
+def get_bigrams(string):
+    '''
+    Takes a string and returns a list of bigrams
+    '''
+    s = string.lower()
+    return [s[i:i+2] for i in xrange(len(s) - 1)]
 
+def string_similarity(str1, str2):
+    '''
+    Perform bigram comparison between two strings
+    and return a percentage match in decimal form
+    '''
+    pairs1 = get_bigrams(str1)
+    pairs2 = get_bigrams(str2)
+    union  = len(pairs1) + len(pairs2)
+    hit_count = 0
+    for x in pairs1:
+        for y in pairs2:
+            if x == y:
+                # print x
+                hit_count += 1
+                break
+    return (2.0 * hit_count) / union
 
 
 def getZHihuQuestions(askedQues, n):
     dic = []
-    asked_kws = jieba.analyse.extract_tags(askedQues, 5)
-    for i in asked_kws:
-        print i.encode('utf-8')
-    for id, kws in qkws:
-        sim_score = getSenSimilarity(asked_kws, kws)
-        #print (bytes(id) + ':' + bytes(sim_score))
-        if len(dic) < n:
-            dic.append((id, sim_score))
-            dic = sorted(dic, key=lambda d: d[1])
-        else:
-            for item in dic:
-                id2, sim_score2 = item
-                if sim_score > sim_score2 :
-                    dic.remove(item)
-                    dic.append((id, sim_score))
-                    dic = sorted(dic, key=lambda d: d[1])
-                break
-    if dic and dic[0][1] > 0:
-        _id = dic[0][0]
-        doc = conn["news_ver2"]["qaDataSet"].find_one({'_id': _id})
-        del doc['_id']
+    sked_kws = jieba.analyse.extract_tags(askedQues, 5)   #extract_tags_helper(askedQues.encode("utf-8"))
+    str_sked_kws = '|'.join(sked_kws)
+    # for i in asked_kws:
+    #     print i.encode('utf-8')
+    # sql = "SELECT NAME,LINK_ID FROM QUESTION WHERE NAME  like" +'"' + "%" + sked_kws[0] + "%" +'"'   #and LINK_ID = 19680895
+    # sql = "SELECT NAME,LINK_ID FROM QUESTION WHERE NAME  like %s"  #and LINK_ID = 19680895
+    sql = "SELECT NAME,LINK_ID FROM QUESTION_GX WHERE NAME  REGEXP " +"'" + str_sked_kws +"'" +" limit 1000"
+    # cursor.execute(sql, (sked_kws[0],))
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    searchResult = []
+    for row in results:
+        doc = {}
+        question = ""
+        answer = ""
+        question = str(row[0])
+        answer = str(row[1])
+        similarity = string_similarity(askedQues.decode('utf-8'), question.decode('utf-8'))
+        doc["question"] = question
+        doc["answer"] = "https://www.zhihu.com/question/" + answer
+        doc["similarity"] = similarity
+        searchResult.append(doc)
+        # break
+    if len(searchResult) > 0:
+        doc={}
+        dic = sorted(searchResult, key=lambda d: d["similarity"], reverse =True)
+        doc["question"] = dic[0]["question"]
+        doc["answer"] = dic[0]["answer"]
+        doc["keywords"] = sked_kws
         return doc
     else:
         return 'No matching answer. Please try another question.'
 
 
-
 if __name__ == '__main__':
     # print do_article_task({"topic":"抢红包大打出手"})
     # print bingSearch()
+    getZHihuQuestions("史上最难题之一，搬砖的如何让马云请他吃顿饭？",1)
     # extract_tag("中新网北京12月1日电(记者 张曦) 30日晚，高圆圆和赵又廷在京举行答谢宴，诸多明星现身捧场，其中包括张杰(微博)、谢娜(微博)夫妇、何炅(微博)、蔡康永(微博)、徐克、张凯丽、黄轩(微博)等。30日中午，有媒体曝光高圆圆和赵又廷现身台北桃园机场的照片，照片中两人小动作不断，尽显恩爱。事实上，夫妻俩此行是回女方老家北京举办答谢宴。")
     do_relate_task({"url":"http://mp.weixin.qq.com/s?__biz=MjM5MTk2OTIwOA==&mid=401562035&idx=1&sn=c3bebee6cb09072cd048bea3108b03c7&scene=23&srcid=0321UwN45f6LVCgXQvbzo1NI#rd","title":"20宗宁：网红经济的悖论，现在做已经晚了"})
     # do_relate_task({"url":"http://www.taiwan.cn/xwzx/shytp/201606/t20160630_11495228_12.htm","title":"14宗宁：网红经济的悖论，现在做已经晚了"})
