@@ -998,7 +998,10 @@ def string_similarity(str1, str2):
 def getZHihuQuestions(askedQues, n):
     dic = []
     sked_kws = jieba.analyse.extract_tags(askedQues, 5)   #extract_tags_helper(askedQues.encode("utf-8"))
-    str_sked_kws = '|'.join(sked_kws)
+    if len(sked_kws)>=1:
+        str_sked_kws = '|'.join(sked_kws)
+    else:
+        str_sked_kws = askedQues
     # for i in asked_kws:
     #     print i.encode('utf-8')
     # sql = "SELECT NAME,LINK_ID FROM QUESTION WHERE NAME  like" +'"' + "%" + sked_kws[0] + "%" +'"'   #and LINK_ID = 19680895
