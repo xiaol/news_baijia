@@ -998,7 +998,7 @@ def string_similarity(str1, str2):
 def getZHihuQuestions(askedQues, n):
     dic = []
     sked_kws = jieba.analyse.extract_tags(askedQues, 5)   #extract_tags_helper(askedQues.encode("utf-8"))
-    if len(sked_kws)>=2:
+    if len(sked_kws)>=1:
         str_sked_kws = ' '.join(sked_kws)
     else:
         str_sked_kws = askedQues
