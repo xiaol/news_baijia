@@ -992,7 +992,7 @@ def string_similarity(str1, str2):
                 # print x
                 hit_count += 1
                 break
-    return max((1.0 * hit_count)/pairs1, (1.0 * hit_count)/pairs2)    #(2.0 * hit_count) / union
+    return max((1.0 * hit_count)/len(pairs1), (1.0 * hit_count)/len(pairs2))    #(2.0 * hit_count) / union
 
 
 def getZHihuQuestions(askedQues, n):
