@@ -998,15 +998,17 @@ def string_similarity(str1, str2):
 def getZHihuQuestions(askedQues, n):
     dic = []
     sked_kws = jieba.analyse.extract_tags(askedQues, 5)   #extract_tags_helper(askedQues.encode("utf-8"))
-    if len(sked_kws)>=1:
-        str_sked_kws = '|'.join(sked_kws)
+    if len(sked_kws)>=2:
+        str_sked_kws = ' '.join(sked_kws)
     else:
         str_sked_kws = askedQues
     # for i in asked_kws:
     #     print i.encode('utf-8')
     # sql = "SELECT NAME,LINK_ID FROM QUESTION WHERE NAME  like" +'"' + "%" + sked_kws[0] + "%" +'"'   #and LINK_ID = 19680895
     # sql = "SELECT NAME,LINK_ID FROM QUESTION WHERE NAME  like %s"  #and LINK_ID = 19680895
-    sql = "SELECT NAME,LINK_ID FROM QUESTION_GX WHERE NAME  REGEXP " +"'" + str_sked_kws +"'" +" limit 1000"
+    # sql = "SELECT NAME,LINK_ID FROM QUESTION_GX WHERE NAME  REGEXP " +"'" + str_sked_kws +"'" +" limit 10000"
+    sql = "SELECT NAME,LINK_ID FROM QUESTION_GX WHERE MATCH(NAME)  AGAINST(" + "'" + str_sked_kws +"'" + " IN NATURAL LANGUAGE MODE) limit 10"
+
     # cursor.execute(sql, (sked_kws[0],))
     cursor.execute(sql)
     results = cursor.fetchall()
