@@ -45,8 +45,8 @@ from task.weibo_run_re import extract_tags_helper
 # db_name = cf.get("db", "db")
 # charset = cf.get("db", "charset")
 # use_unicode = cf.get("db", "use_unicode")
-db = MySQLdb.connect(host='121.41.75.213', port=3306, user='yangjw', passwd='Huohua123', db='ZHIHUHOT_FULL_DATA', charset='utf8', use_unicode='True')
-cursor = db.cursor()
+# db = MySQLdb.connect(host='121.41.75.213', port=3306, user='yangjw', passwd='Huohua123', db='ZHIHUHOT_FULL_DATA', charset='utf8', use_unicode='True')
+# cursor = db.cursor()
 
 def duplicate_docs_check(domain_events):
     events = []
@@ -996,6 +996,8 @@ def string_similarity(str1, str2):
 
 
 def getZHihuQuestions(askedQues, n):
+    db = MySQLdb.connect(host='121.41.75.213', port=3306, user='yangjw', passwd='Huohua123', db='ZHIHUHOT_FULL_DATA', charset='utf8', use_unicode='True')
+    cursor = db.cursor()
     dic = []
     sked_kws = jieba.analyse.extract_tags(askedQues, 5)   #extract_tags_helper(askedQues.encode("utf-8"))
     if len(sked_kws)>=1:
@@ -1012,6 +1014,7 @@ def getZHihuQuestions(askedQues, n):
     # cursor.execute(sql, (sked_kws[0],))
     cursor.execute(sql)
     results = cursor.fetchall()
+    cursor.close()
     searchResult = []
     for row in results:
         doc = {}
@@ -1027,9 +1030,11 @@ def getZHihuQuestions(askedQues, n):
         # break
     if len(searchResult) > 0:
         doc={}
-        dic = sorted(searchResult, key=lambda d: d["similarity"], reverse =True)
-        doc["question"] = dic[0]["question"]
-        doc["answer"] = dic[0]["answer"]
+        # dic = sorted(searchResult, key=lambda d: d["similarity"], reverse =True)
+        # doc["question"] = dic[0]["question"]
+        # doc["answer"] = dic[0]["answer"]
+        doc["question"] = searchResult[0]["question"]
+        doc["answer"] = searchResult[0]["answer"]
         doc["keywords"] = sked_kws
         return doc
     else:
