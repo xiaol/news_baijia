@@ -34,6 +34,10 @@ import jieba.analyse
 import MySQLdb
 # import ConfigParser
 from task.weibo_run_re import extract_tags_helper
+from elasticsearch import Elasticsearch
+es = Elasticsearch(["120.27.163.25"])
+# es = Elasticsearch(["120.27.163.25","120.27.162.230","120.27.163.39"])
+
 
 # cf = ConfigParser.ConfigParser()
 # cf.read("config.ini")
@@ -993,6 +997,24 @@ def string_similarity(str1, str2):
                 hit_count += 1
                 break
     return max((1.0 * hit_count)/len(pairs1), (1.0 * hit_count)/len(pairs2))    #(2.0 * hit_count) / union
+
+
+def getZhihuQuestionsByElastic(askedQues, n):
+    askedQues = askedQues.encode('utf-8')
+    res = es.search(index="zhihu", body={"query": {"match": {"NAME":askedQues}}})
+    docs =[]
+    for doc in res["hits"]["hits"]:
+        docs.append(doc["_source"])
+    if len(docs) >0:
+        doc={}
+        doc["question"] = docs[0]["NAME"]
+        doc["answer"] = "https://www.zhihu.com/question/" + str(docs[0]["LINK_ID"])
+        doc["keywords"] = [askedQues]
+        return doc
+    else:
+        return 'No matching answer. Please try another question.'
+
+
 
 
 def getZHihuQuestions(askedQues, n):

@@ -777,7 +777,7 @@ class FetchQuestionHandler(tornado.web.RequestHandler):
         #result = differ.random_fetch_question()
         question = self.get_argument('question', None)
         # result = differ.getSimQuestions(question, 1)
-        result = differ.getZHihuQuestions(question, 1)
+        result = differ.getZhihuQuestionsByElastic(question, 1)
         #result = differ.getMostSimilary(question)
         self.set_header("Content-Type", "Application/json")
         self.write(json.dumps(result))
