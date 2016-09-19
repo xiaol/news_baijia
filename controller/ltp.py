@@ -3,15 +3,15 @@ __author__ = 'yangjiwen'
 from pyltp import Segmentor, Postagger, Parser, NamedEntityRecognizer, SementicRoleLabeller
 
 segmentor = Segmentor()
-segmentor.load("/root/pyltp/ltp_data/cws.model")
+segmentor.load("/mnt/pyltp/ltp_data/cws.model")
 # segmentor.load("/Users/yangjiwen/Documents/resume/pyltp/ltp_data/cws.model")
 
 postagger = Postagger()
-postagger.load("/root/pyltp/ltp_data/pos.model")
+postagger.load("/mnt/pyltp/ltp_data/pos.model")
 # postagger.load("/Users/yangjiwen/Documents/resume/pyltp/ltp_data/pos.model")
 
 recognizer = NamedEntityRecognizer()
-recognizer.load("/root/pyltp/ltp_data/ner.model")
+recognizer.load("/mnt/pyltp/ltp_data/ner.model")
 # recognizer.load("/Users/yangjiwen/Documents/resume/pyltp/ltp_data/ner.model")
 
 def ltp_model(txt):
