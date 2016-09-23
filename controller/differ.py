@@ -1008,13 +1008,22 @@ def getZhihuQuestionsByElastic(askedQues, n):
     if len(docs) >0:
         doc={}
         doc["question"] = docs[0]["NAME"]
-        doc["answer"] = "https://www.zhihu.com/question/" + str(docs[0]["LINK_ID"])
+        doc["detail"], doc["answer"] = getAnswer("http://www.zhihu.com/question/" + str(docs[0]["LINK_ID"]))
         doc["keywords"] = [askedQues]
         return doc
     else:
         return 'No matching answer. Please try another question.'
 
 
+def getAnswer(qurl):
+    db = MySQLdb.connect(host='121.41.75.213', port=3306, user='yangjw', passwd='Huohua123', db='ZHIHUHOT_FULL_DATA', charset='utf8', use_unicode='True')
+    cursor = db.cursor()
+    sql = "SELECT detail, content FROM ANSWER WHERE  QURL = %s limit 1"
+    cursor.execute(sql, (qurl, ))
+    results = cursor.fetchall()
+    cursor.close()
+    for row in results:
+        return str(row[0]),str(row[1])
 
 
 def getZHihuQuestions(askedQues, n):
