@@ -1001,7 +1001,7 @@ def string_similarity(str1, str2):
 
 def getZhihuQuestionsByElastic(askedQues, n):
     askedQues = askedQues.encode('utf-8')
-    res = es.search(index="zhihu", body={"query": {"match": {"NAME":askedQues}}})
+    res = es.search(index="zhihu_test", body={"query": {"match": {"NAME":askedQues}}})
     docs =[]
     for doc in res["hits"]["hits"]:
         docs.append(doc["_source"])
